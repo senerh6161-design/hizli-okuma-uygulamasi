@@ -447,23 +447,32 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
           child: ListView.builder(
             itemCount: currentQuestion['answers'].length,
             itemBuilder: (context, index) {
+              final isTrueFalse = currentQuestion['answers'].length == 2;
+              final label = isTrueFalse
+                  ? (index == 0 ? 'D' : 'Y')
+                  : String.fromCharCode(65 + index);
+              final optionColor = isTrueFalse
+                  ? (index == 0 ? Colors.green.shade700 : Colors.red.shade700)
+                  : Colors.black87;
+
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.all(18),
-                    alignment: Alignment.centerLeft,
+                    alignment: isTrueFalse ? Alignment.center : Alignment.centerLeft,
+                    side: BorderSide(color: optionColor.withValues(alpha: 0.4)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   onPressed: () => answer(index),
                   child: Text(
-                    '${String.fromCharCode(65 + index)}) ${currentQuestion['answers'][index]}',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                    '$label) ${currentQuestion['answers'][index]}',
+                    style: TextStyle(
+                      fontSize: isTrueFalse ? 18 : 15,
+                      fontWeight: FontWeight.bold,
+                      color: optionColor,
                     ),
                   ),
                 ),

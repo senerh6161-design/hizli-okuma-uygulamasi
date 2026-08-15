@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/word_data.dart';
-import 'attention_exercise_page.dart';
+import 'attention_questions_page.dart';
 
 class ReadingExercisePage extends StatefulWidget {
   final int level;
@@ -155,7 +155,7 @@ class _ReadingExercisePageState extends State<ReadingExercisePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const AttentionExercisePage(),
+                    builder: (_) => const AttentionQuestionsPage(),
                   ),
                 );
               },

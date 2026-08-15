@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'views/homes/home_page.dart';
-import 'views/exercises/exercise_menu_page.dart';
+import 'views/exercises/exercise_folders_page.dart';
 import 'views/progress/progress_page.dart';
 import 'views/settings/settings_page.dart';
 import 'models/progress_manager.dart';
@@ -58,7 +58,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final pages = const [
     HomePage(),
-    ExerciseMenuPage(),
+    ExerciseFoldersPage(),
     ProgressPage(),
     SettingsPage(),
   ];

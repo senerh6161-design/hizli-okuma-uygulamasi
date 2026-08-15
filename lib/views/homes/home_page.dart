@@ -5,8 +5,6 @@ import '../../models/achievement.dart';
 import '../levels/school_level_selection_page.dart';
 import '../levels/wpm_test_page.dart';
 import '../exercises/eye_coordination_page.dart';
-import '../exercises/attention_exercise_page.dart';
-import '../exercises/memory_exercise_page.dart';
 import '../exercises/topic_selection_page.dart';
 import '../leaderboard/leaderboard_page.dart';
 
@@ -20,8 +18,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool isEyeCoordinationDone = false;
   bool isReadingDone = false;
-  bool isAttentionDone = false;
-  bool isMemoryDone = false;
   bool isComprehensionDone = false;
 
   void _showAchievementSnackBar(List<Achievement> unlocked) {
@@ -205,54 +201,6 @@ class _HomePageState extends State<HomePage> {
                 title: 'Hızlı Okuma',
                 subtitle: '5 dakika antrenman',
                 completed: isReadingDone,
-              ),
-            ),
-
-            InkWell(
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AttentionExercisePage()),
-                );
-                final unlocked = ProgressManager.addCompletedExercise(
-                  type: 'Dikkat',
-                  result: 'Tamamlandı',
-                );
-                setState(() => isAttentionDone = true);
-                if (unlocked.isNotEmpty && mounted) {
-                  _showAchievementSnackBar(unlocked);
-                }
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: DailyTaskTile(
-                icon: Icons.visibility,
-                title: 'Dikkat Egzersizi',
-                subtitle: 'Target bulma matrisi',
-                completed: isAttentionDone,
-              ),
-            ),
-
-            InkWell(
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MemoryExercisePage()),
-                );
-                final unlocked = ProgressManager.addCompletedExercise(
-                  type: 'Hafıza',
-                  result: 'Tamamlandı',
-                );
-                setState(() => isMemoryDone = true);
-                if (unlocked.isNotEmpty && mounted) {
-                  _showAchievementSnackBar(unlocked);
-                }
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: DailyTaskTile(
-                icon: Icons.psychology,
-                title: 'Hafıza Egzersizi',
-                subtitle: 'Kelimeleri hatırlama testi',
-                completed: isMemoryDone,
               ),
             ),
 

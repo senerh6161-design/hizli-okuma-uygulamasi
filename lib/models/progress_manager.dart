@@ -246,6 +246,7 @@ class ProgressManager {
   static List<Achievement> recordComprehensionResult({
     required int correct,
     required int total,
+    String title = 'Anlama Testi',
   }) {
     if (total <= 0) return [];
     final scorePercent = ((correct / total) * 100).round();
@@ -264,7 +265,7 @@ class ProgressManager {
 
     completedExercises++;
     history.insert(0, {
-      'title': 'Anlama Testi',
+      'title': title,
       'result': '%$scorePercent doğru',
       'date': 'Şimdi',
     });
@@ -277,6 +278,19 @@ class ProgressManager {
 
     _persist();
     return newlyUnlocked;
+  }
+
+  /// Dikkat/odak gerektiren bir egzersiz (Dairesel Sıralama, Dikkat Soruları,
+  /// Şehir Anagramı, Kelimelerle Saklambaç, Kelime Akışı vb.) bittiğinde
+  /// çağrılır. attentionSuccess'i hareketli ortalama olarak günceller —
+  /// bu alan daha önce hiçbir egzersiz tarafından güncellenmiyordu ve
+  /// İlerleme sayfasında hep %0 görünüyordu.
+  static void recordAttentionScore(int percent) {
+    final clamped = percent.clamp(0, 100);
+    attentionSuccess = attentionSuccess == 0
+        ? clamped
+        : (((attentionSuccess * 0.5) + (clamped * 0.5))).round();
+    _persist();
   }
 
   /// WPM Testi bittiğinde çağrılır. Ölçülen kişisel taban hızı kaydeder;
