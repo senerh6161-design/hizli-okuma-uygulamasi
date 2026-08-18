@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
+import '../../widgets/completion_pop_scope.dart';
 
 class _ObjectItem {
   final String name;
@@ -74,6 +75,7 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
 
   bool _isRunning = false;
   bool _showQuestions = false;
+  bool _hasCompletedOnce = false;
   int _pass = 0;
   int _lineIndex = 0;
   Timer? _timer;
@@ -205,6 +207,7 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   }
 
   void _finish() {
+    _hasCompletedOnce = true;
     final total = _questionTargets.length;
     final percent = (_correctCount / total * 100).round();
     ProgressManager.recordAttentionScore(percent);
@@ -276,11 +279,14 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return CompletionPopScope(
+      isCompleted: () => _hasCompletedOnce,
+      child: Scaffold(
       appBar: AppBar(title: const Text('📦 Nesne Akışı')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: _showQuestions ? _buildQuestionView() : _buildFlowView(),
+      ),
       ),
     );
   }

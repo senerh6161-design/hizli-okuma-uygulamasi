@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
+import '../../widgets/completion_pop_scope.dart';
 
 class _HidePuzzle {
   final String given;
@@ -43,6 +44,7 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
   static const int _stageSeconds = 30;
 
   bool _showIntro = true;
+  bool _hasCompletedOnce = false;
   int _index = 0;
   int _totalScore = 0;
   int _stage = 0;
@@ -141,6 +143,7 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
   }
 
   void _finish() {
+    _hasCompletedOnce = true;
     final maxScore = _puzzles.length * 100;
     ProgressManager.recordAttentionScore((_totalScore / maxScore * 100).round());
 
@@ -215,11 +218,14 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return CompletionPopScope(
+      isCompleted: () => _hasCompletedOnce,
+      child: Scaffold(
       appBar: AppBar(title: const Text('🙈 Kelimelerle Saklambaç')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: _showIntro ? _buildIntro() : _buildPuzzle(),
+      ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
+import '../../widgets/completion_pop_scope.dart';
 
 enum CircularMode { numbers12, numbers20, days, months }
 
@@ -71,6 +72,7 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
   int _demoLap = 0;
   int _demoIndex = 0;
   Timer? _demoTimer;
+  bool _hasCompletedOnce = false;
 
   bool _isPlaying = false;
   int _targetIndex = 0;
@@ -194,6 +196,7 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
     final ms = _stopwatch?.elapsedMilliseconds ?? 0;
     setState(() {
       _isPlaying = false;
+      _hasCompletedOnce = true;
       if (_bestMs == null || ms < _bestMs!) _bestMs = ms;
     });
 
@@ -284,7 +287,9 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
     final n = _positions.length;
     final activeIndex = _isDemoing ? _positions.indexOf(_mode.sequence[_demoIndex]) : -1;
 
-    return Scaffold(
+    return CompletionPopScope(
+      isCompleted: () => _hasCompletedOnce,
+      child: Scaffold(
       appBar: AppBar(title: Text(widget.appBarTitle)),
       body: Column(
         children: [
@@ -461,6 +466,7 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

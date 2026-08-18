@@ -19,6 +19,15 @@ class Achievement {
     required this.isUnlocked,
   });
 
+  // Geçmişte "metin okuma" ile ilgili kaç kayıt var (Anlama Testi, Klasör 1
+  // ön/son metin) — ayrı bir sayaç tutmak yerine mevcut history üzerinden
+  // hesaplanır.
+  static int _textsReadCount() {
+    return ProgressManager.history
+        .where((h) => (h['title'] ?? '').contains('Metin') || (h['title'] ?? '').contains('Anlama Testi'))
+        .length;
+  }
+
   static List<Achievement> get all => [
         Achievement(
           id: 'first_step',
@@ -110,6 +119,20 @@ class Achievement {
           description: 'Genel seviyende 5. seviyeye ulaştın',
           icon: Icons.star_rounded,
           isUnlocked: () => ProgressManager.currentLevel >= 5,
+        ),
+        Achievement(
+          id: 'kitap_kurdu',
+          title: 'Kitap Kurdu',
+          description: '10 metin okuyup anlama testini tamamladın',
+          icon: Icons.auto_stories_rounded,
+          isUnlocked: () => _textsReadCount() >= 10,
+        ),
+        Achievement(
+          id: 'hizli_anlayan',
+          title: 'Hızlı Anlayan',
+          description: 'Anlama başarınla tempon en yüksek seviyeye ulaştı',
+          icon: Icons.bolt_rounded,
+          isUnlocked: () => ProgressManager.speedAdjustment >= 1.3,
         ),
       ];
 }

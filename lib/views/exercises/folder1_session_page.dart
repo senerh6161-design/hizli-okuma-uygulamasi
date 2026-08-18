@@ -5,7 +5,11 @@ import '../../models/comprehension_data.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../models/settings_manager.dart';
+import '../../models/audio_manager.dart';
 import '../../models/school_level.dart';
+import '../../widgets/reading_theme_picker.dart';
+import '../../widgets/word_definition_sheet.dart';
+import '../../widgets/confetti_overlay.dart';
 import '../levels/level_page.dart';
 import 'eye_coordination_page.dart';
 import 'circular_sequence_page.dart';
@@ -95,6 +99,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   @override
   void dispose() {
     _tickTimer?.cancel();
+    AudioManager.stopAmbient();
     super.dispose();
   }
 
@@ -112,6 +117,32 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
     _tickTimer?.cancel();
     _elapsedSeconds = 0;
     _readStart = DateTime.now();
+    _pausedAt = null;
+    AudioManager.startAmbient();
+    _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedSeconds++);
+    });
+  }
+
+  // Renk seçici gibi metin okumayı gerçekten durduran bir panel açıldığında
+  // çağrılır — süre orada geçen zamanı SAYMASIN diye sayaç durdurulur ve
+  // panel kapanınca _readStart o kadar ileri kaydırılarak WPM hesabından
+  // düşürülür.
+  DateTime? _pausedAt;
+
+  void _pauseTimer() {
+    _tickTimer?.cancel();
+    _pausedAt = DateTime.now();
+  }
+
+  void _resumeTimer() {
+    final pausedAt = _pausedAt;
+    final start = _readStart;
+    if (pausedAt != null && start != null) {
+      _readStart = start.add(DateTime.now().difference(pausedAt));
+    }
+    _pausedAt = null;
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _elapsedSeconds++);
@@ -141,6 +172,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
 
   void _finishPreText() {
     _tickTimer?.cancel();
+    AudioManager.stopAmbient();
     _preWpm = _computeWpm(_preText!);
     setState(() {
       _phase = _Phase.preQuiz;
@@ -194,6 +226,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
 
   void _finishPostText() {
     _tickTimer?.cancel();
+    AudioManager.stopAmbient();
     _postWpm = _computeWpm(_postText!);
     setState(() {
       _phase = _Phase.postQuiz;
@@ -220,6 +253,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
     setState(() => _phase = _Phase.results);
+    showConfetti(context);
   }
 
   @override
@@ -231,11 +265,13 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
           padding: const EdgeInsets.all(20),
           child: switch (_phase) {
             _Phase.intro => _buildIntro(),
-            _Phase.preText => _buildReadingView(_preText, 'ÖN METİN', _finishPreText),
-            _Phase.preQuiz => _quizBody(_preText, isPost: false),
+            _Phase.preTopic => _buildTopicPicker(isPost: false),
+            _Phase.preText => _buildReadingView(_preText!, 'ÖN METİN', _finishPreText),
+            _Phase.preQuiz => _quizBody(_preText!, isPost: false),
             _Phase.activities => _buildActivitiesView(),
-            _Phase.postText => _buildReadingView(_postText, 'SON METİN', _finishPostText),
-            _Phase.postQuiz => _quizBody(_postText, isPost: true),
+            _Phase.postTopic => _buildTopicPicker(isPost: true),
+            _Phase.postText => _buildReadingView(_postText!, 'SON METİN', _finishPostText),
+            _Phase.postQuiz => _quizBody(_postText!, isPost: true),
             _Phase.results => _buildResultsView(),
           },
         ),
@@ -269,7 +305,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
           width: double.infinity,
           height: 56,
           child: ElevatedButton.icon(
-            onPressed: _startPreText,
+            onPressed: _goToPreTopic,
             icon: const Icon(Icons.play_arrow),
             label: const Text('OTURUMU BAŞLAT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             style: ElevatedButton.styleFrom(
@@ -296,6 +332,80 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
     );
   }
 
+  Widget _buildTopicPicker({required bool isPost}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isPost ? 'Son metin için bir konu seç' : 'Ön metin için bir konu seç',
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Ne okumak istersin? İlgini çeken bir konu seç.',
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+        ),
+        const SizedBox(height: 20),
+        Expanded(
+          child: GridView.count(
+            crossAxisCount: 3,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.9,
+            children: [
+              for (final topic in ComprehensionData.topics)
+                _topicCard(
+                  emoji: topic.emoji,
+                  title: topic.title,
+                  onTap: () => isPost ? _choosePostTopic(topic.id) : _choosePreTopic(topic.id),
+                ),
+              _topicCard(
+                emoji: '🎲',
+                title: 'Sürpriz',
+                highlight: true,
+                onTap: () => isPost ? _choosePostTopic(null) : _choosePreTopic(null),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _topicCard({
+    required String emoji,
+    required String title,
+    required VoidCallback onTap,
+    bool highlight = false,
+  }) {
+    return Card(
+      elevation: 1,
+      color: highlight ? const Color(0xFFFFF7ED) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: highlight ? const BorderSide(color: Color(0xFFFBBF24), width: 1.5) : BorderSide.none,
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 28)),
+              const SizedBox(height: 6),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildReadingView(ReadingPassage passage, String label, VoidCallback onFinish) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,16 +422,41 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
               child: Text(label,
                   style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5))),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(color: Colors.amber.shade100, borderRadius: BorderRadius.circular(10)),
-              child: Text('$_elapsedSeconds sn',
-                  style: TextStyle(color: Colors.amber.shade900, fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () async {
+                    _pauseTimer();
+                    await showReadingThemePicker(context, () => setState(() {}));
+                    if (mounted) _resumeTimer();
+                  },
+                  icon: const Icon(Icons.palette_outlined),
+                  tooltip: 'Metin rengini değiştir',
+                  visualDensity: VisualDensity.compact,
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: Colors.amber.shade100, borderRadius: BorderRadius.circular(10)),
+                  child: Text('$_elapsedSeconds sn',
+                      style: TextStyle(color: Colors.amber.shade900, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
           ],
         ),
         const SizedBox(height: 16),
         Text(passage.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Icon(Icons.touch_app_rounded, size: 14, color: Colors.grey.shade500),
+            const SizedBox(width: 4),
+            Text(
+              'Anlamını bilmediğin bir kelimeye dokun!',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
         Expanded(
           child: SingleChildScrollView(
@@ -329,11 +464,15 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: SettingsManager.readingBackgroundColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: SettingsManager.readingBorderColor),
               ),
-              child: Text(passage.content, style: const TextStyle(fontSize: 17, height: 1.6, color: Colors.black87)),
+              child: buildInteractiveText(
+                context,
+                passage.content,
+                accentColor: SettingsManager.readingAccentColor,
+              ),
             ),
           ),
         ),
@@ -346,7 +485,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
             icon: const Icon(Icons.check),
             label: const Text('OKUDUM, BİTTİM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: SettingsManager.readingAccentColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -459,7 +598,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
           width: double.infinity,
           height: 52,
           child: ElevatedButton.icon(
-            onPressed: allDone ? _goToPostText : null,
+            onPressed: allDone ? _goToPostTopic : null,
             icon: const Icon(Icons.arrow_forward),
             label: Text(
               allDone ? 'SON METNE GEÇ' : 'Önce tüm etkinlikleri tamamla',

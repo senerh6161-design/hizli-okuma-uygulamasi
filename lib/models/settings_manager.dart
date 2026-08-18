@@ -13,6 +13,7 @@ class SettingsManager {
   static bool isFocusRed = true;
   static bool isSoundOn = false;
   static bool isReminderOn = true;
+  static bool isBackgroundMusicOn = false;
   static TimeOfDay reminderTime = const TimeOfDay(hour: 20, minute: 0);
 
   // Okuma teması: 'default' | 'blue' | 'green'. Anlama Testi'ndeki metin
@@ -25,6 +26,7 @@ class SettingsManager {
   static const _kReminderHour = 'settings_reminder_hour';
   static const _kReminderMinute = 'settings_reminder_minute';
   static const _kReadingTheme = 'settings_reading_theme';
+  static const _kBackgroundMusicOn = 'settings_background_music_on';
 
   /// main() içinde, runApp'ten ÖNCE bir kere çağrılmalı:
   ///   await SettingsManager.init();
@@ -35,6 +37,7 @@ class SettingsManager {
     isFocusRed = prefs.getBool(_kFocusRed) ?? true;
     isSoundOn = prefs.getBool(_kSoundOn) ?? false;
     isReminderOn = prefs.getBool(_kReminderOn) ?? true;
+    isBackgroundMusicOn = prefs.getBool(_kBackgroundMusicOn) ?? false;
     readingTheme = prefs.getString(_kReadingTheme) ?? 'default';
 
     final hour = prefs.getInt(_kReminderHour) ?? 20;
@@ -48,19 +51,26 @@ class SettingsManager {
     await prefs.setBool(_kFocusRed, isFocusRed);
     await prefs.setBool(_kSoundOn, isSoundOn);
     await prefs.setBool(_kReminderOn, isReminderOn);
+    await prefs.setBool(_kBackgroundMusicOn, isBackgroundMusicOn);
     await prefs.setInt(_kReminderHour, reminderTime.hour);
     await prefs.setInt(_kReminderMinute, reminderTime.minute);
     await prefs.setString(_kReadingTheme, readingTheme);
   }
 
-  /// Anlama Testi okuma ekranının arka plan rengi. 'blue' ve 'green'
-  /// seçenekleri bilinçli olarak düşük doygunlukta ve dinlendirici seçildi.
+  /// Okuma ekranlarının arka plan rengi. Her seçenek bilinçli olarak düşük
+  /// doygunlukta ve dinlendirici seçildi (göz yorgunluğunu azaltmak için).
   static Color get readingBackgroundColor {
     switch (readingTheme) {
       case 'blue':
         return const Color(0xFFEFF6FF);
       case 'green':
         return const Color(0xFFECFDF5);
+      case 'lavender':
+        return const Color(0xFFF5F3FF);
+      case 'cream':
+        return const Color(0xFFFFFBEB);
+      case 'gray':
+        return const Color(0xFFF8FAFC);
       default:
         return Colors.white;
     }
@@ -72,6 +82,12 @@ class SettingsManager {
         return const Color(0xFFBFDBFE);
       case 'green':
         return const Color(0xFFA7F3D0);
+      case 'lavender':
+        return const Color(0xFFDDD6FE);
+      case 'cream':
+        return const Color(0xFFFDE68A);
+      case 'gray':
+        return const Color(0xFFCBD5E1);
       default:
         return const Color(0xFFE2E8F0);
     }
@@ -83,6 +99,12 @@ class SettingsManager {
         return const Color(0xFF2563EB);
       case 'green':
         return const Color(0xFF059669);
+      case 'lavender':
+        return const Color(0xFF7C3AED);
+      case 'cream':
+        return const Color(0xFFB45309);
+      case 'gray':
+        return const Color(0xFF475569);
       default:
         return const Color(0xFF4F46E5);
     }

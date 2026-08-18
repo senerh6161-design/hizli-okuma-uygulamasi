@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/settings_manager.dart';
+import '../../models/audio_manager.dart';
 import '../../services/auth_service.dart';
 import '../auth/auth_page.dart';
 
@@ -18,6 +19,7 @@ class _SettingsPageState extends State<SettingsPage> {
   late bool isFocusRed = SettingsManager.isFocusRed;
   late bool isSoundOn = SettingsManager.isSoundOn;
   late bool isReminderOn = SettingsManager.isReminderOn;
+  late bool isBackgroundMusicOn = SettingsManager.isBackgroundMusicOn;
   late TimeOfDay reminderTime = SettingsManager.reminderTime;
   late String readingTheme = SettingsManager.readingTheme;
 
@@ -116,11 +118,11 @@ class _SettingsPageState extends State<SettingsPage> {
     required IconData icon,
   }) {
     final selected = readingTheme == value;
-    return Expanded(
+    return SizedBox(
+      width: 104,
       child: GestureDetector(
         onTap: () => _setReadingTheme(value),
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             color: previewColor,
@@ -220,7 +222,9 @@ class _SettingsPageState extends State<SettingsPage> {
             style: TextStyle(color: Colors.grey, fontSize: 12),
           ),
           const SizedBox(height: 10),
-          Row(
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
             children: [
               _themeOption(
                 value: 'default',
@@ -239,6 +243,24 @@ class _SettingsPageState extends State<SettingsPage> {
                 label: 'Yeşil 🟢',
                 previewColor: const Color(0xFFECFDF5),
                 icon: Icons.eco_outlined,
+              ),
+              _themeOption(
+                value: 'lavender',
+                label: 'Lavanta 🟣',
+                previewColor: const Color(0xFFF5F3FF),
+                icon: Icons.spa_outlined,
+              ),
+              _themeOption(
+                value: 'cream',
+                label: 'Krem 🟡',
+                previewColor: const Color(0xFFFFFBEB),
+                icon: Icons.wb_incandescent_outlined,
+              ),
+              _themeOption(
+                value: 'gray',
+                label: 'Gri ⚪',
+                previewColor: const Color(0xFFF8FAFC),
+                icon: Icons.cloud_outlined,
               ),
             ],
           ),
@@ -273,6 +295,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 SettingsManager.isSoundOn = val;
               });
               SettingsManager.save();
+            },
+          ),
+          SwitchListTile(
+            title: const Text('Arka Plan Müziği'),
+            subtitle: const Text('Okuma sırasında sakin, dinlendirici bir fon sesi çalar.'),
+            value: isBackgroundMusicOn,
+            onChanged: (val) {
+              setState(() {
+                isBackgroundMusicOn = val;
+                SettingsManager.isBackgroundMusicOn = val;
+              });
+              SettingsManager.save();
+              if (!val) AudioManager.stopAmbient();
             },
           ),
 

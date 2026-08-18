@@ -6,6 +6,8 @@ import '../../models/progress_manager.dart';
 import '../../models/school_level.dart';
 import '../../models/achievement.dart';
 import '../../models/comprehension_data.dart';
+import '../../models/audio_manager.dart';
+import '../../widgets/confetti_overlay.dart';
 import '../exercises/comprehension_page.dart';
 
 /// Tek bir okuma egzersizi seviyesini tanımlar.
@@ -329,6 +331,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
     if (useRealText) {
       _currentRealPassage = null;
     }
+    AudioManager.startAmbient();
     _refillQueue();
     setState(() {
       phase = _SessionPhase.running;
@@ -365,8 +368,10 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
   void _finishSession() {
     _wordTimer?.cancel();
     _tickTimer?.cancel();
+    AudioManager.stopAmbient();
     if (!mounted) return;
 
+    final isNewRecord = calculatedWpm > ProgressManager.wpm;
     final unlocked = ProgressManager.addCompletedExercise(
       type: useRealText
           ? '${widget.schoolLevel.title} · ${widget.readingLevel.title} (Gerçek Metin)'
@@ -379,6 +384,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
       phase = _SessionPhase.finished;
       _newAchievements = unlocked;
     });
+    if (isNewRecord && calculatedWpm > 0) showConfetti(context);
   }
 
   void _restart() {
@@ -399,6 +405,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
     _wordTimer?.cancel();
     _tickTimer?.cancel();
     _countdownTimer?.cancel();
+    AudioManager.stopAmbient();
     super.dispose();
   }
 

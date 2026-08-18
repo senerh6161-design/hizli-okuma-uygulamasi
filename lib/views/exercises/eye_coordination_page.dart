@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/achievement.dart';
+import '../../widgets/completion_pop_scope.dart';
 
 // "Farklı versiyonlar" — hoca hangi ikonla göstermek isterse seçilebilsin
 // diye birkaç tema tanımlı. emoji null olan tema (Nokta) orijinal
@@ -113,6 +114,7 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
   int _lapsCompleted = 0;
   Timer? _timer;
   bool _isRunning = false;
+  bool _hasCompletedOnce = false;
 
   @override
   void initState() {
@@ -156,6 +158,7 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
     setState(() {
       _isRunning = false;
       _lapsCompleted = _totalLaps;
+      _hasCompletedOnce = true;
     });
 
     final unlocked = ProgressManager.addCompletedExercise(
@@ -196,7 +199,9 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return CompletionPopScope(
+      isCompleted: () => _hasCompletedOnce,
+      child: Scaffold(
       appBar: AppBar(title: const Text('👁️ Göz Koordinasyonu')),
       body: Column(
         children: [
@@ -358,6 +363,7 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

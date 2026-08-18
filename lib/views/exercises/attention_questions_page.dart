@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
+import '../../widgets/completion_pop_scope.dart';
 
 class _AttentionQuestion {
   final String prompt;
@@ -36,6 +37,7 @@ class _AttentionQuestionsPageState extends State<AttentionQuestionsPage> {
   ];
 
   bool _showIntro = true;
+  bool _hasCompletedOnce = false;
   int _index = 0;
   int _totalScore = 0;
   int? _wrongIndex;
@@ -96,6 +98,7 @@ class _AttentionQuestionsPageState extends State<AttentionQuestionsPage> {
   }
 
   void _finish() {
+    _hasCompletedOnce = true;
     _uiTimer?.cancel();
     final maxScore = _questions.length * 100;
     final percent = (_totalScore / maxScore * 100).round();
@@ -176,11 +179,14 @@ class _AttentionQuestionsPageState extends State<AttentionQuestionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return CompletionPopScope(
+      isCompleted: () => _hasCompletedOnce,
+      child: Scaffold(
       appBar: AppBar(title: const Text('❓ Dikkat Soruları')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: _showIntro ? _buildIntro() : _buildQuestion(),
+      ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
+import '../../widgets/completion_pop_scope.dart';
 
 /// Öğretmen dokümanındaki "Etkinlik 8'in kelime versiyonu": satır üstünde
 /// akan kelimeler, bazı kelimeler (ör. "Hikaye") etkinlik sonuna kadar
@@ -65,6 +66,7 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
 
   bool _isRunning = false;
   bool _showQuestions = false;
+  bool _hasCompletedOnce = false;
   int _pass = 0;
   int _lineIndex = 0;
   Timer? _timer;
@@ -194,6 +196,7 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
   }
 
   void _finish() {
+    _hasCompletedOnce = true;
     final total = _questionTargets.length;
     final percent = (_correctCount / total * 100).round();
     ProgressManager.recordAttentionScore(percent);
@@ -265,11 +268,14 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return CompletionPopScope(
+      isCompleted: () => _hasCompletedOnce,
+      child: Scaffold(
       appBar: AppBar(title: const Text('🌊 Kelime Akışı')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: _showQuestions ? _buildQuestionView() : _buildFlowView(),
+      ),
       ),
     );
   }

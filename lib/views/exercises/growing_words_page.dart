@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
+import '../../widgets/completion_pop_scope.dart';
 
 class _WordRow {
   final String root;
@@ -56,6 +57,7 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
 
   bool _isReading = false;
   bool _showRecall = false;
+  bool _hasCompletedOnce = false;
   int _pass = 0;
   int _flatIndex = 0; // sessionRows.length * 3 içindeki konum
   late List<String> _flatSequence;
@@ -142,6 +144,7 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
   }
 
   void _submitRecall() {
+    _hasCompletedOnce = true;
     final correctSet = _sessionRows.map((r) => r.long).toSet();
     final correctPicks = _selectedOptions.intersection(correctSet).length;
     final wrongPicks = _selectedOptions.difference(correctSet).length;
@@ -225,11 +228,14 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return CompletionPopScope(
+      isCompleted: () => _hasCompletedOnce,
+      child: Scaffold(
       appBar: AppBar(title: const Text('📏 Uzayan Kelimeler')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: _showRecall ? _buildRecallView() : _buildReadingView(),
+      ),
       ),
     );
   }

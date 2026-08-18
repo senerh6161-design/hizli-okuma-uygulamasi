@@ -5,7 +5,10 @@ import '../../models/progress_manager.dart';
 import '../../models/achievement.dart';
 import '../../models/settings_manager.dart';
 import '../../models/sound_manager.dart';
-import '../../models/word_dictionary.dart';
+import '../../models/audio_manager.dart';
+import '../../widgets/confetti_overlay.dart';
+import '../../widgets/reading_theme_picker.dart';
+import '../../widgets/word_definition_sheet.dart';
 
 class ComprehensionPage extends StatefulWidget {
   // Belirli bir metinle açılmak istersen (ör. Hızlı Okuma'da az önce
@@ -51,6 +54,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
       isReadingPhase = !widget.skipReadingPhase;
       questionIndex = 0;
       score = 0;
+      if (isReadingPhase) AudioManager.startAmbient();
     } else {
       _loadRandomPassage();
     }
@@ -75,6 +79,13 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
       questionIndex = 0;
       score = 0;
     });
+    AudioManager.startAmbient();
+  }
+
+  @override
+  void dispose() {
+    AudioManager.stopAmbient();
+    super.dispose();
   }
 
   void answer(int selectedIndex) {
@@ -110,6 +121,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
     if (unlocked.isNotEmpty) {
       SoundManager.playAchievement();
     }
+    if (scorePercent >= 90) showConfetti(context);
 
     final String feedbackMessage;
     final Color feedbackColor;
@@ -219,50 +231,6 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
     );
   }
 
-  // Bir kelimeye dokunulduğunda anlamını gösteren alt panel.
-  void _showWordDefinition(String rawToken) {
-    final definition = WordDictionary.define(rawToken);
-    final cleanWord = rawToken.replaceAll(
-      RegExp(r'''[.,;:!?"'“”‘’()\[\]…]'''),
-      '',
-    );
-    if (cleanWord.isEmpty) return;
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.menu_book_rounded, color: SettingsManager.readingAccentColor),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    cleanWord,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              definition ??
-                  'Bu kelimenin tanımı henüz sözlüğümüzde yok, ama harika bir kelime! Öğretmenine ya da ailene sorabilirsin. 😊',
-              style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -318,6 +286,13 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
                 ),
               ),
             ],
+            const Spacer(),
+            IconButton(
+              onPressed: () => showReadingThemePicker(context, () => setState(() {})),
+              icon: const Icon(Icons.palette_outlined),
+              tooltip: 'Metin rengini değiştir',
+              visualDensity: VisualDensity.compact,
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -350,7 +325,11 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: SettingsManager.readingBorderColor),
               ),
-              child: _buildInteractiveText(currentPassage.content),
+              child: buildInteractiveText(
+                context,
+                currentPassage.content,
+                accentColor: SettingsManager.readingAccentColor,
+              ),
             ),
           ),
         ),
@@ -370,6 +349,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
               setState(() {
                 isReadingPhase = false; // Sorulara geç
               });
+              AudioManager.stopAmbient();
             },
             icon: const Icon(Icons.arrow_forward),
             label: const Text(
@@ -379,33 +359,6 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
           ),
         ),
       ],
-    );
-  }
-
-  // Metni tek tek dokunulabilir kelimeler hâlinde çizer. Bir kelimeye
-  // dokunulduğunda WordDictionary'den tanımı aranır ve alt panelde
-  // gösterilir.
-  Widget _buildInteractiveText(String content) {
-    final tokens = content.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
-    return Wrap(
-      spacing: 5,
-      runSpacing: 10,
-      children: tokens.map((token) {
-        return GestureDetector(
-          onTap: () => _showWordDefinition(token),
-          child: Text(
-            token,
-            style: TextStyle(
-              fontSize: 17,
-              height: 1.6,
-              color: Colors.black87,
-              decoration: TextDecoration.underline,
-              decorationStyle: TextDecorationStyle.dotted,
-              decorationColor: SettingsManager.readingAccentColor.withValues(alpha: 0.35),
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 

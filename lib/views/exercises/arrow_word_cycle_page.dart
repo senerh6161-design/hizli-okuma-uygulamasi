@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
+import '../../widgets/completion_pop_scope.dart';
 
 /// "6. Madde" dokümanındaki etkinlik: kelimeler bir daire üzerinde oklarla
 /// birbirine bağlı halde durur, öğrenci ok yönünü takip ederek (saat yönü ya
@@ -47,6 +48,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
   }
   int _roundIndex = 0;
   bool _isRunning = false;
+  bool _hasCompletedOnce = false;
   int _activeIndex = 0;
   Timer? _pulseTimer;
 
@@ -140,6 +142,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
   }
 
   void _finishAll() {
+    _hasCompletedOnce = true;
     final avg = _roundTimes.reduce((a, b) => a + b) / _roundTimes.length;
     final score = ((_capSeconds - avg) / _capSeconds * 100).round().clamp(5, 100);
     ProgressManager.recordAttentionScore(score);
@@ -205,7 +208,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context); // dialogu kapat
-              Navigator.pop(context); // Klasör 1'e dön
+              Navigator.pop(context, true); // Klasör 1'e dön, tamamlandı olarak işaretle
             },
             child: const Text('Bitir'),
           ),
@@ -231,7 +234,9 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
     final words = _current.words;
     final n = words.length;
 
-    return Scaffold(
+    return CompletionPopScope(
+      isCompleted: () => _hasCompletedOnce,
+      child: Scaffold(
       appBar: AppBar(title: const Text('🔁 Kelime Döngüsü')),
       body: Column(
         children: [
@@ -382,6 +387,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
