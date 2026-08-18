@@ -42,32 +42,6 @@ extension on _IconTheme {
   }
 }
 
-enum _Speed { slow, normal, fast }
-
-extension on _Speed {
-  int get stepMs {
-    switch (this) {
-      case _Speed.slow:
-        return 900;
-      case _Speed.normal:
-        return 600;
-      case _Speed.fast:
-        return 350;
-    }
-  }
-
-  String get label {
-    switch (this) {
-      case _Speed.slow:
-        return 'Yavaş';
-      case _Speed.normal:
-        return 'Orta';
-      case _Speed.fast:
-        return 'Hızlı';
-    }
-  }
-}
-
 /// Göz Koordinasyonu Egzersizi: ekrandaki bağlı noktalar arasında,
 /// aktif nokta sırayla ilerler. Kullanıcı başını oynatmadan, sadece
 /// gözleriyle aktif noktayı takip eder. Kelime bazlı Hızlı Okuma
@@ -105,10 +79,14 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
 
   static const int _totalLaps = 3;
 
+  // Hoca dokümanındaki diğer etkinliklerle aynı mantık: yavaş başla, her
+  // turda otomatik hızlan. Artık kullanıcı manuel hız seçmiyor.
+  static const List<int> _lapStepMs = [900, 600, 350];
+  static const List<String> _lapLabels = ['Yavaş', 'Orta', 'Hızlı'];
+
   final Random _random = Random();
   late List<Offset> _points;
   _IconTheme _theme = _IconTheme.dot;
-  _Speed _speed = _Speed.normal;
 
   int _currentIndex = 0;
   int _lapsCompleted = 0;
@@ -135,7 +113,12 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
       _currentIndex = 0;
       _lapsCompleted = 0;
     });
-    _timer = Timer.periodic(Duration(milliseconds: _speed.stepMs), (t) {
+    _scheduleTick();
+  }
+
+  void _scheduleTick() {
+    final stepMs = _lapStepMs[_lapsCompleted.clamp(0, _lapStepMs.length - 1)];
+    _timer = Timer(Duration(milliseconds: stepMs), () {
       if (!mounted) return;
       if (_currentIndex >= _points.length - 1) {
         final nextLap = _lapsCompleted + 1;
@@ -150,6 +133,7 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
       } else {
         setState(() => _currentIndex++);
       }
+      _scheduleTick();
     });
   }
 
@@ -227,32 +211,29 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
               ),
             ),
           ),
-          // HIZ SEÇİCİ
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            color: Colors.white,
-            child: Row(
-              children: _Speed.values.map((s) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(s.label),
-                    selected: _speed == s,
-                    onSelected: (selected) {
-                      if (selected) setState(() => _speed = s);
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-
           if (_isRunning)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                'Tur: ${_lapsCompleted + 1}/$_totalLaps',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Tur: ${_lapsCompleted + 1}/$_totalLaps',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D9488).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '⚡ ${_lapLabels[_lapsCompleted.clamp(0, _lapLabels.length - 1)]}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488), fontSize: 12),
+                    ),
+                  ),
+                ],
               ),
             ),
 

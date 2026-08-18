@@ -8,6 +8,7 @@ import '../../models/achievement.dart';
 import '../../models/comprehension_data.dart';
 import '../../models/audio_manager.dart';
 import '../../widgets/confetti_overlay.dart';
+import '../../widgets/completion_pop_scope.dart';
 import '../exercises/comprehension_page.dart';
 
 /// Tek bir okuma egzersizi seviyesini tanımlar.
@@ -204,8 +205,8 @@ class LevelPage extends StatelessWidget {
                       ),
                     ),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final completed = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
                           builder: (_) => ActiveReadingSession(
@@ -214,6 +215,11 @@ class LevelPage extends StatelessWidget {
                           ),
                         ),
                       );
+                      // En az bir tur bitirdiyse Klasör 1 kontrol listesine
+                      // otomatik dön — kullanıcı iki kez geri çıkmasın.
+                      if (completed == true && context.mounted) {
+                        Navigator.pop(context, true);
+                      }
                     },
                   ),
                 );
@@ -250,6 +256,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
   Timer? _countdownTimer;
 
   _SessionPhase phase = _SessionPhase.ready;
+  bool _hasCompletedOnce = false;
   int countdownValue = 3;
 
   List<String> _queue = [];
@@ -369,6 +376,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
     _wordTimer?.cancel();
     _tickTimer?.cancel();
     AudioManager.stopAmbient();
+    _hasCompletedOnce = true;
     if (!mounted) return;
 
     final isNewRecord = calculatedWpm > ProgressManager.wpm;
@@ -411,7 +419,9 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return CompletionPopScope(
+      isCompleted: () => _hasCompletedOnce,
+      child: Scaffold(
       appBar: AppBar(title: Text(widget.readingLevel.title)),
       body: SafeArea(
         child: Padding(
@@ -423,6 +433,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
             _SessionPhase.finished => _buildFinished(),
           },
         ),
+      ),
       ),
     );
   }
@@ -781,7 +792,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(context, true),
                 style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
                 child: const Text('Seviyelere Dön'),
               ),

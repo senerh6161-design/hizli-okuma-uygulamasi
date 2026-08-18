@@ -14,28 +14,34 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static const _blue = Color(0xFF2563EB);
+  static const _teal = Color(0xFF0D9488);
+  static const _emerald = Color(0xFF059669);
+  static const _rose = Color(0xFFE11D48);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text(
           'Hızlı Okuma Lab',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        backgroundColor: const Color(0xFFF8FAFC),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const WelcomeCard(),
-            const SizedBox(height: 20),
+            WelcomeCard(streak: ProgressManager.currentStreak),
+            const SizedBox(height: 24),
 
-            const Text(
-              'Bugünkü Durum',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            _SectionHeader(icon: Icons.insights_rounded, title: 'Bugünkü Durum', color: _blue),
             const SizedBox(height: 12),
 
             // DİNAMİK SERVİSTEN ÇEKİLEN KARTLAR
@@ -45,8 +51,8 @@ class _HomePageState extends State<HomePage> {
                   child: StatCard(
                     title: 'WPM',
                     value: '${ProgressManager.wpm}',
-                    icon: Icons.speed,
-                    color: Colors.indigo,
+                    icon: Icons.speed_rounded,
+                    color: _blue,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -54,8 +60,8 @@ class _HomePageState extends State<HomePage> {
                   child: StatCard(
                     title: 'Anlama',
                     value: '%${ProgressManager.comprehensionRate}',
-                    icon: Icons.menu_book,
-                    color: Colors.green,
+                    icon: Icons.menu_book_rounded,
+                    color: _teal,
                   ),
                 ),
               ],
@@ -67,8 +73,8 @@ class _HomePageState extends State<HomePage> {
                   child: StatCard(
                     title: 'Seviye',
                     value: '${ProgressManager.currentLevel}',
-                    icon: Icons.emoji_events,
-                    color: Colors.orange,
+                    icon: Icons.emoji_events_rounded,
+                    color: _rose,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -76,13 +82,50 @@ class _HomePageState extends State<HomePage> {
                   child: StatCard(
                     title: 'Tamamlanan',
                     value: '${ProgressManager.completedExercises}',
-                    icon: Icons.check_circle_outline,
-                    color: Colors.purple,
+                    icon: Icons.check_circle_rounded,
+                    color: _emerald,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
+
+            // SEVİYE İLERLEME ÇUBUĞU
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Seviye ${ProgressManager.currentLevel}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                      Text('%${(ProgressManager.levelProgress * 100).round()}',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _blue)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: ProgressManager.levelProgress.clamp(0.0, 1.0),
+                      minHeight: 8,
+                      backgroundColor: _blue.withValues(alpha: 0.1),
+                      valueColor: const AlwaysStoppedAnimation(_blue),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
 
             // LİDERLİK TABLOSU GİRİŞİ
             InkWell(
@@ -92,19 +135,28 @@ class _HomePageState extends State<HomePage> {
                   MaterialPageRoute(builder: (_) => const LeaderboardPage()),
                 );
               },
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFF59E0B), Color(0xFFFBBF24)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFE11D48), Color(0xFFFB7185)],
                   ),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFE11D48).withValues(alpha: 0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.emoji_events, color: Colors.white, size: 28),
+                    Icon(Icons.emoji_events_rounded, color: Colors.white, size: 28),
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -112,34 +164,40 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
-                    Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                    Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 28),
 
-            const Text(
-              'Bugünkü Çalışma',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            _SectionHeader(icon: Icons.local_fire_department_rounded, title: 'Bugünkü Çalışma', color: _teal),
             const SizedBox(height: 12),
 
             InkWell(
               onTap: widget.onNavigateToExercises,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF0369A1), Color(0xFF0D9488)],
                   ),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0369A1).withValues(alpha: 0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.psychology, color: Colors.white, size: 32),
+                    Icon(Icons.psychology_rounded, color: Colors.white, size: 32),
                     SizedBox(width: 14),
                     Expanded(
                       child: Column(
@@ -157,7 +215,7 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                     ),
-                    Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                    Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
                   ],
                 ),
               ),
@@ -165,6 +223,28 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color color;
+
+  const _SectionHeader({required this.icon, required this.title, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+        ),
+      ],
     );
   }
 }

@@ -44,19 +44,6 @@ class TopicSelectionPage extends StatelessWidget {
                         );
                       },
                     ),
-                  _TopicCard(
-                    emoji: '🎲',
-                    title: 'Sürpriz Metin',
-                    highlight: true,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ComprehensionPage(),
-                        ),
-                      );
-                    },
-                  ),
                 ],
               ),
             ),
@@ -71,25 +58,20 @@ class _TopicCard extends StatelessWidget {
   final String emoji;
   final String title;
   final VoidCallback onTap;
-  final bool highlight;
 
   const _TopicCard({
     required this.emoji,
     required this.title,
     required this.onTap,
-    this.highlight = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      color: highlight ? const Color(0xFFFFF7ED) : Colors.white,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: highlight
-            ? const BorderSide(color: Color(0xFFFBBF24), width: 1.5)
-            : BorderSide.none,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),

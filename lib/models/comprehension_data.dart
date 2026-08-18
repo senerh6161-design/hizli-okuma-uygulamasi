@@ -40,6 +40,7 @@ class ComprehensionData {
     ReadingTopic(id: 'kodlama', title: 'Kodlama', emoji: '💻'),
     ReadingTopic(id: 'yemek', title: 'Yemek', emoji: '🍽️'),
     ReadingTopic(id: 'kitaplar', title: 'Kitaplar', emoji: '📚'),
+    ReadingTopic(id: 'ulkeler', title: 'Ülkeler', emoji: '🌍'),
   ];
 
   static ReadingTopic? topicById(String? id) {
@@ -334,6 +335,30 @@ class ComprehensionData {
         },
         {
           'question': 'Her kitap okuyana farklı bir bakış açısı kazandırır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+      ],
+    ),
+    ReadingPassage(
+      id: 'p13',
+      title: 'Dünyanın Dört Bir Yanından',
+      topic: 'ulkeler',
+      content:
+          'Dünya üzerinde yaklaşık 195 farklı ülke bulunur ve her birinin kendine özgü bir bayrağı, dili ve kültürü vardır. Bazı ülkeler çok büyük topraklara sahipken, bazıları küçücük adalardan oluşur. Ülkeler arasındaki bu çeşitlilik, dünyayı keşfetmeyi ve farklı gelenekleri tanımayı heyecanlı bir maceraya dönüştürür. Her ülkenin başkenti, o ülkenin yönetim merkezi olarak kabul edilir.',
+      questions: [
+        {
+          'question': 'Dünya üzerinde yaklaşık 195 farklı ülke bulunur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Bütün ülkeler aynı bayrağı, dili ve kültürü paylaşır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Bir ülkenin başkenti, o ülkenin yönetim merkezi olarak kabul edilir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },

@@ -207,9 +207,22 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   }
 
   Future<void> _openActivity(int index) async {
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => _activities[index].build()));
+    final completed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => _activities[index].build()),
+    );
     if (!mounted) return;
-    setState(() => _activityDone.add(index));
+    if (completed == true) {
+      setState(() => _activityDone.add(index));
+    } else {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Etkinliği tamamlamadan çıktın, bu yüzden tik atılmadı.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _goToPostTopic() {
@@ -280,55 +293,166 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   }
 
   Widget _buildIntro() {
-    return Column(
-      children: [
-        const Spacer(),
-        const Icon(Icons.auto_stories, size: 64, color: Color(0xFF4F46E5)),
-        const SizedBox(height: 20),
-        const Text(
-          'Klasör 1 Oturumu',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Önce kısa bir metin okuyup hızını ölçeceğiz.\n'
-          'Sonra ${_activities.length} etkinliği tamamlayacaksın.\n'
-          'En sonunda FARKLI bir metinle tekrar ölçüm yapıp\n'
-          'D/Y sorularını çözeceksin.\n\n'
-          'Sonunda okuma hızını ve dikkat puanını ayrı ayrı göreceksin.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey.shade700, fontSize: 14, height: 1.5),
-        ),
-        const Spacer(),
-        SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: ElevatedButton.icon(
-            onPressed: _goToPreTopic,
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('OTURUMU BAŞLAT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF0369A1), Color(0xFF0D9488)],
+              ),
+              borderRadius: BorderRadius.circular(26),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0369A1).withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.auto_stories_rounded, size: 40, color: Colors.white),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Klasör 1 Oturumu',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Baştan sona rehberli bir okuma antrenmanı',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-        TextButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ExerciseMenuPage()),
-            );
-          },
-          child: Text(
-            'Sadece tek tek pratik yapmak istiyorum',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          const SizedBox(height: 24),
+          _stepRow(
+            icon: Icons.menu_book_rounded,
+            color: const Color(0xFF2563EB),
+            title: 'Ön Metin',
+            subtitle: 'Konu seç, oku, hızını ölçelim',
+            isFirst: true,
           ),
-        ),
-      ],
+          _stepRow(
+            icon: Icons.psychology_rounded,
+            color: const Color(0xFF0D9488),
+            title: '${_activities.length} Etkinlik',
+            subtitle: 'Göz koordinasyonundan kelime oyunlarına',
+          ),
+          _stepRow(
+            icon: Icons.auto_stories_rounded,
+            color: const Color(0xFF059669),
+            title: 'Son Metin',
+            subtitle: 'FARKLI bir metinle tekrar ölçüm + D/Y sorular',
+          ),
+          _stepRow(
+            icon: Icons.emoji_events_rounded,
+            color: const Color(0xFFE11D48),
+            title: 'Sonuç',
+            subtitle: 'Okuma hızın ve dikkat puanın ayrı ayrı',
+            isLast: true,
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: _goToPreTopic,
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('OTURUMU BAŞLAT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                elevation: 4,
+                shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ExerciseMenuPage()),
+              );
+            },
+            child: Text(
+              'Sadece tek tek pratik yapmak istiyorum',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepRow({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 2,
+                height: 10,
+                color: isFirst ? Colors.transparent : Colors.grey.shade300,
+              ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              Expanded(
+                child: Container(
+                  width: 2,
+                  color: isLast ? Colors.transparent : Colors.grey.shade300,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5, height: 1.3)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -359,12 +483,6 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
                   title: topic.title,
                   onTap: () => isPost ? _choosePostTopic(topic.id) : _choosePreTopic(topic.id),
                 ),
-              _topicCard(
-                emoji: '🎲',
-                title: 'Sürpriz',
-                highlight: true,
-                onTap: () => isPost ? _choosePostTopic(null) : _choosePreTopic(null),
-              ),
             ],
           ),
         ),
@@ -376,14 +494,12 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
     required String emoji,
     required String title,
     required VoidCallback onTap,
-    bool highlight = false,
   }) {
     return Card(
       elevation: 1,
-      color: highlight ? const Color(0xFFFFF7ED) : Colors.white,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: highlight ? const BorderSide(color: Color(0xFFFBBF24), width: 1.5) : BorderSide.none,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),

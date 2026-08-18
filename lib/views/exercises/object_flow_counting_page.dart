@@ -308,10 +308,13 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
               ),
             ),
-            Text(
-              'Bazı nesneler çok kez geçecek, sonunda kaç kez geçtiği sorulacak!',
-              textAlign: TextAlign.right,
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Bazı nesneler çok kez geçecek, sonunda kaç kez geçtiği sorulacak!',
+                textAlign: TextAlign.right,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+              ),
             ),
           ],
         ),

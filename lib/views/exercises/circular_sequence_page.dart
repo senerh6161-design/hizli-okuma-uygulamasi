@@ -326,7 +326,7 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
                       ? 'Sırada: ${_mode.sequence[_targetIndex]}'
                       : (_isDemoing ? 'İzle: ${_demoLap + 1}. tur' : 'Hazır mısın?'),
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                      fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
                 ),
                 Text(
                   'Süre: ${(_elapsed.inMilliseconds / 1000).toStringAsFixed(1)} sn',
@@ -348,7 +348,7 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
                   final size = min(constraints.maxWidth, constraints.maxHeight);
                   final center = Offset(constraints.maxWidth / 2, size / 2 + 10);
                   final radius = size / 2 - 40;
-                  final nodeSize = n > 14 ? 42.0 : 56.0;
+                  final nodeSize = n > 14 ? 48.0 : 68.0;
 
                   return Stack(
                     children: [
@@ -376,11 +376,11 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
                           final passedInPlay = _isPlaying &&
                               _mode.sequence.indexOf(_positions[i]) < _targetIndex;
 
-                          Color bg = Colors.white;
-                          Color border = Colors.indigo.shade200;
+                          Color bg = const Color(0xFFEFF6FF);
+                          Color border = const Color(0xFF93C5FD);
                           Color textColor = const Color(0xFF0F172A);
                           if (isDemoActive) {
-                            bg = const Color(0xFF4F46E5);
+                            bg = const Color(0xFF2563EB);
                             textColor = Colors.white;
                           } else if (isWrong) {
                             bg = Colors.red.shade400;
@@ -420,7 +420,7 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: n > 14 ? 11 : 14,
+                                        fontSize: n > 14 ? 12 : 16,
                                         color: textColor,
                                       ),
                                     ),
@@ -456,7 +456,7 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
                     icon: const Icon(Icons.play_arrow),
                     label: const Text('BAŞLA', style: TextStyle(fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5),
+                      backgroundColor: const Color(0xFF2563EB),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
