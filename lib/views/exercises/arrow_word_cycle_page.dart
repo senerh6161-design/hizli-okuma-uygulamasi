@@ -26,19 +26,25 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
   static const List<String> _setB = [
     'Bir Hedef Belirle', 'Son Sürat Çalış', 'Zaman En Büyük Sermaye', 'Kıymetini Bil',
   ];
+  static const List<String> _setC = ['Gayretliyim', 'Kararlıyım', 'Sabırlıyım', 'Umutluyum'];
 
-  late final List<_WordCycle> _allCycles = [
-    const _WordCycle(_setA, true),
-    const _WordCycle(_setA, false),
-    const _WordCycle(_setB, false),
-    const _WordCycle(_setB, true),
-  ];
+  static const List<List<String>> _wordSets = [_setA, _setB, _setC];
 
   final Random _random = Random();
   static const int _totalRounds = 3;
   static const int _capSeconds = 30;
 
   late List<_WordCycle> _rounds;
+
+  // Her turda FARKLI bir kelime seti çıksın diye (aynı setin sadece yönü
+  // değişmiş hali değil) 3 seti karıştırıp yöne rastgele atıyoruz.
+  List<_WordCycle> _buildRounds() {
+    final shuffledSets = List<List<String>>.from(_wordSets)..shuffle(_random);
+    return shuffledSets
+        .take(_totalRounds)
+        .map((set) => _WordCycle(set, _random.nextBool()))
+        .toList();
+  }
   int _roundIndex = 0;
   bool _isRunning = false;
   int _activeIndex = 0;
@@ -57,7 +63,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
   @override
   void initState() {
     super.initState();
-    _rounds = (List<_WordCycle>.from(_allCycles)..shuffle(_random)).take(_totalRounds).toList();
+    _rounds = _buildRounds();
   }
 
   @override
@@ -207,9 +213,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
             onPressed: () {
               Navigator.pop(context);
               setState(() {
-                _rounds = (List<_WordCycle>.from(_allCycles)..shuffle(_random))
-                    .take(_totalRounds)
-                    .toList();
+                _rounds = _buildRounds();
                 _roundIndex = 0;
                 _roundTimes.clear();
                 _elapsed = Duration.zero;

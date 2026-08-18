@@ -591,19 +591,11 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
                 BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15),
               ],
             ),
-            child: Stack(
-              children: [
-                const Center(
-                  child: SizedBox(
-                    width: 8,
-                    height: 8,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
-                    ),
-                  ),
-                ),
-                Center(
-                  child: AnimatedSwitcher(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedSwitcher(
                     duration: const Duration(milliseconds: 180),
                     transitionBuilder: (child, animation) => FadeTransition(
                       opacity: animation,
@@ -626,8 +618,16 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
                       ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  const SizedBox(
+                    width: 8,
+                    height: 8,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

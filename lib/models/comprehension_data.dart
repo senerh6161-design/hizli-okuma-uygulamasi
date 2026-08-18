@@ -37,6 +37,9 @@ class ComprehensionData {
     ReadingTopic(id: 'spor', title: 'Spor', emoji: '⚽'),
     ReadingTopic(id: 'sanat', title: 'Sanat', emoji: '🎨'),
     ReadingTopic(id: 'hayvanlar', title: 'Hayvanlar', emoji: '🐬'),
+    ReadingTopic(id: 'kodlama', title: 'Kodlama', emoji: '💻'),
+    ReadingTopic(id: 'yemek', title: 'Yemek', emoji: '🍽️'),
+    ReadingTopic(id: 'kitaplar', title: 'Kitaplar', emoji: '📚'),
   ];
 
   static ReadingTopic? topicById(String? id) {
@@ -259,6 +262,78 @@ class ComprehensionData {
         },
         {
           'question': 'Mars\'taki keşif robotları gezegen hakkında bilgi toplar.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+      ],
+    ),
+    ReadingPassage(
+      id: 'p10',
+      title: 'Kodlama Nedir?',
+      topic: 'kodlama',
+      content:
+          'Kodlama, bilgisayara ne yapması gerektiğini adım adım anlatmaktır. Programcılar, "kod" adı verilen özel bir dille bilgisayara talimatlar yazar. Bir oyunun nasıl çalışacağını, bir uygulamanın nasıl görüneceğini bile kodlama sayesinde tasarlarız. En küçük bir hata bile, tıpkı bir tarifte yanlış malzeme kullanmak gibi, programın çalışmamasına neden olabilir. Bu yüzden kodlama hem yaratıcılık hem de sabır gerektirir.',
+      questions: [
+        {
+          'question': 'Kodlama, bilgisayara adım adım ne yapması gerektiğini anlatmaktır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Kodlamada küçük bir hata programın çalışmasını asla etkilemez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Kodlama hem yaratıcılık hem sabır gerektirir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+      ],
+    ),
+    ReadingPassage(
+      id: 'p11',
+      title: 'Sağlıklı Beslenmenin Sırrı',
+      topic: 'yemek',
+      content:
+          'Sağlıklı beslenmek, vücudumuzun ihtiyaç duyduğu farklı besinleri dengeli bir şekilde almaktır. Meyveler ve sebzeler vitamin deposu iken, tahıllar bize enerji verir. Fazla şekerli ve yağlı yiyecekler ise sadece ara sıra, ölçülü tüketilmelidir. Bol su içmek de sindirim sistemimizin düzgün çalışması için çok önemlidir.',
+      questions: [
+        {
+          'question': 'Meyveler ve sebzeler vitamin deposudur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Şekerli ve yağlı yiyecekler her öğünde bol miktarda tüketilmelidir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Bol su içmek sindirim sistemi için önemlidir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+      ],
+    ),
+    ReadingPassage(
+      id: 'p12',
+      title: 'Kitapların Büyülü Dünyası',
+      topic: 'kitaplar',
+      content:
+          'Bir kitap açtığımızda, aslında başka bir dünyaya kapı aralarız. Roman okurken hayal gücümüz canlanır, karakterlerin yaşadıklarını sanki kendimiz yaşıyormuş gibi hissederiz. Düzenli kitap okumak sadece hayal gücümüzü değil, kelime dağarcığımızı ve empati kurma becerimizi de geliştirir. Her kitap, okuyana farklı bir bakış açısı kazandırır.',
+      questions: [
+        {
+          'question': 'Düzenli kitap okumak kelime dağarcığını geliştirir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Kitap okumak hayal gücümüzü hiçbir şekilde etkilemez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Her kitap okuyana farklı bir bakış açısı kazandırır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },

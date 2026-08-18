@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'exercise_menu_page.dart';
+import 'folder1_session_page.dart';
 
 class _FolderInfo {
   final int number;
@@ -24,7 +24,7 @@ class ExerciseFoldersPage extends StatelessWidget {
   const ExerciseFoldersPage({super.key});
 
   static const List<_FolderInfo> _folders = [
-    _FolderInfo(number: 1, title: 'Klasör 1', isUnlocked: true, readyCount: 8, totalCount: 10),
+    _FolderInfo(number: 1, title: 'Klasör 1', isUnlocked: true, readyCount: 10, totalCount: 10),
     _FolderInfo(number: 2, title: 'Klasör 2', isUnlocked: false, readyCount: 0, totalCount: 10),
     _FolderInfo(number: 3, title: 'Klasör 3', isUnlocked: false, readyCount: 0, totalCount: 10),
     _FolderInfo(number: 4, title: 'Klasör 4', isUnlocked: false, readyCount: 0, totalCount: 10),
@@ -120,7 +120,7 @@ class _FolderCard extends StatelessWidget {
           if (folder.isUnlocked) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ExerciseMenuPage()),
+              MaterialPageRoute(builder: (_) => const Folder1SessionPage()),
             );
           } else {
             ScaffoldMessenger.of(context).clearSnackBars();

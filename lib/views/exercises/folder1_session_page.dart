@@ -4,16 +4,20 @@ import 'package:flutter/material.dart';
 import '../../models/comprehension_data.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
+import '../../models/settings_manager.dart';
+import '../../models/school_level.dart';
+import '../levels/level_page.dart';
 import 'eye_coordination_page.dart';
 import 'circular_sequence_page.dart';
 import 'arrow_word_cycle_page.dart';
 import 'growing_words_page.dart';
 import 'attention_questions_page.dart';
 import 'word_hide_seek_page.dart';
-import 'city_anagram_test_page.dart';
+import 'object_flow_counting_page.dart';
 import 'word_flow_counting_page.dart';
+import 'exercise_menu_page.dart';
 
-enum _Phase { intro, preText, preQuiz, activities, postText, postQuiz, results }
+enum _Phase { intro, preTopic, preText, preQuiz, activities, postTopic, postText, postQuiz, results }
 
 class _ActivityRef {
   final String title;
@@ -23,7 +27,7 @@ class _ActivityRef {
 }
 
 /// Öğretmen dokümanındaki tam akış: önce kısa bir metinle okuma hızı
-/// ölçülür, ardından Klasör 1'deki 8 etkinlik tamamlanır, sonra FARKLI bir
+/// ölçülür, ardından Klasör 1'deki 10 etkinlik tamamlanır, sonra FARKLI bir
 /// metinle tekrar hız ölçülür, her iki metinden sonra da D/Y sorularıyla
 /// anlama kontrol edilir. Sonunda okuma hızı ve dikkat puanı AYRI AYRI
 /// gösterilir.
@@ -38,8 +42,8 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   final Random _random = Random();
   _Phase _phase = _Phase.intro;
 
-  late ReadingPassage _preText;
-  late ReadingPassage _postText;
+  ReadingPassage? _preText;
+  ReadingPassage? _postText;
 
   DateTime? _readStart;
   Timer? _tickTimer;
@@ -59,19 +63,32 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   @override
   void initState() {
     super.initState();
-    final shuffled = List<ReadingPassage>.from(ComprehensionData.passages)..shuffle(_random);
-    _preText = shuffled[0];
-    _postText = shuffled.firstWhere((p) => p.id != _preText.id, orElse: () => shuffled[1]);
 
     _activities = [
       _ActivityRef('Göz Koordinasyonu', Icons.visibility_outlined, () => const EyeCoordinationPage()),
-      _ActivityRef('Dairesel Sıralama', Icons.donut_large, () => const CircularSequencePage()),
+      _ActivityRef('Hızlı Okuma', Icons.speed, () => LevelPage(schoolLevel: SchoolLevelConfig.levels[1])),
+      _ActivityRef(
+        'Dairesel Sıralama',
+        Icons.donut_large,
+        () => const CircularSequencePage(
+          availableModes: [CircularMode.numbers12, CircularMode.numbers20],
+          appBarTitle: '🔄 Dairesel Sıralama (Sayılar)',
+        ),
+      ),
+      _ActivityRef(
+        'Dairesel Gün/Ay',
+        Icons.calendar_month,
+        () => const CircularSequencePage(
+          availableModes: [CircularMode.days, CircularMode.months],
+          appBarTitle: '🔄 Dairesel Gün/Ay Sıralama',
+        ),
+      ),
       _ActivityRef('Kelime Döngüsü', Icons.sync, () => const ArrowWordCyclePage()),
       _ActivityRef('Uzayan Kelimeler', Icons.expand, () => const GrowingWordsPage()),
       _ActivityRef('Dikkat Soruları', Icons.help_center, () => const AttentionQuestionsPage()),
-      _ActivityRef('Kelimelerle Saklambaç', Icons.extension, () => const WordHideSeekPage()),
-      _ActivityRef('Şehir Anagramı', Icons.location_city, () => const CityAnagramTestPage()),
+      _ActivityRef('Nesne Akışı', Icons.category, () => const ObjectFlowCountingPage()),
       _ActivityRef('Kelime Akışı', Icons.waves, () => const WordFlowCountingPage()),
+      _ActivityRef('Kelimelerle Saklambaç', Icons.extension, () => const WordHideSeekPage()),
     ];
   }
 
@@ -101,14 +118,30 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
     });
   }
 
-  void _startPreText() {
-    setState(() => _phase = _Phase.preText);
+  void _goToPreTopic() {
+    setState(() => _phase = _Phase.preTopic);
+  }
+
+  ReadingPassage _pickPassage(String? topicId, {ReadingPassage? avoid}) {
+    final pool = ComprehensionData.passagesForTopic(topicId);
+    final shuffled = List<ReadingPassage>.from(pool)..shuffle(_random);
+    if (avoid != null && shuffled.length > 1) {
+      return shuffled.firstWhere((p) => p.id != avoid.id, orElse: () => shuffled.first);
+    }
+    return shuffled.first;
+  }
+
+  void _choosePreTopic(String? topicId) {
+    setState(() {
+      _preText = _pickPassage(topicId);
+      _phase = _Phase.preText;
+    });
     _startTimer();
   }
 
   void _finishPreText() {
     _tickTimer?.cancel();
-    _preWpm = _computeWpm(_preText);
+    _preWpm = _computeWpm(_preText!);
     setState(() {
       _phase = _Phase.preQuiz;
       _quizIndex = 0;
@@ -132,10 +165,10 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   }
 
   void _finishPreQuiz() {
-    _preComprehensionPercent = ((_quizCorrect / _preText.questions.length) * 100).round();
+    _preComprehensionPercent = ((_quizCorrect / _preText!.questions.length) * 100).round();
     ProgressManager.recordComprehensionResult(
       correct: _quizCorrect,
-      total: _preText.questions.length,
+      total: _preText!.questions.length,
       title: 'Klasör 1 · Ön Metin',
     );
     setState(() => _phase = _Phase.activities);
@@ -147,14 +180,21 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
     setState(() => _activityDone.add(index));
   }
 
-  void _goToPostText() {
-    setState(() => _phase = _Phase.postText);
+  void _goToPostTopic() {
+    setState(() => _phase = _Phase.postTopic);
+  }
+
+  void _choosePostTopic(String? topicId) {
+    setState(() {
+      _postText = _pickPassage(topicId, avoid: _preText);
+      _phase = _Phase.postText;
+    });
     _startTimer();
   }
 
   void _finishPostText() {
     _tickTimer?.cancel();
-    _postWpm = _computeWpm(_postText);
+    _postWpm = _computeWpm(_postText!);
     setState(() {
       _phase = _Phase.postQuiz;
       _quizIndex = 0;
@@ -163,10 +203,10 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   }
 
   void _finishPostQuiz() {
-    _postComprehensionPercent = ((_quizCorrect / _postText.questions.length) * 100).round();
+    _postComprehensionPercent = ((_quizCorrect / _postText!.questions.length) * 100).round();
     ProgressManager.recordComprehensionResult(
       correct: _quizCorrect,
-      total: _postText.questions.length,
+      total: _postText!.questions.length,
       title: 'Klasör 1 · Son Metin',
     );
     _finishSession();
@@ -217,7 +257,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
         const SizedBox(height: 12),
         Text(
           'Önce kısa bir metin okuyup hızını ölçeceğiz.\n'
-          'Sonra 8 etkinliği tamamlayacaksın.\n'
+          'Sonra ${_activities.length} etkinliği tamamlayacaksın.\n'
           'En sonunda FARKLI bir metinle tekrar ölçüm yapıp\n'
           'D/Y sorularını çözeceksin.\n\n'
           'Sonunda okuma hızını ve dikkat puanını ayrı ayrı göreceksin.',
@@ -237,6 +277,19 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ExerciseMenuPage()),
+            );
+          },
+          child: Text(
+            'Sadece tek tek pratik yapmak istiyorum',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
         ),
       ],
@@ -358,7 +411,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('8 Etkinlik', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('${_activities.length} Etkinlik', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Text('${_activityDone.length}/${_activities.length} tamamlandı',
                 style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ],
@@ -451,7 +504,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
                 color: Colors.orange,
                 title: 'Dikkat Puanı',
                 mainValue: '%$attentionScore',
-                subValue: '8 etkinlikteki performansın',
+                subValue: '${_activities.length} etkinlikteki performansın',
                 subColor: Colors.grey,
               ),
               const SizedBox(height: 12),

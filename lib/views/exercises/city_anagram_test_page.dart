@@ -38,6 +38,7 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
 
   static const int _stageSeconds = 30;
 
+  bool _showIntro = true;
   int _index = 0;
   int _totalScore = 0;
   int _stage = 0; // 0: ipucu yok, 1/2/3: ipucu açık
@@ -47,9 +48,8 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
   String? _feedback;
   bool _isWrongFlash = false;
 
-  @override
-  void initState() {
-    super.initState();
+  void _startPuzzles() {
+    setState(() => _showIntro = false);
     _startTimerForCurrent();
   }
 
@@ -206,17 +206,89 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
 
   @override
   Widget build(BuildContext context) {
-    final puzzle = _puzzles[_index];
-    final remaining = (_stageSeconds - (_elapsedSeconds % _stageSeconds)) % _stageSeconds;
-
     return Scaffold(
       appBar: AppBar(title: const Text('🏙️ Şehir Anagramı')),
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        child: _showIntro ? _buildIntro() : _buildPuzzle(),
+      ),
+    );
+  }
+
+  Widget _buildIntro() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Nasıl Oynanır?', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        Text(
+          'Harfleri karıştırılmış bir şehir adı göreceksin. 30 saniye içinde '
+          'bulabilirsen tam puan alırsın. Zaman geçtikçe ipuçları açılır ama puan biraz düşer.',
+          style: TextStyle(color: Colors.grey.shade700, fontSize: 14, height: 1.5),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8)),
+          child: Text('ÖRNEK',
+              style: TextStyle(color: Colors.amber.shade900, fontWeight: FontWeight.bold, fontSize: 12)),
+        ),
+        const SizedBox(height: 12),
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            decoration: BoxDecoration(
+              color: Colors.indigo.shade50,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFF4F46E5), width: 2),
+            ),
+            child: const Text('"RUBSA"', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.arrow_downward, color: Colors.green.shade600),
+              const SizedBox(width: 8),
+              Text('BURSA', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green.shade700)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          '"RUBSA" harfleri karıştırılırsa "BURSA" şehrinin adı çıkar!',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontStyle: FontStyle.italic),
+        ),
+        const Spacer(),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _startPuzzles,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('ANLADIM, BAŞLA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4F46E5),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPuzzle() {
+    final puzzle = _puzzles[_index];
+    final remaining = (_stageSeconds - (_elapsedSeconds % _stageSeconds)) % _stageSeconds;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
@@ -243,7 +315,9 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+            const Center(child: Text('🏃🧠', style: TextStyle(fontSize: 36))),
+            const SizedBox(height: 8),
             Center(
               child: Text(
                 'Harfleri karıştırılmış kelimeyi bulabilir misin?',
@@ -315,15 +389,19 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
             ),
             const SizedBox(height: 8),
             Center(
-              child: Text(
-                'Sonraki ipucuna: $remaining sn',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-              ),
+              child: (remaining <= 10 && _stage < 3)
+                  ? Text(
+                      'Sonraki ipucuna: $remaining sn',
+                      style: TextStyle(
+                        color: Colors.red.shade400,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : const SizedBox(height: 16),
             ),
           ],
-        ),
-      ),
-    );
+        );
   }
 
   Widget _hintChip(String text) {

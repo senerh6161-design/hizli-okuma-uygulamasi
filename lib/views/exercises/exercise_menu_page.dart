@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../levels/school_level_selection_page.dart';
+import '../../models/school_level.dart';
+import '../levels/level_page.dart';
 import 'topic_selection_page.dart';
 import 'schulte_table_page.dart';
 import 'eye_coordination_page.dart';
@@ -9,6 +10,7 @@ import 'growing_words_page.dart';
 import 'attention_questions_page.dart';
 import 'city_anagram_test_page.dart';
 import 'word_hide_seek_page.dart';
+import 'object_flow_counting_page.dart';
 import 'word_flow_counting_page.dart';
 import 'folder1_session_page.dart';
 
@@ -100,7 +102,7 @@ class ExerciseMenuPage extends StatelessWidget {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Ön metin → 8 etkinlik → son metin → D/Y → hız + dikkat puanı',
+                            'Ön metin → 10 etkinlik → son metin → D/Y → hız + dikkat puanı',
                             style: TextStyle(color: Colors.white70, fontSize: 12),
                           ),
                         ],
@@ -149,19 +151,45 @@ class ExerciseMenuPage extends StatelessWidget {
                 ),
                 _buildGridCard(
                   context,
-                  title: 'Dairesel Sıralama',
-                  subtitle: 'Sayı, Gün, Ay',
+                  title: 'Hızlı Okuma',
+                  subtitle: 'Eğitim Seviyeli',
                   badge: 'Etkinlik 2',
+                  badgeColor: Colors.indigo,
+                  icon: Icons.speed,
+                  color: const Color(0xFF4F46E5),
+                  page: LevelPage(schoolLevel: SchoolLevelConfig.levels[1]),
+                ),
+                _buildGridCard(
+                  context,
+                  title: 'Dairesel Sıralama',
+                  subtitle: 'Sayılar (1-12, 1-20)',
+                  badge: 'Etkinlik 3',
                   badgeColor: Colors.deepPurple,
                   icon: Icons.donut_large,
                   color: Colors.deepPurple,
-                  page: const CircularSequencePage(),
+                  page: const CircularSequencePage(
+                    availableModes: [CircularMode.numbers12, CircularMode.numbers20],
+                    appBarTitle: '🔄 Dairesel Sıralama (Sayılar)',
+                  ),
+                ),
+                _buildGridCard(
+                  context,
+                  title: 'Dairesel Gün/Ay',
+                  subtitle: 'Sıralama',
+                  badge: 'Etkinlik 4',
+                  badgeColor: Colors.deepPurple,
+                  icon: Icons.calendar_month,
+                  color: Colors.deepPurple,
+                  page: const CircularSequencePage(
+                    availableModes: [CircularMode.days, CircularMode.months],
+                    appBarTitle: '🔄 Dairesel Gün/Ay Sıralama',
+                  ),
                 ),
                 _buildGridCard(
                   context,
                   title: 'Kelime Döngüsü',
                   subtitle: 'Ok Yönünde Oku',
-                  badge: 'Etkinlik 3',
+                  badge: 'Etkinlik 5',
                   badgeColor: Colors.blue,
                   icon: Icons.sync,
                   color: Colors.blue,
@@ -171,7 +199,7 @@ class ExerciseMenuPage extends StatelessWidget {
                   context,
                   title: 'Uzayan Kelimeler',
                   subtitle: 'Hızlanan Okuma',
-                  badge: 'Etkinlik 4',
+                  badge: 'Etkinlik 6',
                   badgeColor: Colors.cyan,
                   icon: Icons.expand,
                   color: Colors.cyan,
@@ -181,7 +209,7 @@ class ExerciseMenuPage extends StatelessWidget {
                   context,
                   title: 'Dikkat Soruları',
                   subtitle: 'Harf Bulmacaları',
-                  badge: 'Etkinlik 5',
+                  badge: 'Etkinlik 7',
                   badgeColor: Colors.orange,
                   icon: Icons.help_center,
                   color: Colors.orange,
@@ -189,40 +217,40 @@ class ExerciseMenuPage extends StatelessWidget {
                 ),
                 _buildGridCard(
                   context,
-                  title: 'Kelimelerle Saklambaç',
-                  subtitle: 'Yeni Kelime Bul',
-                  badge: 'Etkinlik 6',
-                  badgeColor: Colors.pink,
-                  icon: Icons.extension,
-                  color: Colors.pink,
-                  page: const WordHideSeekPage(),
-                ),
-                _buildGridCard(
-                  context,
-                  title: 'Şehir Anagramı',
-                  subtitle: 'Dikkat Testi',
-                  badge: 'Etkinlik 7',
-                  badgeColor: Colors.redAccent,
-                  icon: Icons.location_city,
-                  color: Colors.redAccent,
-                  page: const CityAnagramTestPage(),
+                  title: 'Nesne Akışı',
+                  subtitle: 'Kaç Kez Geçti?',
+                  badge: 'Etkinlik 8',
+                  badgeColor: Colors.brown,
+                  icon: Icons.category,
+                  color: Colors.brown,
+                  page: const ObjectFlowCountingPage(),
                 ),
                 _buildGridCard(
                   context,
                   title: 'Kelime Akışı',
                   subtitle: 'Kaç Kez Geçti?',
-                  badge: 'Etkinlik 8',
+                  badge: 'Etkinlik 9',
                   badgeColor: Colors.lightBlue,
                   icon: Icons.waves,
                   color: Colors.lightBlue,
                   page: const WordFlowCountingPage(),
+                ),
+                _buildGridCard(
+                  context,
+                  title: 'Kelimelerle Saklambaç',
+                  subtitle: 'Yeni Kelime Bul',
+                  badge: 'Etkinlik 10',
+                  badgeColor: Colors.pink,
+                  icon: Icons.extension,
+                  color: Colors.pink,
+                  page: const WordHideSeekPage(),
                 ),
               ],
             ),
             const SizedBox(height: 28),
 
             const Text(
-              'Okuma & Ölçüm',
+              'Ekstra & Ölçüm',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -231,7 +259,7 @@ class ExerciseMenuPage extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              'Etkinliklerden önce ve sonra okuma hızını ve anlamayı ölç',
+              'Numaralı 10 etkinliğin dışında, istersen ek pratik',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
             ),
             const SizedBox(height: 12),
@@ -246,16 +274,6 @@ class ExerciseMenuPage extends StatelessWidget {
               children: [
                 _buildGridCard(
                   context,
-                  title: 'Hızlı Okuma',
-                  subtitle: 'Eğitim Seviyeli',
-                  badge: 'İlkokul-Lise',
-                  badgeColor: Colors.indigo,
-                  icon: Icons.speed,
-                  color: const Color(0xFF4F46E5),
-                  page: const SchoolLevelSelectionPage(), // İLKOKUL/LİSE SEÇİM EKRANI
-                ),
-                _buildGridCard(
-                  context,
                   title: 'Schulte Grid',
                   subtitle: '5x5 Odak Tablosu',
                   badge: 'Popüler',
@@ -263,6 +281,16 @@ class ExerciseMenuPage extends StatelessWidget {
                   icon: Icons.grid_on,
                   color: Colors.teal,
                   page: const SchulteTablePage(),
+                ),
+                _buildGridCard(
+                  context,
+                  title: 'Şehir Anagramı',
+                  subtitle: 'Dikkat Testi',
+                  badge: 'Bonus',
+                  badgeColor: Colors.redAccent,
+                  icon: Icons.location_city,
+                  color: Colors.redAccent,
+                  page: const CityAnagramTestPage(),
                 ),
                 _buildGridCard(
                   context,

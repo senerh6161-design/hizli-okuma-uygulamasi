@@ -17,7 +17,17 @@ class WordData {
     'teleskop', 'mikroskop', 'pusula', 'harita', 'kütüphane', 'müze', 'tiyatro',
     'senfoni', 'heykeltıraş', 'ressam', 'mimar', 'astronot', 'biyoloji', 'felsefe',
     'matematik', 'algoritma', 'yazılım', 'donanım', 'teknoloji', 'inovasyon',
-    'sardunya', 'papatya', 'manolya', 'zambak', 'biberiye', 'fesleğen', 'mandalina'
+    'sardunya', 'papatya', 'manolya', 'zambak', 'biberiye', 'fesleğen', 'mandalina',
+    // Hocanın "hızlı kelimeler" sunumundan eklenen kelimeler
+    'babaanne', 'ağabey', 'abla', 'rüzgarlı', 'battaniye', 'buzdolabı', 'fotoğraf', 'şampuan', 'süpürge',
+    'anlaşmak', 'alkışlamak', 'biriktirmek', 'başarmak', 'çarpışmak', 'büyümek', 'değiştirmek',
+    'düzenlemek', 'cevaplamak', 'ilgilenmek', 'iyileşmek', 'güvenmek', 'gülümsemek', 'kararlaştırmak',
+    'kahvaltı', 'karıştırmak', 'kilitlemek', 'savaşmak', 'toplamak', 'uzaklaşmak', 'uyandırmak',
+    'vazgeçmek', 'yenilmek', 'yükselmek', 'padişah', 'tekerlek', 'yaprak', 'arkadaş', 'hareket',
+    'bereket', 'gözyaşı', 'konuşma', 'kaynak', 'mektup', 'yarışmak', 'misafir', 'mevsim', 'mahalle',
+    'elektrik', 'yiyecek', 'yolculuk', 'dikkat', 'pantolon', 'ayakkabı', 'eldiven', 'karınca',
+    'örümcek', 'zürafa', 'itfaiyeci', 'postacı', 'hemşire', 'saklambaç', 'salıncak', 'otobüs',
+    'helikopter', 'başparmak', 'eczane',
   ];
 
   // Zengin İkili Öbek Havuzu
@@ -31,7 +41,18 @@ class WordData {
     'büyük otobüs', 'yüksek apartman', 'ucuz ekmek', 'ekşi limon', 'sarı patates',
     'yeşil domates', 'beyaz telefon', 'ince ip', 'eski günler', 'mavi kazak',
     'güzel kitap', 'derin deniz', 'sıcak çay', 'soğuk su', 'açık pencere',
-    'parlak güneş', 'hızlı tren', 'sessiz kütüphane', 'renkli resim', 'uzak diyar'
+    'parlak güneş', 'hızlı tren', 'sessiz kütüphane', 'renkli resim', 'uzak diyar',
+    // Hocanın "hızlı kelimeler" sunumundan eklenen ikili öbekler
+    'kabak çekirdeği', 'diş fırçası', 'çamaşır makinesi', 'fotoğraf makinesi', 'çöp kovası',
+    'çalar saat', 'oturma odası', 'davet etmek', 'acele etmek', 'fark etmek', 'fotoğraf çekmek',
+    'dikkat etmek', 'izin vermek', 'hareket etmek', 'takip etmek', 'tamir etmek', 'yardım etmek',
+    'doğum günü', 'öğle yemeği', 'çizgi film', 'hayvanat bahçesi',
+    'açık kapalı', 'acı tatlı', 'aşağı yukarı', 'büyük küçük', 'yaşlı genç', 'dağınık düzenli',
+    'güzel çirkin', 'içeri dışarı', 'hızlı yavaş', 'sıcak soğuk', 'önce sonra', 'taze bayat',
+    'yumuşak sert', 'yanlış doğru', 'film senaryosu', 'matematik geometri', 'psikoloji sosyoloji',
+    'astronomi biyoloji', 'futbol basketbol', 'masa tenisi', 'roman hikaye', 'gölge oyunu',
+    'kızartma köfte', 'yanak yüz', 'simit şeker', 'kol kulak', 'çember daire', 'kitap defter',
+    'pilot polis',
   ];
 
   /// İstenilen adette rastgele BENZERSİZ tekil kelime getirir

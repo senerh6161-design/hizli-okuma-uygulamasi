@@ -4,33 +4,33 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 
-enum _CircularMode { numbers12, numbers20, days, months }
+enum CircularMode { numbers12, numbers20, days, months }
 
-extension on _CircularMode {
+extension on CircularMode {
   String get label {
     switch (this) {
-      case _CircularMode.numbers12:
+      case CircularMode.numbers12:
         return '1-12 Sayı';
-      case _CircularMode.numbers20:
+      case CircularMode.numbers20:
         return '1-20 Sayı';
-      case _CircularMode.days:
+      case CircularMode.days:
         return 'Günler';
-      case _CircularMode.months:
+      case CircularMode.months:
         return 'Aylar';
     }
   }
 
   List<String> get sequence {
     switch (this) {
-      case _CircularMode.numbers12:
+      case CircularMode.numbers12:
         return List.generate(12, (i) => '${i + 1}');
-      case _CircularMode.numbers20:
+      case CircularMode.numbers20:
         return List.generate(20, (i) => '${i + 1}');
-      case _CircularMode.days:
+      case CircularMode.days:
         return const [
           'PAZARTESİ', 'SALI', 'ÇARŞAMBA', 'PERŞEMBE', 'CUMA', 'CUMARTESİ', 'PAZAR',
         ];
-      case _CircularMode.months:
+      case CircularMode.months:
         return const [
           'OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN',
           'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK',
@@ -45,7 +45,17 @@ extension on _CircularMode {
 /// karışık yerleşimi doğru sırayla en kısa sürede tıklamaya çalışır. Her
 /// turda öğelerin yerleri yeniden karışır.
 class CircularSequencePage extends StatefulWidget {
-  const CircularSequencePage({super.key});
+  // Hangi modların bu sayfada gösterileceği. Tek modlu verilirse mod
+  // seçici gizlenir ve o tek aktivite olarak açılır (hocanın "1-12 ve
+  // 1-20 ayrı etkinlik" isteğine göre).
+  final List<CircularMode> availableModes;
+  final String appBarTitle;
+
+  const CircularSequencePage({
+    super.key,
+    this.availableModes = CircularMode.values,
+    this.appBarTitle = '🔄 Dairesel Sıralama',
+  });
 
   @override
   State<CircularSequencePage> createState() => _CircularSequencePageState();
@@ -54,7 +64,7 @@ class CircularSequencePage extends StatefulWidget {
 class _CircularSequencePageState extends State<CircularSequencePage> {
   final Random _random = Random();
 
-  _CircularMode _mode = _CircularMode.numbers12;
+  late CircularMode _mode = widget.availableModes.first;
   late List<String> _positions; // dairedeki her yuvanın gösterdiği öğe
 
   bool _isDemoing = false;
@@ -89,7 +99,7 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
     _positions = List.from(_mode.sequence);
   }
 
-  void _changeMode(_CircularMode mode) {
+  void _changeMode(CircularMode mode) {
     _demoTimer?.cancel();
     _tickTimer?.cancel();
     setState(() {
@@ -105,10 +115,14 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
 
   void _startDemo() {
     _demoTimer?.cancel();
+    // Doküman görsellerinde de sayılar/günler/aylar dairede KARIŞIK
+    // duruyor — izleme turunda da gerçek oyundaki gibi dağınık yerleşim
+    // kullanılır, sadece hangi yuvanın sırada olduğu vurgulanır.
+    final shuffled = List<String>.from(_mode.sequence)..shuffle(_random);
     setState(() {
       _isDemoing = true;
       _isPlaying = false;
-      _resetPositions();
+      _positions = shuffled;
       _demoLap = 0;
       _demoIndex = 0;
     });
@@ -268,33 +282,34 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
   @override
   Widget build(BuildContext context) {
     final n = _positions.length;
-    final activeIndex = _isDemoing ? _demoIndex : -1;
+    final activeIndex = _isDemoing ? _positions.indexOf(_mode.sequence[_demoIndex]) : -1;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('🔄 Dairesel Sıralama')),
+      appBar: AppBar(title: Text(widget.appBarTitle)),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            color: Colors.white,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _CircularMode.values.map((m) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(m.label),
-                      selected: _mode == m,
-                      onSelected: (selected) {
-                        if (selected) _changeMode(m);
-                      },
-                    ),
-                  );
-                }).toList(),
+          if (widget.availableModes.length > 1)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: Colors.white,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: widget.availableModes.map((m) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(m.label),
+                        selected: _mode == m,
+                        onSelected: (selected) {
+                          if (selected) _changeMode(m);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
             ),
-          ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             color: Colors.grey.shade100,

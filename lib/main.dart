@@ -56,15 +56,19 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int currentIndex = 0;
 
-  final pages = const [
-    HomePage(),
-    ExerciseFoldersPage(),
-    ProgressPage(),
-    SettingsPage(),
-  ];
+  void _goToTab(int index) {
+    setState(() => currentIndex = index);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      HomePage(onNavigateToExercises: () => _goToTab(1)),
+      const ExerciseFoldersPage(),
+      const ProgressPage(),
+      const SettingsPage(),
+    ];
+
     return Scaffold(
       body: pages[currentIndex],
       bottomNavigationBar: NavigationBar(

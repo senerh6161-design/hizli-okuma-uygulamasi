@@ -100,6 +100,14 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
     _scheduleNext();
   }
 
+  void _stopReading() {
+    _timer?.cancel();
+    setState(() {
+      _isReading = false;
+      _showRecall = true;
+    });
+  }
+
   void _scheduleNext() {
     final stepMs = _passStepMs[_pass.clamp(0, _passStepMs.length - 1)];
     _timer = Timer(Duration(milliseconds: stepMs), () {
@@ -286,19 +294,39 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
           ),
         ),
         const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: _isReading ? null : _startReading,
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('BAŞLAT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        Row(
+          children: [
+            if (_isReading) ...[
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _stopReading,
+                  icon: const Icon(Icons.stop),
+                  label: const Text('DURDUR', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              flex: 2,
+              child: ElevatedButton.icon(
+                onPressed: _isReading ? null : _startReading,
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('BAŞLAT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4F46E5),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ],
     );

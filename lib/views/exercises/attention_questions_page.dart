@@ -29,11 +29,6 @@ class _AttentionQuestionsPageState extends State<AttentionQuestionsPage> {
       2,
     ),
     _AttentionQuestion(
-      '"ELMAS" harfleriyle hangi kelime yazılamaz?',
-      ['Selma', 'Selam', 'Emsal', 'Selim'],
-      3,
-    ),
-    _AttentionQuestion(
       '"KATİP" harfleriyle hangi kelime yazılamaz?',
       ['Kitap', 'Patik', 'Takip', 'Rakip'],
       3,
@@ -216,7 +211,7 @@ class _AttentionQuestionsPageState extends State<AttentionQuestionsPage> {
         ),
         const SizedBox(height: 12),
         const Text(
-          '"KEDİ" harfleriyle yazılabilecek kelime hangisidir?',
+          '"ELMAS" harfleriyle hangi kelime yazılamaz?',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 14),
@@ -228,16 +223,16 @@ class _AttentionQuestionsPageState extends State<AttentionQuestionsPage> {
           mainAxisSpacing: 12,
           childAspectRatio: 2.4,
           children: [
-            _exampleOption('A) Dere', false),
-            _exampleOption('B) Dik', true),
-            _exampleOption('C) Kar', false),
-            _exampleOption('D) Deve', false),
+            _exampleOption('A) Selma', false),
+            _exampleOption('B) Selam', false),
+            _exampleOption('C) Emsal', false),
+            _exampleOption('D) Selim', true),
           ],
         ),
         const SizedBox(height: 10),
         Text(
-          '"Dik" doğru çünkü D, İ, K harflerinin hepsi "KEDİ" kelimesinde var. '
-          'Diğerlerinde "KEDİ"de olmayan harfler var (R, A, V gibi).',
+          '"Selim" yazılamaz çünkü içindeki İ harfi "ELMAS" kelimesinde yok. '
+          'Diğer üçü (Selma, Selam, Emsal) sadece "ELMAS"ın harflerini kullanıyor.',
           style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontStyle: FontStyle.italic),
         ),
         const Spacer(),
