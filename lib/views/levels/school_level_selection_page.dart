@@ -27,7 +27,7 @@ class SchoolLevelSelectionPage extends StatelessWidget {
               contentPadding: const EdgeInsets.all(18),
               leading: CircleAvatar(
                 radius: 28,
-                backgroundColor: const Color(0xFF4F46E5).withValues(alpha: 0.12),
+                backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.12),
                 child: Icon(
                   index == 0
                       ? Icons.child_care
@@ -36,7 +36,7 @@ class SchoolLevelSelectionPage extends StatelessWidget {
                           : index == 2
                               ? Icons.cast_for_education
                               : Icons.psychology,
-                  color: const Color(0xFF4F46E5),
+                  color: const Color(0xFF2563EB),
                 ),
               ),
               title: Text(

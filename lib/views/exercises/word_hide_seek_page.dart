@@ -310,12 +310,12 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     'Soru ${_index + 1}/${_puzzles.length}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
                   ),
                 ),
                 Container(

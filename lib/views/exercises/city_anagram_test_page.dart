@@ -238,9 +238,9 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
             decoration: BoxDecoration(
-              color: Colors.indigo.shade50,
+              color: Color(0xFFDBEAFE),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFF4F46E5), width: 2),
+              border: Border.all(color: const Color(0xFF2563EB), width: 2),
             ),
             child: const Text('"RUBSA"', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
           ),
@@ -271,7 +271,7 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
             icon: const Icon(Icons.play_arrow),
             label: const Text('ANLADIM, BAŞLA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -294,12 +294,12 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     'Soru ${_index + 1}/${_puzzles.length}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
                   ),
                 ),
                 Container(
@@ -330,10 +330,10 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                 decoration: BoxDecoration(
-                  color: Colors.indigo.shade50,
+                  color: Color(0xFFDBEAFE),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: _isWrongFlash ? Colors.red : const Color(0xFF4F46E5),
+                    color: _isWrongFlash ? Colors.red : const Color(0xFF2563EB),
                     width: 2,
                   ),
                 ),
@@ -357,7 +357,7 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
                 child: Text(
                   _feedback!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.indigo),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF2563EB)),
                 ),
               ),
             Row(
@@ -378,7 +378,7 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
                 ElevatedButton(
                   onPressed: () => _submit(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
+                    backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

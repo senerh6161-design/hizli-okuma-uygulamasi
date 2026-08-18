@@ -249,12 +249,12 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 _isReading ? 'Tur: ${_pass + 1}/$_totalPasses' : 'Hazır',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
               ),
             ),
             Text(
@@ -325,7 +325,7 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('BAŞLAT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F46E5),
+                  backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -366,10 +366,10 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                   alignment: Alignment.center,
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF4F46E5) : Colors.white,
+                    color: isSelected ? const Color(0xFF2563EB) : Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF4F46E5) : Colors.grey.shade300,
+                      color: isSelected ? const Color(0xFF2563EB) : Colors.grey.shade300,
                       width: 2,
                     ),
                   ),
@@ -394,7 +394,7 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
           child: ElevatedButton(
             onPressed: _selectedOptions.isEmpty ? null : _submitRecall,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
             ),
             child: const Text('KONTROL ET', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),

@@ -532,11 +532,11 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(label,
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5))),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
             ),
             Row(
               children: [
@@ -618,10 +618,10 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(color: Colors.indigo.shade50, borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(color: Color(0xFFDBEAFE), borderRadius: BorderRadius.circular(8)),
           child: Text(
             '${isPost ? "SON" : "ÖN"} METİN · D/Y ${_quizIndex + 1}/${passage.questions.length}',
-            style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold, fontSize: 12),
+            style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 12),
           ),
         ),
         const SizedBox(height: 24),
@@ -691,7 +691,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
                   ),
                   child: Row(
                     children: [
-                      Icon(activity.icon, color: done ? Colors.green.shade700 : const Color(0xFF4F46E5)),
+                      Icon(activity.icon, color: done ? Colors.green.shade700 : const Color(0xFF2563EB)),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(activity.title,
@@ -721,7 +721,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -747,7 +747,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
             children: [
               _resultCard(
                 icon: Icons.speed,
-                color: const Color(0xFF4F46E5),
+                color: const Color(0xFF2563EB),
                 title: 'Okuma Hızı',
                 mainValue: '$_preWpm → $_postWpm WPM',
                 subValue: wpmDelta >= 0 ? '+$wpmDelta WPM arttı' : '$wpmDelta WPM azaldı',
@@ -780,7 +780,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
           child: ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),

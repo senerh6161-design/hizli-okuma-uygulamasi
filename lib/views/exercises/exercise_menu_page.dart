@@ -37,7 +37,7 @@ class ExerciseMenuPage extends StatelessWidget {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                  colors: [Color(0xFF2563EB), Color(0xFF0D9488)],
                 ),
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -144,9 +144,9 @@ class ExerciseMenuPage extends StatelessWidget {
                   title: 'Göz Koordinasyonu',
                   subtitle: 'Yön Takip Isınması',
                   badge: 'Etkinlik 1',
-                  badgeColor: Colors.indigo,
+                  badgeColor: Color(0xFF2563EB),
                   icon: Icons.visibility_outlined,
-                  color: Colors.indigo,
+                  color: Color(0xFF2563EB),
                   page: const EyeCoordinationPage(),
                 ),
                 _buildGridCard(
@@ -154,9 +154,9 @@ class ExerciseMenuPage extends StatelessWidget {
                   title: 'Hızlı Okuma',
                   subtitle: 'Eğitim Seviyeli',
                   badge: 'Etkinlik 2',
-                  badgeColor: Colors.indigo,
+                  badgeColor: Color(0xFF2563EB),
                   icon: Icons.speed,
-                  color: const Color(0xFF4F46E5),
+                  color: const Color(0xFF2563EB),
                   page: LevelPage(schoolLevel: SchoolLevelConfig.levels[1]),
                 ),
                 _buildGridCard(
@@ -388,13 +388,13 @@ class ExerciseMenuPage extends StatelessWidget {
                   Text(
                     'Başla',
                     style: TextStyle(
-                      color: Color(0xFF4F46E5),
+                      color: Color(0xFF2563EB),
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
                   ),
                   SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF4F46E5)),
+                  Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF2563EB)),
                 ],
               ),
             ],

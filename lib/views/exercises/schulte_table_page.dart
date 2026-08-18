@@ -225,7 +225,7 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
               children: [
                 Text(
                   'Hedef: $currentTargetLabel',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
                 ),
                 Text(
                   'Süre: $elapsedSeconds sn',
@@ -295,7 +295,7 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
               height: 52,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F46E5),
+                  backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),

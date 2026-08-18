@@ -135,7 +135,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
       feedbackColor = Colors.orange;
     } else {
       feedbackMessage = '👍 Dengedesin, Hızlı Okuma temposu aynı kalıyor.';
-      feedbackColor = Colors.indigo;
+      feedbackColor = Color(0xFF2563EB);
     }
 
     showDialog(
@@ -157,7 +157,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
             Text(
               'Anlama Oranı: %$scorePercent',
               style: const TextStyle(
-                color: Colors.indigo,
+                color: Color(0xFF2563EB),
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
@@ -256,13 +256,13 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.indigo.shade50,
+                color: Color(0xFFDBEAFE),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text(
                 '1. AŞAMA: METNİ OKUYUN',
                 style: TextStyle(
-                  color: Colors.indigo,
+                  color: Color(0xFF2563EB),
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -375,7 +375,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
             Text(
               'Soru ${questionIndex + 1}/${currentPassage.questions.length}',
               style: const TextStyle(
-                color: Colors.indigo,
+                color: Color(0xFF2563EB),
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),

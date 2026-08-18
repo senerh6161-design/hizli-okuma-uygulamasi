@@ -34,6 +34,46 @@ class _AttentionQuestionsPageState extends State<AttentionQuestionsPage> {
       ['Kitap', 'Patik', 'Takip', 'Rakip'],
       3,
     ),
+    _AttentionQuestion(
+      '"KALEM" harfleriyle hangi kelime yazılamaz?',
+      ['Kelime', 'Emlak', 'Amel', 'Mal'],
+      0,
+    ),
+    _AttentionQuestion(
+      '"DENİZ" harfleriyle hangi kelime yazılamaz?',
+      ['Din', 'Zindan', 'İz', 'Dize'],
+      1,
+    ),
+    _AttentionQuestion(
+      '"ORMAN" harfleriyle hangi kelime yazılamaz?',
+      ['Mor', 'Ora', 'Manto', 'Nar'],
+      2,
+    ),
+    _AttentionQuestion(
+      '"TAKIM" harfleriyle hangi kelime yazılamaz?',
+      ['Kitap', 'Kat', 'Tak', 'Mat'],
+      0,
+    ),
+    _AttentionQuestion(
+      '"BALIK" harfleriyle hangi kelime yazılamaz?',
+      ['Bal', 'Balkon', 'Kal', 'Alık'],
+      1,
+    ),
+    _AttentionQuestion(
+      '"PENCERE" harfleriyle hangi kelime yazılamaz?',
+      ['Ne', 'Cep', 'Perde', 'Nere'],
+      2,
+    ),
+    _AttentionQuestion(
+      '"ANAHTAR" harfleriyle hangi kelime yazılamaz?',
+      ['Hantal', 'Nar', 'Tan', 'Hata'],
+      0,
+    ),
+    _AttentionQuestion(
+      '"SANDALYE" harfleriyle hangi kelime yazılamaz?',
+      ['Ada', 'Selam', 'Yalan', 'Dans'],
+      1,
+    ),
   ];
 
   bool _showIntro = true;
@@ -250,7 +290,7 @@ class _AttentionQuestionsPageState extends State<AttentionQuestionsPage> {
             icon: const Icon(Icons.play_arrow),
             label: const Text('ANLADIM, BAŞLA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -292,12 +332,12 @@ class _AttentionQuestionsPageState extends State<AttentionQuestionsPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     'Soru ${_index + 1}/${_questions.length}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
                   ),
                 ),
                 Text(

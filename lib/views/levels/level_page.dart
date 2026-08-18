@@ -184,12 +184,12 @@ class LevelPage extends StatelessWidget {
                     contentPadding: const EdgeInsets.all(18),
                     leading: CircleAvatar(
                       radius: 26,
-                      backgroundColor: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                      backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
                       child: Text(
                         '${lvl.index}',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF4F46E5),
+                          color: Color(0xFF2563EB),
                           fontSize: 18,
                         ),
                       ),
@@ -443,7 +443,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
     return Column(
       children: [
         const Spacer(),
-        const Icon(Icons.speed_rounded, size: 64, color: Color(0xFF4F46E5)),
+        const Icon(Icons.speed_rounded, size: 64, color: Color(0xFF2563EB)),
         const SizedBox(height: 16),
         Text(
           lvl.title,
@@ -509,7 +509,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -523,19 +523,19 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF4F46E5).withValues(alpha: 0.08),
+        color: const Color(0xFF2563EB).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF4F46E5)),
+          Icon(icon, size: 16, color: const Color(0xFF2563EB)),
           const SizedBox(width: 6),
           Text(
             label,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFF4F46E5),
+              color: Color(0xFF2563EB),
               fontSize: 13,
             ),
           ),
@@ -559,7 +559,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
           style: const TextStyle(
             fontSize: 96,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF4F46E5),
+            color: Color(0xFF2563EB),
           ),
         ),
       ),
@@ -593,7 +593,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
             ),
             Text(
               '$calculatedWpm WPM',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
             ),
           ],
         ),
@@ -662,7 +662,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
                     value: _progress,
                     strokeWidth: 4,
                     backgroundColor: Colors.grey.shade200,
-                    valueColor: const AlwaysStoppedAnimation(Color(0xFF4F46E5)),
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFF2563EB)),
                   ),
                   Text(
                     '${(remainingMs / 1000).ceil()}',
@@ -732,14 +732,14 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF4F46E5).withValues(alpha: 0.06),
+            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
             children: [
               Text(
                 '$calculatedWpm',
-                style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
               ),
               const Text('Ortalama WPM', style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 12),
@@ -781,8 +781,8 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
               label: const Text('📖 Az Önce Okuduğun Metnin Sorularına Geç'),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                foregroundColor: const Color(0xFF4F46E5),
-                side: const BorderSide(color: Color(0xFF4F46E5)),
+                foregroundColor: const Color(0xFF2563EB),
+                side: const BorderSide(color: Color(0xFF2563EB)),
               ),
             ),
           ),
@@ -802,7 +802,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
               child: ElevatedButton(
                 onPressed: _restart,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F46E5),
+                  backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),

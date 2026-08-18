@@ -8,7 +8,7 @@ import '../../widgets/completion_pop_scope.dart';
 // "Farklı versiyonlar" — hoca hangi ikonla göstermek isterse seçilebilsin
 // diye birkaç tema tanımlı. emoji null olan tema (Nokta) orijinal
 // videodaki sade mavi noktaya karşılık geliyor.
-enum _IconTheme { dot, star, heart, smiley, apple }
+enum _IconTheme { dot, star, smiley, apple }
 
 extension on _IconTheme {
   String get label {
@@ -17,8 +17,6 @@ extension on _IconTheme {
         return 'Nokta';
       case _IconTheme.star:
         return 'Yıldız';
-      case _IconTheme.heart:
-        return 'Kalp';
       case _IconTheme.smiley:
         return 'Gülen Yüz';
       case _IconTheme.apple:
@@ -32,8 +30,6 @@ extension on _IconTheme {
         return null;
       case _IconTheme.star:
         return '⭐';
-      case _IconTheme.heart:
-        return '❤️';
       case _IconTheme.smiley:
         return '😊';
       case _IconTheme.apple:
@@ -186,165 +182,231 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-      appBar: AppBar(title: const Text('👁️ Göz Koordinasyonu')),
-      body: Column(
-        children: [
-          // İKON TEMASI SEÇİCİ ("farklı versiyonlar")
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            color: Colors.white,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _IconTheme.values.map((t) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(t.emoji != null ? '${t.emoji} ${t.label}' : t.label),
-                      selected: _theme == t,
-                      onSelected: (selected) {
-                        if (selected) setState(() => _theme = t);
-                      },
-                    ),
-                  );
-                }).toList(),
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(title: const Text('👁️ Göz Koordinasyonu')),
+        body: Column(
+          children: [
+            // Yönerge şeridi
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
               ),
-            ),
-          ),
-          if (_isRunning)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: const Row(
                 children: [
-                  Text(
-                    'Tur: ${_lapsCompleted + 1}/$_totalLaps',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0D9488).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  Icon(Icons.remove_red_eye_rounded, color: Color(0xFF2563EB), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
                     child: Text(
-                      '⚡ ${_lapLabels[_lapsCompleted.clamp(0, _lapLabels.length - 1)]}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488), fontSize: 12),
+                      'Başını oynatmadan, sadece gözlerinle aktif noktayı takip et.',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
               ),
             ),
 
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade300),
+            if (_isRunning)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Tur: ${_lapsCompleted + 1}/$_totalLaps',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D9488).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '⚡ ${_lapLabels[_lapsCompleted.clamp(0, _lapLabels.length - 1)]}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488), fontSize: 12),
+                      ),
+                    ),
+                  ],
                 ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final size = Size(constraints.maxWidth, constraints.maxHeight);
-                    return Stack(
-                      children: [
-                        CustomPaint(
-                          size: size,
-                          painter: _PathPainter(points: _points),
-                        ),
-                        ..._points.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final point = entry.value;
-                          final isActive = _isRunning && index == _currentIndex;
-                          final nodeSize = isActive ? 56.0 : 46.0;
-                          return Positioned(
-                            left: point.dx * size.width - nodeSize / 2,
-                            top: point.dy * size.height - nodeSize / 2,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              width: nodeSize,
-                              height: nodeSize,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isActive ? const Color(0xFF4F46E5) : Colors.white,
-                                border: Border.all(
-                                  color: isActive ? const Color(0xFF4F46E5) : Colors.indigo.shade200,
-                                  width: isActive ? 0 : 2,
-                                ),
-                                boxShadow: isActive
-                                    ? [
-                                        BoxShadow(
-                                          color: const Color(0xFF4F46E5).withValues(alpha: 0.4),
-                                          blurRadius: 14,
-                                          spreadRadius: 2,
-                                        ),
-                                      ]
-                                    : [],
-                              ),
-                              child: Center(
-                                child: _theme.emoji != null
-                                    ? Text(
-                                        _theme.emoji!,
-                                        style: TextStyle(fontSize: isActive ? 26 : 20),
-                                      )
-                                    : Container(
-                                        width: isActive ? 16 : 12,
-                                        height: isActive ? 16 : 12,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: isActive ? Colors.white : const Color(0xFF4F46E5),
-                                        ),
-                                      ),
-                              ),
+              ),
+
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final size = Size(constraints.maxWidth, constraints.maxHeight);
+                        return Stack(
+                          children: [
+                            CustomPaint(
+                              size: size,
+                              painter: _PathPainter(points: _points),
                             ),
-                          );
-                        }),
-                      ],
-                    );
-                  },
+                            ..._points.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final point = entry.value;
+                              final isActive = _isRunning && index == _currentIndex;
+                              final nodeSize = isActive ? 56.0 : 44.0;
+                              return Positioned(
+                                left: point.dx * size.width - nodeSize / 2,
+                                top: point.dy * size.height - nodeSize / 2,
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  width: nodeSize,
+                                  height: nodeSize,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isActive ? const Color(0xFF2563EB) : const Color(0xFFEFF6FF),
+                                    border: Border.all(
+                                      color: isActive ? const Color(0xFF2563EB) : const Color(0xFF93C5FD),
+                                      width: isActive ? 0 : 2,
+                                    ),
+                                    boxShadow: isActive
+                                        ? [
+                                            BoxShadow(
+                                              color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                                              blurRadius: 14,
+                                              spreadRadius: 2,
+                                            ),
+                                          ]
+                                        : [],
+                                  ),
+                                  child: Center(
+                                    child: _theme.emoji != null
+                                        ? Text(
+                                            _theme.emoji!,
+                                            style: TextStyle(fontSize: isActive ? 26 : 18),
+                                          )
+                                        : Container(
+                                            width: isActive ? 16 : 10,
+                                            height: isActive ? 16 : 10,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: isActive ? Colors.white : const Color(0xFF2563EB),
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
 
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _shufflePath,
-                    icon: const Icon(Icons.shuffle),
-                    label: const Text('Farklı Rota'),
-                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+            // Alt kontrol paneli: ikon teması + aksiyon butonları bir arada
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(color: Color(0x14000000), blurRadius: 12, offset: Offset(0, -4)),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Görsel Teması',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton.icon(
-                    onPressed: _isRunning ? _stop : _start,
-                    icon: Icon(_isRunning ? Icons.stop : Icons.play_arrow),
-                    label: Text(
-                      _isRunning ? 'DURDUR' : 'BAŞLAT',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _IconTheme.values.map((t) {
+                        final selected = _theme == t;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(t.emoji != null ? '${t.emoji} ${t.label}' : t.label),
+                            selected: selected,
+                            onSelected: (sel) {
+                              if (sel) setState(() => _theme = t);
+                            },
+                            selectedColor: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                            labelStyle: TextStyle(
+                              color: selected ? const Color(0xFF2563EB) : const Color(0xFF475569),
+                              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            side: BorderSide(color: selected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0)),
+                            backgroundColor: const Color(0xFFF8FAFC),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _shufflePath,
+                          icon: const Icon(Icons.shuffle),
+                          label: const Text('Farklı Rota'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF2563EB),
+                            side: const BorderSide(color: Color(0xFF2563EB)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton.icon(
+                          onPressed: _isRunning ? _stop : _start,
+                          icon: Icon(_isRunning ? Icons.stop : Icons.play_arrow),
+                          label: Text(
+                            _isRunning ? 'DURDUR' : 'BAŞLAT',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2563EB),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 4,
+                            shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -358,7 +420,7 @@ class _PathPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black54
+      ..color = const Color(0xFFCBD5E1)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 

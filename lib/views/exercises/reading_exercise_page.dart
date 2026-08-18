@@ -172,7 +172,7 @@ class _ReadingExercisePageState extends State<ReadingExercisePage> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, color: Colors.indigo),
+          Icon(icon, color: Color(0xFF2563EB)),
           const SizedBox(width: 10),
           Text(title),
           const Spacer(),
@@ -229,7 +229,7 @@ class _ReadingExercisePageState extends State<ReadingExercisePage> {
                   'Kelime gösterim süresi: ${_displayText()}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.indigo,
+                    color: Color(0xFF2563EB),
                   ),
                 ),
               ],
@@ -290,7 +290,7 @@ class _ReadingExercisePageState extends State<ReadingExercisePage> {
                           'Seviye ${widget.level}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.indigo,
+                            color: Color(0xFF2563EB),
                           ),
                         ),
                         Container(
@@ -327,7 +327,7 @@ class _ReadingExercisePageState extends State<ReadingExercisePage> {
                         Text(
                           'WPM: $wordsRead',
                           style: const TextStyle(
-                            color: Colors.indigo,
+                            color: Color(0xFF2563EB),
                             fontWeight: FontWeight.bold,
                           ),
                         ),

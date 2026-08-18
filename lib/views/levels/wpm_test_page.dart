@@ -138,7 +138,7 @@ class _WpmTestPageState extends State<WpmTestPage> {
     return Column(
       children: [
         const Spacer(),
-        const Icon(Icons.timer_outlined, size: 64, color: Color(0xFF4F46E5)),
+        const Icon(Icons.timer_outlined, size: 64, color: Color(0xFF2563EB)),
         const SizedBox(height: 20),
         const Text(
           'Gerçek Okuma Hızını Ölçelim',
@@ -166,7 +166,7 @@ class _WpmTestPageState extends State<WpmTestPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -232,7 +232,7 @@ class _WpmTestPageState extends State<WpmTestPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -250,12 +250,12 @@ class _WpmTestPageState extends State<WpmTestPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.indigo.shade50,
+            color: Color(0xFFDBEAFE),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
             'KONTROL SORUSU ${_questionIndex + 1}/${_passage.questions.length}',
-            style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold, fontSize: 12),
+            style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 12),
           ),
         ),
         const SizedBox(height: 20),
@@ -305,14 +305,14 @@ class _WpmTestPageState extends State<WpmTestPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF4F46E5).withValues(alpha: 0.06),
+            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
             children: [
               Text(
                 '$_finalWpm',
-                style: const TextStyle(fontSize: 44, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                style: const TextStyle(fontSize: 44, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
               ),
               const Text('Kişisel Taban Hızın (WPM)', style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 10),
@@ -337,7 +337,7 @@ class _WpmTestPageState extends State<WpmTestPage> {
           child: ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),

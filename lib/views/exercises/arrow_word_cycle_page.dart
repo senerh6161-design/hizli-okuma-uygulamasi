@@ -169,7 +169,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
             Text('Ortalama: ${avg.toStringAsFixed(1)} sn',
                 style: const TextStyle(fontWeight: FontWeight.bold)),
             Text('Puan: $score',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo)),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
               const Text('🎉 Yeni Başarım Kazandın!',
@@ -248,7 +248,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
               children: [
                 Text(
                   'Tur: ${_roundIndex + 1}/$_totalRounds',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
                 ),
                 Text(
                   'Süre: ${(_elapsed.inMilliseconds / 1000).toStringAsFixed(1)} sn',
@@ -329,16 +329,16 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
                               alignment: Alignment.center,
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: isActive ? const Color(0xFF4F46E5) : Colors.indigo.shade50,
+                                color: isActive ? const Color(0xFF2563EB) : Color(0xFFDBEAFE),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: const Color(0xFF4F46E5),
+                                  color: const Color(0xFF2563EB),
                                   width: isActive ? 2.5 : 1.5,
                                 ),
                                 boxShadow: isActive
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFF4F46E5).withValues(alpha: 0.45),
+                                          color: const Color(0xFF2563EB).withValues(alpha: 0.45),
                                           blurRadius: 14,
                                           spreadRadius: 1,
                                         ),
@@ -379,7 +379,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _isRunning ? Colors.green.shade600 : const Color(0xFF4F46E5),
+                  backgroundColor: _isRunning ? Colors.green.shade600 : const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
@@ -414,10 +414,10 @@ class _CycleArrowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF4F46E5).withValues(alpha: 0.55)
+      ..color = const Color(0xFF2563EB).withValues(alpha: 0.55)
       ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke;
-    final fillPaint = Paint()..color = const Color(0xFF4F46E5).withValues(alpha: 0.55);
+    final fillPaint = Paint()..color = const Color(0xFF2563EB).withValues(alpha: 0.55);
 
     for (int i = 0; i < count; i++) {
       final j = clockwise ? (i + 1) % count : (i - 1 + count) % count;

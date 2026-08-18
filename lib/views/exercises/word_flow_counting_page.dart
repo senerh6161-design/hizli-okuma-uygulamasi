@@ -289,18 +289,21 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 _isRunning ? 'Tur: ${_pass + 1}/$_totalPasses' : 'Hazır',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
               ),
             ),
-            Text(
-              'Bazı kelimeler çok kez geçecek, sonunda kaç kez geçtiği sorulacak!',
-              textAlign: TextAlign.right,
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Bazı kelimeler çok kez geçecek, sonunda kaç kez geçtiği sorulacak!',
+                textAlign: TextAlign.right,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+              ),
             ),
           ],
         ),
@@ -363,7 +366,7 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
             icon: const Icon(Icons.play_arrow),
             label: const Text('BAŞLAT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -382,7 +385,7 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
       children: [
         Text(
           'Soru ${_questionIndex + 1}/${_questionTargets.length}',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4F46E5), fontSize: 16),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB), fontSize: 16),
         ),
         const SizedBox(height: 24),
         Text(

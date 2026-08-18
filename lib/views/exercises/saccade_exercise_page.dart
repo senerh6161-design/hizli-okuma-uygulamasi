@@ -143,16 +143,16 @@ class _SaccadeExercisePageState extends State<SaccadeExercisePage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFF4F46E5), width: 1.5),
+                    border: Border.all(color: const Color(0xFF2563EB), width: 1.5),
                   ),
                   child: Text(
                     isRunning ? currentWord : 'HAZIR',
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF4F46E5),
+                      color: Color(0xFF2563EB),
                     ),
                   ),
                 ),
@@ -168,7 +168,7 @@ class _SaccadeExercisePageState extends State<SaccadeExercisePage> {
               height: 52,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F46E5),
+                  backgroundColor: const Color(0xFF2563EB),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),

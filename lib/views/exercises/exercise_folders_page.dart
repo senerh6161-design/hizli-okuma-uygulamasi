@@ -52,7 +52,7 @@ class ExerciseFoldersPage extends StatelessWidget {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                  colors: [Color(0xFF2563EB), Color(0xFF0D9488)],
                 ),
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -143,11 +143,11 @@ class _FolderCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundColor: (folder.isUnlocked ? const Color(0xFF4F46E5) : Colors.grey)
+                    backgroundColor: (folder.isUnlocked ? const Color(0xFF2563EB) : Colors.grey)
                         .withValues(alpha: 0.12),
                     child: Icon(
                       folder.isUnlocked ? Icons.folder_open : Icons.lock_outline,
-                      color: folder.isUnlocked ? const Color(0xFF4F46E5) : Colors.grey,
+                      color: folder.isUnlocked ? const Color(0xFF2563EB) : Colors.grey,
                       size: 24,
                     ),
                   ),
@@ -190,10 +190,10 @@ class _FolderCard extends StatelessWidget {
                   children: [
                     Text(
                       'Aç',
-                      style: TextStyle(color: Color(0xFF4F46E5), fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     SizedBox(width: 4),
-                    Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF4F46E5)),
+                    Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF2563EB)),
                   ],
                 ),
             ],
