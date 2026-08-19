@@ -222,7 +222,7 @@ class _ProgressPageState extends State<ProgressPage> {
     );
   }
 
-  Widget _historyItem(String title, String result, String date) {
+  Widget _historyItem(String title, String result, String isoDate) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(15),
@@ -239,7 +239,7 @@ class _ProgressPageState extends State<ProgressPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(_relativeLabel(isoDate), style: const TextStyle(color: Colors.grey, fontSize: 12)),
               ],
             ),
           ),
@@ -250,5 +250,22 @@ class _ProgressPageState extends State<ProgressPage> {
         ],
       ),
     );
+  }
+
+  // Kayıt anında gerçek bir ISO zaman damgası saklanıyor (bkz.
+  // ProgressManager); burada, o an geçerli olan aradan ne kadar süre
+  // geçtiğine göre okunabilir bir etiket üretilir — "Şimdi" artık her
+  // kayıtta sabit değil, gerçekten yeni olanlarda gösterilir.
+  String _relativeLabel(String isoDate) {
+    final date = DateTime.tryParse(isoDate);
+    if (date == null) return isoDate; // eski/tanınmayan biçim, olduğu gibi göster
+    final diff = DateTime.now().difference(date);
+
+    if (diff.inMinutes < 1) return 'Şimdi';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} dk önce';
+    if (diff.inHours < 24) return '${diff.inHours} sa önce';
+    if (diff.inDays == 1) return 'Dün';
+    if (diff.inDays < 7) return '${diff.inDays} gün önce';
+    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 }

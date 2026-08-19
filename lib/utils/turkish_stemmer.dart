@@ -14,11 +14,12 @@ const List<String> _suffixes = [
   'sinden', 'sından', 'sinde', 'sında', 'lerini', 'larını', 'sinin',
   'sının', 'ndaki', 'deki', 'daki', 'ları', 'leri', 'sini', 'sını',
   'ndan', 'nden', 'dığı', 'diği', 'dığında', 'diğinde', 'ecek', 'acak',
-  'meyi', 'mayı', 'mesi', 'ması', 'ler', 'lar', 'nın', 'nin', 'nun',
-  'nün', 'dan', 'den', 'tan', 'ten', 'dır', 'dir', 'dur', 'dür', 'tır',
-  'tir', 'tur', 'tür', 'da', 'de', 'ta', 'te', 'ın', 'in', 'un', 'ün',
-  'sı', 'si', 'su', 'sü', 'yı', 'yi', 'yu', 'yü', 'la', 'le', 'a', 'e',
-  'ı', 'i', 'u', 'ü',
+  'yorlar', 'meye', 'maya', 'meyi', 'mayı', 'mesi', 'ması', 'yordu',
+  'muşlar', 'mişler', 'mış', 'miş', 'muş', 'müş', 'yor', 'ler', 'lar',
+  'nın', 'nin', 'nun', 'nün', 'dan', 'den', 'tan', 'ten', 'dır', 'dir',
+  'dur', 'dür', 'tır', 'tir', 'tur', 'tür', 'da', 'de', 'ta', 'te',
+  'ye', 'ya', 'ın', 'in', 'un', 'ün', 'sı', 'si', 'su', 'sü', 'yı',
+  'yi', 'yu', 'yü', 'la', 'le', 'a', 'e', 'ı', 'i', 'u', 'ü',
 ];
 
 /// [word] için, kelimenin kendisinden başlayıp gittikçe daha fazla ek

@@ -106,6 +106,18 @@ class ProgressManager {
     } else {
       history = [];
     }
+
+    // Eski bir hatadan dolayı her kayıt, ne zaman olursa olsun 'date'
+    // alanına sabit "Şimdi" yazıyordu — gerçek bir zaman damgası hiç
+    // tutulmuyordu, yani günler önceki kayıtlar bile hep "Şimdi" görünüyordu.
+    // Bu, o hatalı (ayrıştırılamayan, ISO tarih formatında olmayan) eski
+    // kayıtları geçmişten temizler; bundan sonra eklenenler gerçek zaman
+    // damgasıyla kaydedilip doğru şekilde ("X gün önce" gibi) gösterilecek.
+    final beforePrune = history.length;
+    history = history.where((item) => DateTime.tryParse(item['date'] ?? '') != null).toList();
+    if (history.length != beforePrune) {
+      await _persist();
+    }
   }
 
   static Future<void> _persist() async {
@@ -230,7 +242,7 @@ class ProgressManager {
     history.insert(0, {
       'title': type,
       'result': result,
-      'date': 'Şimdi',
+      'date': DateTime.now().toIso8601String(),
     });
     if (history.length > 50) {
       history = history.sublist(0, 50);
@@ -273,7 +285,7 @@ class ProgressManager {
     history.insert(0, {
       'title': title,
       'result': '%$scorePercent doğru',
-      'date': 'Şimdi',
+      'date': DateTime.now().toIso8601String(),
     });
     if (history.length > 50) {
       history = history.sublist(0, 50);

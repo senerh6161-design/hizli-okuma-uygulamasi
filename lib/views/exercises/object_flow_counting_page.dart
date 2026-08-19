@@ -101,7 +101,6 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     _ObjectItem('Uçurtma', '🪁'),
     _ObjectItem('Çorap', '🧦'),
     _ObjectItem('Şapka', '🧢'),
-    _ObjectItem('Zar', '🎲'),
     _ObjectItem('Yapboz', '🧩'),
     _ObjectItem('Ataç', '🖇️'),
     _ObjectItem('Fırça', '🖌️'),
