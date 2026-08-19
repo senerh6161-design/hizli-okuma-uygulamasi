@@ -10,6 +10,7 @@ import '../../models/school_level.dart';
 import '../../widgets/reading_theme_picker.dart';
 import '../../widgets/word_definition_sheet.dart';
 import '../../widgets/confetti_overlay.dart';
+import '../../widgets/background_music_picker.dart';
 import '../levels/level_page.dart';
 import 'eye_coordination_page.dart';
 import 'circular_sequence_page.dart';
@@ -203,7 +204,62 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
       total: _preText!.questions.length,
       title: 'Klasör 1 · Ön Metin',
     );
-    setState(() => _phase = _Phase.activities);
+    _showPreTextReport();
+  }
+
+  // Etkinliklere geçmeden önce, ön metinde ne kadar sürede kaç kelime
+  // okunduğunu ve ne kadarının anlaşıldığını gösteren küçük bir "karne".
+  void _showPreTextReport() {
+    final wordCount =
+        _preText!.content.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('📊 Ön Metin Karnen'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _reportRow('⏱️ Süre', '$_elapsedSeconds saniye'),
+            _reportRow('📖 Okunan', '$wordCount kelime'),
+            _reportRow('⚡ Hız', '$_preWpm WPM'),
+            _reportRow('🎯 Anlama', '%$_preComprehensionPercent'),
+            const SizedBox(height: 4),
+            Text(
+              'Şimdi 10 etkinliğe geçiyoruz, sonunda tekrar ölçeceğiz!',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() => _phase = _Phase.activities);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Etkinliklere Geç'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _reportRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 14)),
+          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+        ],
+      ),
+    );
   }
 
   Future<void> _openActivity(int index) async {
@@ -469,7 +525,9 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
           'Ne okumak istersin? İlgini çeken bir konu seç.',
           style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+        const BackgroundMusicPicker(),
+        const SizedBox(height: 16),
         Expanded(
           child: GridView.count(
             crossAxisCount: 3,

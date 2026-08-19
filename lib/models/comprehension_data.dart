@@ -41,6 +41,7 @@ class ComprehensionData {
     ReadingTopic(id: 'yemek', title: 'Yemek', emoji: '🍽️'),
     ReadingTopic(id: 'kitaplar', title: 'Kitaplar', emoji: '📚'),
     ReadingTopic(id: 'ulkeler', title: 'Ülkeler', emoji: '🌍'),
+    ReadingTopic(id: 'biyografi', title: 'Biyografi', emoji: '📜'),
   ];
 
   static ReadingTopic? topicById(String? id) {
@@ -359,6 +360,78 @@ class ComprehensionData {
         },
         {
           'question': 'Bir ülkenin başkenti, o ülkenin yönetim merkezi olarak kabul edilir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+      ],
+    ),
+    ReadingPassage(
+      id: 'p14',
+      title: 'İbni Sina: Tıbbın Öncüsü',
+      topic: 'biyografi',
+      content:
+          'İbni Sina, 980 yılında bugünkü Özbekistan sınırları içinde doğmuş ünlü bir bilgin ve hekimdir. Küçük yaşta tıp, felsefe ve matematik alanlarında kendini yetiştirmiş, on sekiz yaşına geldiğinde döneminin önde gelen hekimlerinden biri olmuştur. En bilinen eseri El-Kânun fi\'t-Tıbb (Tıbbın Kanunu), yüzyıllarca hem İslam dünyasında hem de Avrupa üniversitelerinde tıp eğitiminin temel kaynağı olarak okutulmuştur. İbni Sina\'nın çalışmaları, modern tıbbın gelişimine de önemli katkılar sağlamıştır.',
+      questions: [
+        {
+          'question': 'İbni Sina\'nın en bilinen eseri El-Kânun fi\'t-Tıbb\'dır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'İbni Sina\'nın eserleri sadece İslam dünyasında okutulmuş, Avrupa\'da hiç kullanılmamıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'İbni Sina, küçük yaşta tıp, felsefe ve matematik alanlarında kendini yetiştirmiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+      ],
+    ),
+    ReadingPassage(
+      id: 'p15',
+      title: 'Ali Kuşçu: Yıldızların Bilgini',
+      topic: 'biyografi',
+      content:
+          'Ali Kuşçu, 15. yüzyılda yaşamış önemli bir Türk astronomu ve matematikçisidir. Semerkant\'ta Uluğ Bey Rasathanesi\'nde çalışarak gök cisimleri üzerine değerli gözlemler yapmıştır. Fatih Sultan Mehmed\'in daveti üzerine İstanbul\'a gelmiş, burada matematik ve astronomi alanında dersler vermiştir. Ali Kuşçu\'nun bilime katkılarını anmak için Ay üzerindeki bir krater onun adıyla anılmaktadır.',
+      questions: [
+        {
+          'question': 'Ali Kuşçu, Uluğ Bey Rasathanesi\'nde çalışmıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Ali Kuşçu, Fatih Sultan Mehmed\'in davetini reddederek İstanbul\'a hiç gitmemiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Ay üzerinde Ali Kuşçu\'nun adını taşıyan bir krater vardır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+      ],
+    ),
+    ReadingPassage(
+      id: 'p16',
+      title: 'Bîrûnî: Çok Yönlü Bilgin',
+      topic: 'biyografi',
+      content:
+          'Bîrûnî, 973 yılında Harezm\'de doğmuş; matematik, astronomi, coğrafya ve tarih gibi pek çok alanda eser vermiş çok yönlü bir bilgindir. Dünya\'nın yarıçapını, o dönem için şaşırtıcı derecede doğru bir yöntemle hesaplamıştır. Hindistan\'a yaptığı geziler sonucunda kaleme aldığı Kitâbü\'l-Hind adlı eseriyle Hint kültürünü ve bilimini tanıtmıştır. Bîrûnî\'nin çalışmaları, onun tarihin ilk gerçek bilim insanlarından biri olarak anılmasını sağlamıştır.',
+      questions: [
+        {
+          'question': 'Bîrûnî, Dünya\'nın yarıçapını hesaplamıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Bîrûnî yalnızca astronomiyle ilgilenmiş, başka hiçbir alanda çalışma yapmamıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Kitâbü\'l-Hind, Bîrûnî\'nin Hindistan gezileri sonucunda yazdığı bir eserdir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },

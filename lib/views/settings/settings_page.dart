@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/settings_manager.dart';
-import '../../models/audio_manager.dart';
 import '../../services/auth_service.dart';
 import '../auth/auth_page.dart';
+import '../../widgets/background_music_picker.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -19,7 +19,6 @@ class _SettingsPageState extends State<SettingsPage> {
   late bool isFocusRed = SettingsManager.isFocusRed;
   late bool isSoundOn = SettingsManager.isSoundOn;
   late bool isReminderOn = SettingsManager.isReminderOn;
-  late bool isBackgroundMusicOn = SettingsManager.isBackgroundMusicOn;
   late TimeOfDay reminderTime = SettingsManager.reminderTime;
   late String readingTheme = SettingsManager.readingTheme;
 
@@ -297,18 +296,9 @@ class _SettingsPageState extends State<SettingsPage> {
               SettingsManager.save();
             },
           ),
-          SwitchListTile(
-            title: const Text('Arka Plan Müziği'),
-            subtitle: const Text('Okuma sırasında sakin, dinlendirici bir fon sesi çalar.'),
-            value: isBackgroundMusicOn,
-            onChanged: (val) {
-              setState(() {
-                isBackgroundMusicOn = val;
-                SettingsManager.isBackgroundMusicOn = val;
-              });
-              SettingsManager.save();
-              if (!val) AudioManager.stopAmbient();
-            },
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: BackgroundMusicPicker(),
           ),
 
           const Divider(height: 30),

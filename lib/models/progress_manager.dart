@@ -67,7 +67,10 @@ class ProgressManager {
     _prefs = await SharedPreferences.getInstance();
     final prefs = _prefs!;
 
-    wpm = prefs.getInt(_kWpm) ?? 0;
+    // clamp(0, 900): eski bir WPM hesaplama hatasından (bkz. LevelPage
+    // _startSession) cihazda kalmış olabilecek imkansız değerleri (ör.
+    // 7800) yükleme anında düzeltir.
+    wpm = (prefs.getInt(_kWpm) ?? 0).clamp(0, 900);
     comprehensionRate = prefs.getInt(_kComprehension) ?? 0;
     attentionSuccess = prefs.getInt(_kAttention) ?? 0;
     completedExercises = prefs.getInt(_kCompleted) ?? 0;
@@ -209,8 +212,11 @@ class ProgressManager {
   }) {
     completedExercises++;
 
-    if (newWpm != null && newWpm > wpm) {
-      wpm = newWpm; // Yeni rekor WPM
+    // 900 üstü gerçekçi bir okuma hızı değil (bkz. LevelPage._roundWpm
+    // aralığı) — eski bir hesaplama hatasından kalma şişirilmiş rekorların
+    // kalıcı olarak takılı kalmasını da önler.
+    if (newWpm != null && newWpm.clamp(0, 900) > wpm) {
+      wpm = newWpm.clamp(0, 900);
     }
 
     // İlerleme çubuğunu artır

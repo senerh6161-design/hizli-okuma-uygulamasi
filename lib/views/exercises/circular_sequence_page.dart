@@ -396,7 +396,10 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
                             child: GestureDetector(
                               onTap: () => _onTapSlot(i),
                               child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
+                                // En hızlı turda yuvalar arası 350ms var;
+                                // geçiş bu kadar yakın olursa bir önceki
+                                // vurgu tam sönmeden yenisi başlıyor.
+                                duration: const Duration(milliseconds: 90),
                                 width: nodeSize,
                                 height: nodeSize,
                                 decoration: BoxDecoration(

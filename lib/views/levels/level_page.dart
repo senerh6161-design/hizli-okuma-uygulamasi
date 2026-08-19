@@ -354,8 +354,12 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
         if (!mounted) return;
         setState(() {
           readCount++;
-          calculatedWpm =
-              (readCount * (60000 / widget.readingLevel.speedMs)).round();
+          // Kelimeler sabit aralıkla akıyor, o yüzden WPM zaten bu turun
+          // hedef hızı (60000/speedMs) kadardır — readCount ile çarpmak
+          // süre uzadıkça WPM'i katlanarak şişiriyordu (ör. 7800 gibi
+          // imkansız değerler). readCount sadece kelime akışını sürdürmek
+          // için kullanılır, WPM hesabına girmez.
+          calculatedWpm = widget.readingLevel.wpm;
           currentWord = _nextWord();
         });
       },

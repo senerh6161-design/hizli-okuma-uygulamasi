@@ -81,15 +81,14 @@ class ExerciseFoldersPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: GridView.builder(
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
                 itemCount: _folders.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                  childAspectRatio: 1.05,
+                separatorBuilder: (_, __) => const SizedBox(width: 14),
+                itemBuilder: (context, index) => SizedBox(
+                  width: 170,
+                  child: _FolderCard(folder: _folders[index]),
                 ),
-                itemBuilder: (context, index) => _FolderCard(folder: _folders[index]),
               ),
             ),
           ],

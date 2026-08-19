@@ -28,8 +28,18 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
     'Bir Hedef Belirle', 'Son Sürat Çalış', 'Zaman En Büyük Sermaye', 'Kıymetini Bil',
   ];
   static const List<String> _setC = ['Gayretliyim', 'Kararlıyım', 'Sabırlıyım', 'Umutluyum'];
+  static const List<String> _setD = ['Disiplinliyim', 'Odaklıyım', 'Meraklıyım', 'Cesaretliyim'];
+  static const List<String> _setE = [
+    'Bugün Bir Adım At', 'Pes Etme Devam Et', 'Küçük Adımlar Büyütür', 'Her Gün Biraz Daha',
+  ];
+  static const List<String> _setF = ['Öğrenmeyi Severim', 'Merak Ederim', 'Soru Sorarım', 'Araştırırım'];
+  static const List<String> _setG = ['Planlıyım', 'Düzenliyim', 'Zamanımı İyi Kullanırım', 'Önceliğimi Bilirim'];
+  static const List<String> _setH = ['Denemekten Korkmam', 'Hatamdan Öğrenirim', 'Yeniden Denerim', 'Asla Vazgeçmem'];
+  static const List<String> _setI = ['Kendime Güvenirim', 'Değerliyim', 'Yeterliyim', 'Başarabilirim'];
 
-  static const List<List<String>> _wordSets = [_setA, _setB, _setC];
+  static const List<List<String>> _wordSets = [
+    _setA, _setB, _setC, _setD, _setE, _setF, _setG, _setH, _setI,
+  ];
 
   final Random _random = Random();
   static const int _totalRounds = 3;
@@ -37,8 +47,9 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
 
   late List<_WordCycle> _rounds;
 
-  // Her turda FARKLI bir kelime seti çıksın diye (aynı setin sadece yönü
-  // değişmiş hali değil) 3 seti karıştırıp yöne rastgele atıyoruz.
+  // 9 farklı kelime setinden HER SEFERİNDE rastgele 3 tanesi seçilir, bu
+  // yüzden kullanıcı ertesi gün girdiğinde büyük ihtimalle farklı kelimeler
+  // görür; aynı setin sadece yönü değişmiş hali de gösterilmez.
   List<_WordCycle> _buildRounds() {
     final shuffledSets = List<List<String>>.from(_wordSets)..shuffle(_random);
     return shuffledSets
@@ -301,6 +312,17 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
                   final center = Offset(constraints.maxWidth / 2, size / 2);
                   final radius = size / 2 - 60;
 
+                  // Kartlar sabit (128x68) boyuttaydı; küçük ekranlarda
+                  // dairenin çevresi kartlara yetmeyip komşu kartlar birbirine
+                  // giriyordu ("iç içe geçme"). Kart boyutunu, komşu iki
+                  // yuva arasındaki gerçek mesafeye göre üst sınırla —
+                  // böylece hangi ekranda olursa olsun çakışma olmaz.
+                  final neighborGap = 2 * radius * sin(pi / n);
+                  final cardW = (neighborGap * 0.78).clamp(76.0, 120.0);
+                  final cardH = cardW * 0.5;
+                  final activeCardW = cardW * 1.06;
+                  final activeCardH = cardH * 1.13;
+
                   return Stack(
                     children: [
                       CustomPaint(
@@ -310,6 +332,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
                           radius: radius,
                           count: n,
                           clockwise: _effectiveClockwise,
+                          retract: activeCardW / 2 + 8,
                         ),
                       ),
                       for (int i = 0; i < n; i++)
@@ -318,14 +341,16 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
                           final dx = center.dx + radius * cos(angle);
                           final dy = center.dy + radius * sin(angle);
                           final isActive = _isRunning && i == _activeIndex;
+                          final w = isActive ? activeCardW : cardW;
+                          final h = isActive ? activeCardH : cardH;
 
                           return Positioned(
-                            left: dx - 60,
-                            top: dy - (isActive ? 34 : 30),
+                            left: dx - w / 2,
+                            top: dy - h / 2,
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              width: isActive ? 128 : 120,
-                              height: isActive ? 68 : 60,
+                              width: w,
+                              height: h,
                               alignment: Alignment.center,
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
@@ -398,12 +423,14 @@ class _CycleArrowPainter extends CustomPainter {
   final double radius;
   final int count;
   final bool clockwise;
+  final double retract;
 
   _CycleArrowPainter({
     required this.center,
     required this.radius,
     required this.count,
     required this.clockwise,
+    required this.retract,
   });
 
   Offset _pointFor(int i) {
@@ -429,8 +456,8 @@ class _CycleArrowPainter extends CustomPainter {
       final len = dir.distance;
       if (len == 0) continue;
       final unit = dir / len;
-      final start = p1 + unit * 55;
-      final end = p2 - unit * 55;
+      final start = p1 + unit * retract;
+      final end = p2 - unit * retract;
 
       canvas.drawLine(start, end, paint);
 

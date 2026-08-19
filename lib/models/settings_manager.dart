@@ -16,6 +16,10 @@ class SettingsManager {
   static bool isBackgroundMusicOn = false;
   static TimeOfDay reminderTime = const TimeOfDay(hour: 20, minute: 0);
 
+  // Fon müziği parçası: 'calm' | 'motivational' | 'inspiration'.
+  // AudioManager bu id'ye göre hangi ses dosyasını çalacağını seçer.
+  static String backgroundMusicTrack = 'calm';
+
   // Okuma teması: 'default' | 'blue' | 'green'. Anlama Testi'ndeki metin
   // kutusunun arka plan/rengini belirler (dinlendirici mavi/yeşil seçenekleri).
   static String readingTheme = 'default';
@@ -27,6 +31,7 @@ class SettingsManager {
   static const _kReminderMinute = 'settings_reminder_minute';
   static const _kReadingTheme = 'settings_reading_theme';
   static const _kBackgroundMusicOn = 'settings_background_music_on';
+  static const _kBackgroundMusicTrack = 'settings_background_music_track';
 
   /// main() içinde, runApp'ten ÖNCE bir kere çağrılmalı:
   ///   await SettingsManager.init();
@@ -38,6 +43,7 @@ class SettingsManager {
     isSoundOn = prefs.getBool(_kSoundOn) ?? false;
     isReminderOn = prefs.getBool(_kReminderOn) ?? true;
     isBackgroundMusicOn = prefs.getBool(_kBackgroundMusicOn) ?? false;
+    backgroundMusicTrack = prefs.getString(_kBackgroundMusicTrack) ?? 'calm';
     readingTheme = prefs.getString(_kReadingTheme) ?? 'default';
 
     final hour = prefs.getInt(_kReminderHour) ?? 20;
@@ -52,6 +58,7 @@ class SettingsManager {
     await prefs.setBool(_kSoundOn, isSoundOn);
     await prefs.setBool(_kReminderOn, isReminderOn);
     await prefs.setBool(_kBackgroundMusicOn, isBackgroundMusicOn);
+    await prefs.setString(_kBackgroundMusicTrack, backgroundMusicTrack);
     await prefs.setInt(_kReminderHour, reminderTime.hour);
     await prefs.setInt(_kReminderMinute, reminderTime.minute);
     await prefs.setString(_kReadingTheme, readingTheme);
@@ -106,7 +113,7 @@ class SettingsManager {
       case 'gray':
         return const Color(0xFF475569);
       default:
-        return const Color(0xFF4F46E5);
+        return const Color(0xFF2563EB);
     }
   }
 }
