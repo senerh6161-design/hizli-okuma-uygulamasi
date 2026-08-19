@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../utils/turkish_stemmer.dart';
 
 /// TDK (Türk Dil Kurumu) Güncel Türkçe Sözlük servisinden GERÇEK,
 /// resmî kelime tanımlarını çeker. https://sozluk.gov.tr üzerinden herkese
@@ -9,8 +10,20 @@ class TdkService {
     final cleaned = word.trim();
     if (cleaned.isEmpty) return null;
 
+    // Metindeki kelimelerin çoğu ek alıyor (ör. "ülkelerin", "keşfetmeyi")
+    // ve TDK sözlüğü ekli hâlleri değil kök/mastar hâlleri barındırıyor.
+    // Önce kelimenin kendisi, olmazsa gittikçe daha fazla ek çıkarılmış
+    // aday kökleri sırayla denenir.
+    for (final candidate in turkishStemCandidates(cleaned)) {
+      final result = await _lookupExact(candidate);
+      if (result != null && result.isNotEmpty) return result;
+    }
+    return null;
+  }
+
+  static Future<List<String>?> _lookupExact(String word) async {
     try {
-      final uri = Uri.https('sozluk.gov.tr', '/gts', {'ara': cleaned});
+      final uri = Uri.https('sozluk.gov.tr', '/gts', {'ara': word});
       final response = await http.get(uri).timeout(const Duration(seconds: 8));
       if (response.statusCode != 200) return null;
 

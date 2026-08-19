@@ -6,6 +6,10 @@
 /// [WordDictionary.define] çağrılır. Kelime doğrudan sözlükte yoksa, basit
 /// bir Türkçe ek ayıklama denemesi yapılır (ör. "kapasitesini" ->
 /// "kapasite"); o da bulamazsa arkadaşça bir "bulunamadı" mesajı gösterilir.
+library;
+
+import '../utils/turkish_stemmer.dart';
+
 class WordDictionary {
   static const Map<String, String> _definitions = {
     // p1 - Hızlı Okuma ve Beyin Kasları
@@ -81,17 +85,8 @@ class WordDictionary {
   // sonunda bu eklerden biri varsa çıkarılır ve kalan kök sözlükte
   // aranır. Yanlış eşleşmeyi önlemek için kök en az 3 harf olmalı VE
   // sözlükte doğrudan bulunmalı — yani "tahmin" ile eşleşme yapılmaz,
-  // sadece gerçek kökler bulunur.
-  static const List<String> _suffixes = [
-    'lerinden', 'larından', 'lerinde', 'larında', 'leriyle', 'larıyla',
-    'sinden', 'sından', 'sinde', 'sında', 'lerini', 'larını', 'sinin',
-    'sının', 'ndaki', 'deki', 'daki', 'ları', 'leri', 'sini', 'sını',
-    'ndan', 'nden', 'dığı', 'diği', 'dığında', 'diğinde', 'ecek', 'acak',
-    'ler', 'lar', 'nın', 'nin', 'nun', 'nün', 'dan', 'den', 'tan', 'ten',
-    'dır', 'dir', 'dur', 'dür', 'tır', 'tir', 'tur', 'tür', 'da', 'de',
-    'ta', 'te', 'ın', 'in', 'un', 'ün', 'sı', 'si', 'su', 'sü', 'yı',
-    'yi', 'yu', 'yü', 'la', 'le', 'a', 'e', 'ı', 'i', 'u', 'ü',
-  ];
+  // sadece gerçek kökler bulunur. Ek listesi turkish_stemmer.dart'ta,
+  // TDK araması ile aynı yerde tutuluyor.
 
   static String _normalize(String raw) {
     var w = raw.trim();
@@ -108,13 +103,8 @@ class WordDictionary {
     final key = _normalize(rawWord);
     if (key.isEmpty) return null;
 
-    if (_definitions.containsKey(key)) return _definitions[key];
-
-    for (final suffix in _suffixes) {
-      if (key.length - suffix.length >= 3 && key.endsWith(suffix)) {
-        final stem = key.substring(0, key.length - suffix.length);
-        if (_definitions.containsKey(stem)) return _definitions[stem];
-      }
+    for (final candidate in turkishStemCandidates(key)) {
+      if (_definitions.containsKey(candidate)) return _definitions[candidate];
     }
 
     return null;

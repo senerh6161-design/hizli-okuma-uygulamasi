@@ -33,12 +33,12 @@ class WordHideSeekPage extends StatefulWidget {
 
 class _WordHideSeekPageState extends State<WordHideSeekPage> {
   static const List<_HidePuzzle> _puzzles = [
-    _HidePuzzle('KİTAP', 'PATİK', 'İlk harfi P, son harfi K',
-        'Bebeklerin ayağına giydirilen örme ayakkabı', 'Pat..'),
-    _HidePuzzle('TARAK', 'AKTAR', 'İlk harfi A, son harfi R',
-        'Baharat, kuruyemiş satan dükkân', 'Akt..'),
-    _HidePuzzle('SAAT', 'TASA', 'İlk harfi T, son harfi A',
-        'Endişe, üzüntü, kaygı anlamına gelen kelime', 'Tas..'),
+    _HidePuzzle('AKSARAY', 'SAKARYA', 'İlk harfi S, son harfi A',
+        'İstanbul\'a yakın bir şehir', 'Sak..'),
+    _HidePuzzle('BİSULTAN', 'İSTANBUL', 'İlk harfi İ, son harfi L',
+        'Şehirlerin en güzeli', 'İst..'),
+    _HidePuzzle('KANKA EL AÇ', 'ÇANAKKALE', 'İlk harfi Ç, son harfi E',
+        'Destan yazılan bir şehir', 'Çan..'),
   ];
 
   static const int _stageSeconds = 30;

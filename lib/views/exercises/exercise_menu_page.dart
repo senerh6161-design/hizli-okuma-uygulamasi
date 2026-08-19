@@ -157,7 +157,7 @@ class ExerciseMenuPage extends StatelessWidget {
                   badgeColor: Color(0xFF2563EB),
                   icon: Icons.speed,
                   color: const Color(0xFF2563EB),
-                  page: LevelPage(schoolLevel: SchoolLevelConfig.levels[1]),
+                  page: LevelPage(schoolLevel: SchoolLevelConfig.levels[1], showSchoolLevelInTitle: false),
                 ),
                 _buildGridCard(
                   context,

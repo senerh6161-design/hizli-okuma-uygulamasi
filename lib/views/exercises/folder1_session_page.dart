@@ -71,7 +71,11 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
 
     _activities = [
       _ActivityRef('Göz Koordinasyonu', Icons.visibility_outlined, () => const EyeCoordinationPage()),
-      _ActivityRef('Hızlı Okuma', Icons.speed, () => LevelPage(schoolLevel: SchoolLevelConfig.levels[1])),
+      _ActivityRef(
+        'Hızlı Okuma',
+        Icons.speed,
+        () => LevelPage(schoolLevel: SchoolLevelConfig.levels[1], showSchoolLevelInTitle: false),
+      ),
       _ActivityRef(
         'Dairesel Sıralama',
         Icons.donut_large,
@@ -716,6 +720,36 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
     _answerQuiz(passage, index, isPost ? _finishPostQuiz : _finishPreQuiz);
   }
 
+  void _confirmSkipToPostText() {
+    final remaining = _activities.length - _activityDone.length;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('⚠️ Etkinlikler Bitmedi'),
+        content: Text(
+          'Henüz $remaining etkinliği tamamlamadın. Yine de son metne geçmek istiyor musun?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Vazgeç'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _goToPostTopic();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Yine de Geç'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActivitiesView() {
     final allDone = _activityDone.length == _activities.length;
     return Column(
@@ -772,14 +806,14 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
           width: double.infinity,
           height: 52,
           child: ElevatedButton.icon(
-            onPressed: allDone ? _goToPostTopic : null,
-            icon: const Icon(Icons.arrow_forward),
+            onPressed: allDone ? _goToPostTopic : _confirmSkipToPostText,
+            icon: Icon(allDone ? Icons.arrow_forward : Icons.warning_amber_rounded),
             label: Text(
-              allDone ? 'SON METNE GEÇ' : 'Önce tüm etkinlikleri tamamla',
+              allDone ? 'SON METNE GEÇ' : 'Etkinlikler Bitmedi, Yine de Geç',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
+              backgroundColor: allDone ? const Color(0xFF2563EB) : Colors.grey.shade500,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),

@@ -82,13 +82,9 @@ class ExerciseFoldersPage extends StatelessWidget {
             const SizedBox(height: 20),
             Expanded(
               child: ListView.separated(
-                scrollDirection: Axis.horizontal,
                 itemCount: _folders.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 14),
-                itemBuilder: (context, index) => SizedBox(
-                  width: 170,
-                  child: _FolderCard(folder: _folders[index]),
-                ),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) => _FolderCard(folder: _folders[index]),
               ),
             ),
           ],
@@ -132,60 +128,46 @@ class _FolderCard extends StatelessWidget {
           }
         },
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          padding: const EdgeInsets.all(14),
+          child: Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: (folder.isUnlocked ? const Color(0xFF2563EB) : Colors.grey)
-                        .withValues(alpha: 0.12),
-                    child: Icon(
-                      folder.isUnlocked ? Icons.folder_open : Icons.lock_outline,
-                      color: folder.isUnlocked ? const Color(0xFF2563EB) : Colors.grey,
-                      size: 24,
-                    ),
-                  ),
-                  if (!folder.isUnlocked)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Yakında',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54),
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: (folder.isUnlocked ? const Color(0xFF2563EB) : Colors.grey)
+                    .withValues(alpha: 0.12),
+                child: Icon(
+                  folder.isUnlocked ? Icons.folder_open : Icons.lock_outline,
+                  color: folder.isUnlocked ? const Color(0xFF2563EB) : Colors.grey,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      folder.title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: folder.isUnlocked ? const Color(0xFF0F172A) : Colors.grey.shade500,
                       ),
                     ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    folder.title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: folder.isUnlocked ? const Color(0xFF0F172A) : Colors.grey.shade500,
+                    const SizedBox(height: 2),
+                    Text(
+                      folder.isUnlocked
+                          ? '${folder.readyCount}/${folder.totalCount} egzersiz hazır'
+                          : '${folder.totalCount} egzersiz',
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    folder.isUnlocked
-                        ? '${folder.readyCount}/${folder.totalCount} egzersiz hazır'
-                        : '${folder.totalCount} egzersiz',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 10),
               if (folder.isUnlocked)
                 const Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Aç',
@@ -194,6 +176,18 @@ class _FolderCard extends StatelessWidget {
                     SizedBox(width: 4),
                     Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF2563EB)),
                   ],
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Yakında',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54),
+                  ),
                 ),
             ],
           ),

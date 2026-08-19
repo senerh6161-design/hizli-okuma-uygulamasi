@@ -37,8 +37,13 @@ class ReadingLevel {
 
 class LevelPage extends StatelessWidget {
   final SchoolLevelConfig schoolLevel;
+  // Klasör 1 akışında artık kullanıcı okul seviyesi SEÇMİYOR (sabit
+  // levels[1] kullanılıyor), o yüzden "Ortaokul Seviyeleri" gibi bir başlık
+  // orada anlamsız/kafa karıştırıcı kalıyor. Sadece school_level_selection_page
+  // üzerinden GERÇEKTEN seviye seçilen akışta true kalır.
+  final bool showSchoolLevelInTitle;
 
-  const LevelPage({super.key, required this.schoolLevel});
+  const LevelPage({super.key, required this.schoolLevel, this.showSchoolLevelInTitle = true});
 
   // WPM'i 5'in katına yuvarlar ve 60-900 aralığında tutar (daha okunur
   // rakamlar: 97.5 yerine 100 gibi).
@@ -113,7 +118,11 @@ class LevelPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${schoolLevel.title.split('(').first.trim()} Seviyeleri'),
+        title: Text(
+          showSchoolLevelInTitle
+              ? '${schoolLevel.title.split('(').first.trim()} Seviyeleri'
+              : '⚡ Hızlı Okuma',
+        ),
       ),
       body: Column(
         children: [
@@ -131,7 +140,9 @@ class LevelPage extends StatelessWidget {
                   child: Text(
                     ProgressManager.personalWpmBaseline != null
                         ? 'Taban hız: kişisel ölçümün (~${ProgressManager.personalWpmBaseline} WPM)'
-                        : 'Taban hız: ${schoolLevel.title.split('(').first.trim()} ortalaması — "Seviyeni Ölç" ile kişiselleştirebilirsin',
+                        : showSchoolLevelInTitle
+                            ? 'Taban hız: ${schoolLevel.title.split('(').first.trim()} ortalaması — "Seviyeni Ölç" ile kişiselleştirebilirsin'
+                            : 'Taban hız: yaş grubu ortalaması — "Seviyeni Ölç" ile kişiselleştirebilirsin',
                     style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                   ),
                 ),
@@ -613,43 +624,54 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
                 BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15),
               ],
             ),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: Tween<double>(begin: 0.85, end: 1.0).animate(animation),
-                        child: child,
-                      ),
+            // Stack + Alignment.center: kelime HER ZAMAN kutunun tam
+            // merkezinde kalır (bir Column'da nokta+boşluk eklemek kelimeyi
+            // merkezden kaydırıyordu). Kırmızı nokta, kelimenin kendi
+            // merkezine göre ~1cm (56px) aşağıya kaydırılmış ayrı bir katman.
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 160),
+                  // switchOutCurve/switchInCurve süreyi ikiye bölüp ayırıyor:
+                  // önce eski kelime TAMAMEN kaybolur, ANCAK ONDAN SONRA yenisi
+                  // belirmeye başlar. Varsayılan AnimatedSwitcher ikisini aynı
+                  // anda (çapraz geçiş) oynatıyordu, bu da kelimelerin bir an
+                  // üst üste binip "iç içe geçmiş" görünmesine yol açıyordu.
+                  switchOutCurve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+                  switchInCurve: const Interval(0.5, 1.0, curve: Curves.easeIn),
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(
+                      scale: Tween<double>(begin: 0.85, end: 1.0).animate(animation),
+                      child: child,
                     ),
-                    child: Padding(
-                      key: ValueKey('$currentWord-$readCount'),
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text(
-                        currentWord,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: fontSize,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF0F172A),
-                        ),
+                  ),
+                  child: Padding(
+                    key: ValueKey('$currentWord-$readCount'),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      currentWord,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const SizedBox(
+                ),
+                Transform.translate(
+                  offset: const Offset(0, 56),
+                  child: const SizedBox(
                     width: 8,
                     height: 8,
                     child: DecoratedBox(
                       decoration: BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

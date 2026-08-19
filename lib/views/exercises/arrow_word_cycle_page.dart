@@ -77,6 +77,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
   void initState() {
     super.initState();
     _rounds = _buildRounds();
+    _displayWords = List<String>.from(_rounds[0].words);
   }
 
   @override
@@ -88,11 +89,20 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
 
   _WordCycle get _current => _rounds[_roundIndex];
 
+  // Tur başladığında o turun kelime setiyle doldurulur; HER TEK lap (bir
+  // tam döngü) bitişinde yeni bir sete geçer ki aynı 4 kelime art arda
+  // tekrarlanmasın, dönerken içerik sürekli tazelensin.
+  late List<String> _displayWords;
+  int _lapsSincePlay = 0;
+  static const int _lapsPerWordSwap = 1;
+
   void _start() {
     setState(() {
       _isRunning = true;
       _elapsed = Duration.zero;
       _activeIndex = 0;
+      _displayWords = List<String>.from(_current.words);
+      _lapsSincePlay = 0;
     });
     _stopwatch = Stopwatch()..start();
     _tickTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
@@ -105,11 +115,24 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
     // Kelimeler ok yönünde (saat yönü/tersi) sırayla tek tek yanıp sönsün.
     _pulseTimer = Timer.periodic(const Duration(milliseconds: 550), (_) {
       if (!mounted) return;
-      final n = _current.words.length;
+      final n = _displayWords.length;
+      final nextIndex = _effectiveClockwise
+          ? (_activeIndex + 1) % n
+          : (_activeIndex - 1 + n) % n;
+      final completedLap = nextIndex == 0;
       setState(() {
-        _activeIndex = _effectiveClockwise
-            ? (_activeIndex + 1) % n
-            : (_activeIndex - 1 + n) % n;
+        _activeIndex = nextIndex;
+        if (completedLap) {
+          _lapsSincePlay++;
+          if (_lapsSincePlay % _lapsPerWordSwap == 0) {
+            final previous = _displayWords;
+            List<String> next;
+            do {
+              next = _wordSets[_random.nextInt(_wordSets.length)];
+            } while (next == previous);
+            _displayWords = next;
+          }
+        }
       });
     });
   }
@@ -231,6 +254,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
                 _roundIndex = 0;
                 _roundTimes.clear();
                 _elapsed = Duration.zero;
+                _displayWords = List<String>.from(_rounds[0].words);
               });
             },
             child: const Text('Yeniden Başlat'),
@@ -242,7 +266,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
 
   @override
   Widget build(BuildContext context) {
-    final words = _current.words;
+    final words = _displayWords;
     final n = words.length;
 
     return CompletionPopScope(
@@ -251,6 +275,28 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
       appBar: AppBar(title: const Text('🔁 Kelime Döngüsü')),
       body: Column(
         children: [
+          if (!_isRunning)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline_rounded, color: Color(0xFF2563EB), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Kelimeleri ok yönünde sırayla, en hızlı şekilde oku. 3 tur var, her turda daha hızlı olmaya çalış!',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             color: Colors.grey.shade100,

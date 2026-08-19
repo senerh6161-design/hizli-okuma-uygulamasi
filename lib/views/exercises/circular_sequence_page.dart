@@ -83,6 +83,7 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
   int? _bestMs;
 
   static const List<int> _demoStepMs = [700, 500, 350];
+  static const List<String> _demoLapLabels = ['Yavaş', 'Orta', 'Hızlı'];
 
   @override
   void initState() {
@@ -315,18 +316,58 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
                 ),
               ),
             ),
+          if (_isDemoing)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.visibility_rounded, color: Color(0xFF2563EB), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Sırayı izle — 3 tur sürecek, her turda biraz daha hızlanacak!',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             color: Colors.grey.shade100,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _isPlaying
-                      ? 'Sırada: ${_mode.sequence[_targetIndex]}'
-                      : (_isDemoing ? 'İzle: ${_demoLap + 1}. tur' : 'Hazır mısın?'),
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                Row(
+                  children: [
+                    Text(
+                      _isPlaying
+                          ? 'Sırada: ${_mode.sequence[_targetIndex]}'
+                          : (_isDemoing ? 'İzle: ${_demoLap + 1}/3. tur' : 'Hazır mısın?'),
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                    ),
+                    if (_isDemoing) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0D9488).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '⚡ ${_demoLapLabels[_demoLap.clamp(0, _demoLapLabels.length - 1)]}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488), fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 Text(
                   'Süre: ${(_elapsed.inMilliseconds / 1000).toStringAsFixed(1)} sn',
@@ -395,11 +436,13 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
                             top: dy,
                             child: GestureDetector(
                               onTap: () => _onTapSlot(i),
-                              child: AnimatedContainer(
-                                // En hızlı turda yuvalar arası 350ms var;
-                                // geçiş bu kadar yakın olursa bir önceki
-                                // vurgu tam sönmeden yenisi başlıyor.
-                                duration: const Duration(milliseconds: 90),
+                              // Bilerek animasyonsuz (Container, AnimatedContainer
+                              // DEĞİL): en hızlı turda yuvalar 350ms'de bir
+                              // değişiyor, herhangi bir geçiş süresi bir
+                              // öncekinin vurgusunun tam sönmeden yenisiyle
+                              // üst üste binmesine ("gölge kalması") yol
+                              // açıyordu. Anlık geçiş bunu kökten çözer.
+                              child: Container(
                                 width: nodeSize,
                                 height: nodeSize,
                                 decoration: BoxDecoration(

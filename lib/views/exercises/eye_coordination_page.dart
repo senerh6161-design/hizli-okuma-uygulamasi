@@ -271,14 +271,13 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
                               return Positioned(
                                 left: point.dx * size.width - nodeSize / 2,
                                 top: point.dy * size.height - nodeSize / 2,
-                                child: AnimatedContainer(
-                                  // Kısa tutuldu: en hızlı turda noktalar
-                                  // arası 350ms var, geçiş bunun çok
-                                  // altında kalmazsa bir önceki noktanın
-                                  // parlaması yeni nokta parlarken hâlâ
-                                  // sönmemiş oluyor ("gölge kalıyor" hissi
-                                  // veren, dikkat dağıtıcı bir kalıntı).
-                                  duration: const Duration(milliseconds: 90),
+                                // Bilerek animasyonsuz (Container, AnimatedContainer
+                                // DEĞİL): büyüyüp küçülme geçişi bir öncekinin
+                                // hâlâ küçülmekte olduğu bir anda yeni noktanın
+                                // büyümeye başlamasına, yani iki noktanın bir an
+                                // üst üste binmiş gibi görünmesine yol açıyordu.
+                                // Anlık geçiş bunu kökten çözer.
+                                child: Container(
                                   width: nodeSize,
                                   height: nodeSize,
                                   decoration: BoxDecoration(
