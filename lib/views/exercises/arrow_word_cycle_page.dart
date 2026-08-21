@@ -7,7 +7,7 @@ import '../../widgets/completion_pop_scope.dart';
 
 /// "6. Madde" dokümanındaki etkinlik: kelimeler bir daire üzerinde oklarla
 /// birbirine bağlı halde durur, öğrenci ok yönünü takip ederek (saat yönü ya
-/// da tersi) resmini çeker gibi en kısa sürede okur. Süre: 30 sn, günde iki
+/// da tersi) resmini çeker gibi en kısa sürede okur. Süre: 60 sn, günde iki
 /// kez, her seferinde daha hızlı olunması hedeflenir.
 class ArrowWordCyclePage extends StatefulWidget {
   const ArrowWordCyclePage({super.key});
@@ -23,39 +23,43 @@ class _WordCycle {
 }
 
 class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
-  static const List<String> _setA = ['Azimliyim', 'Çalışkanım', 'Başarılıyım', 'Zekiyim'];
-  static const List<String> _setB = [
-    'Bir Hedef Belirle', 'Son Sürat Çalış', 'Zaman En Büyük Sermaye', 'Kıymetini Bil',
-  ];
-  static const List<String> _setC = ['Gayretliyim', 'Kararlıyım', 'Sabırlıyım', 'Umutluyum'];
-  static const List<String> _setD = ['Disiplinliyim', 'Odaklıyım', 'Meraklıyım', 'Cesaretliyim'];
-  static const List<String> _setE = [
-    'Bugün Bir Adım At', 'Pes Etme Devam Et', 'Küçük Adımlar Büyütür', 'Her Gün Biraz Daha',
-  ];
-  static const List<String> _setF = ['Öğrenmeyi Severim', 'Merak Ederim', 'Soru Sorarım', 'Araştırırım'];
-  static const List<String> _setG = ['Planlıyım', 'Düzenliyim', 'Zamanımı İyi Kullanırım', 'Önceliğimi Bilirim'];
-  static const List<String> _setH = ['Denemekten Korkmam', 'Hatamdan Öğrenirim', 'Yeniden Denerim', 'Asla Vazgeçmem'];
-  static const List<String> _setI = ['Kendime Güvenirim', 'Değerliyim', 'Yeterliyim', 'Başarabilirim'];
+  // 1. tur: tek kelime. 2. tur: 2 kelimelik ifadeler. 3. tur: 2-3 kelimelik
+  // ifadeler. Her tur kendi zorluk seviyesinde kalır, sadece hangi set
+  // gösterileceği (ve tur içindeki set değişimleri) rastgele seçilir.
+  static const List<String> _t1A = ['Azimliyim', 'Çalışkanım', 'Başarılıyım', 'Zekiyim'];
+  static const List<String> _t1B = ['Gayretliyim', 'Kararlıyım', 'Sabırlıyım', 'Umutluyum'];
+  static const List<String> _t1C = ['Disiplinliyim', 'Odaklıyım', 'Meraklıyım', 'Cesaretliyim'];
 
-  static const List<List<String>> _wordSets = [
-    _setA, _setB, _setC, _setD, _setE, _setF, _setG, _setH, _setI,
-  ];
+  static const List<String> _t2A = ['Denemekten Korkmam', 'Hatamdan Öğrenirim', 'Yeniden Denerim', 'Asla Vazgeçmem'];
+  static const List<String> _t2B = ['Kendime Güvenirim', 'Azimle Çalışırım', 'Sabırla Beklerim', 'Cesaretle İlerlerim'];
+  static const List<String> _t2C = ['Planımı Uygularım', 'Zamanı Yönetirim', 'Hedefe Odaklanırım', 'Kararlı Kalırım'];
+
+  static const List<String> _t3A = ['Bir Hedef Belirle', 'Son Sürat Çalış', 'Kıymetini Bil', 'Zamanını İyi Kullan'];
+  static const List<String> _t3B = ['Küçük Adımlar Büyütür', 'Asla Pes Etme', 'Her Gün İlerle', 'Bugün Adım At'];
+  static const List<String> _t3C = ['Hayalini Gerçek Yap', 'Bugünü Değerlendir', 'Yarına Hazırlan', 'Kendine İnan'];
+
+  static const List<List<String>> _tier1 = [_t1A, _t1B, _t1C];
+  static const List<List<String>> _tier2 = [_t2A, _t2B, _t2C];
+  static const List<List<String>> _tier3 = [_t3A, _t3B, _t3C];
+  static const List<List<List<String>>> _tiersByRound = [_tier1, _tier2, _tier3];
 
   final Random _random = Random();
   static const int _totalRounds = 3;
-  static const int _capSeconds = 30;
+  static const int _capSeconds = 60;
 
   late List<_WordCycle> _rounds;
 
-  // 9 farklı kelime setinden HER SEFERİNDE rastgele 3 tanesi seçilir, bu
-  // yüzden kullanıcı ertesi gün girdiğinde büyük ihtimalle farklı kelimeler
-  // görür; aynı setin sadece yönü değişmiş hali de gösterilmez.
+  List<List<String>> _poolForRound(int roundIndex) => _tiersByRound[roundIndex];
+
+  // Her tur kendi zorluk kademesinden (tek kelime / 2 kelime / 2-3 kelime)
+  // rastgele bir set alır; böylece kullanıcı ertesi gün girdiğinde büyük
+  // ihtimalle farklı kelimeler görür ama tur bazındaki zorluk sırası sabit kalır.
   List<_WordCycle> _buildRounds() {
-    final shuffledSets = List<List<String>>.from(_wordSets)..shuffle(_random);
-    return shuffledSets
-        .take(_totalRounds)
-        .map((set) => _WordCycle(set, _random.nextBool()))
-        .toList();
+    return List.generate(_totalRounds, (i) {
+      final pool = _poolForRound(i);
+      final set = pool[_random.nextInt(pool.length)];
+      return _WordCycle(set, _random.nextBool());
+    });
   }
   int _roundIndex = 0;
   bool _isRunning = false;
@@ -125,11 +129,12 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
         if (completedLap) {
           _lapsSincePlay++;
           if (_lapsSincePlay % _lapsPerWordSwap == 0) {
+            final pool = _poolForRound(_roundIndex);
             final previous = _displayWords;
             List<String> next;
             do {
-              next = _wordSets[_random.nextInt(_wordSets.length)];
-            } while (next == previous);
+              next = pool[_random.nextInt(pool.length)];
+            } while (next == previous && pool.length > 1);
             _displayWords = next;
           }
         }
@@ -156,7 +161,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
           title: Text(timedOut ? '⏱️ Süre Doldu' : '✅ ${_roundIndex + 1}. Tur Bitti'),
           content: Text(
             timedOut
-                ? '30 saniyede bitiremedin, bir sonraki turda daha hızlı olmayı dene!'
+                ? '$_capSeconds saniyede bitiremedin, bir sonraki turda daha hızlı olmayı dene!'
                 : '${seconds.toStringAsFixed(1)} saniyede bitirdin. Bir sonraki turda daha hızlı olmaya çalış!',
           ),
           actions: [
@@ -393,8 +398,7 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
                           return Positioned(
                             left: dx - w / 2,
                             top: dy - h / 2,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
+                            child: Container(
                               width: w,
                               height: h,
                               alignment: Alignment.center,
@@ -406,15 +410,6 @@ class _ArrowWordCyclePageState extends State<ArrowWordCyclePage> {
                                   color: const Color(0xFF2563EB),
                                   width: isActive ? 2.5 : 1.5,
                                 ),
-                                boxShadow: isActive
-                                    ? [
-                                        BoxShadow(
-                                          color: const Color(0xFF2563EB).withValues(alpha: 0.45),
-                                          blurRadius: 14,
-                                          spreadRadius: 1,
-                                        ),
-                                      ]
-                                    : [],
                               ),
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,

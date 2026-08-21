@@ -345,23 +345,28 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
                 ],
               ),
             ),
-          if (_isPlaying)
+          // Yönerge OYUN BAŞLADIKTAN SONRA üstte gösterilirse öğrencinin
+          // dikkati zaten daire üzerindeyken kaçırılabiliyordu — bu yüzden
+          // etkinliğe girer girmez, henüz İZLE/BAŞLA'ya basmadan ÖNCE
+          // gösteriliyor.
+          if (!_isDemoing && !_isPlaying)
             Container(
               width: double.infinity,
               margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF0D9488).withValues(alpha: 0.1),
+                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.bolt_rounded, color: Color(0xFF0D9488), size: 20),
+                  Icon(Icons.info_outline_rounded, color: Color(0xFF2563EB), size: 20),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Şimdi bu sayıları sıraya dizme sırası sende — hızlı olmayı unutma!',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF115E59), fontWeight: FontWeight.w600),
+                      'İstersen önce İZLE\'ye basıp sırayı öğren, sonra BAŞLA\'ya bas — bu sayıları '
+                      'sıraya dizme sırası sende olacak, hızlı olmayı unutma!',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],

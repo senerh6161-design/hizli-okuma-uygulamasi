@@ -12,9 +12,16 @@ class _WordRow {
   const _WordRow(this.root, this.mid, this.long);
 }
 
+class _RecallQuestion {
+  final List<String> options;
+  final String notSeenWord;
+  const _RecallQuestion(this.options, this.notSeenWord);
+}
+
 /// "7. Madde" dokümanındaki etkinlik: her satırda kök bir kelimeden başlayıp
 /// giderek uzayan üç biçim var (Başar -> Başarılı -> Başarılıyım). Satırlar 3
-/// tur boyunca gösterilir, her turda gösterim hızı otomatik olarak artar.
+/// tur boyunca gösterilir, hızı öğrenci kendi seçer ve istediği an bir üst
+/// hıza geçebilir — herkes aynı seviyede okumadığı için hız sabitlenmez.
 /// Sonunda hangi uzamış kelimelerin gösterildiğini hatırlama testi yapılır.
 class GrowingWordsPage extends StatefulWidget {
   const GrowingWordsPage({super.key});
@@ -64,12 +71,16 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
 
   static const int _rowsPerSession = 6;
   static const int _totalPasses = 3;
-  static const List<int> _passStepMs = [1300, 900, 600];
+  // Hız artık turla otomatik artmıyor — öğrenci bu 3 seviyeden istediğini
+  // istediği an seçer (herkes aynı seviyede okumadığı için).
+  static const List<int> _speedStepsMs = [1300, 900, 600];
+  static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
+
+  static const int _recallQuestionCount = 5;
 
   final Random _random = Random();
   late List<_WordRow> _sessionRows;
-  late List<String> _recallOptions;
-  final Set<String> _selectedOptions = {};
+  List<_RecallQuestion> _recallQuestions = [];
 
   bool _isReading = false;
   bool _isPaused = false; // DURDUR'a basılıp henüz teste geçilmemiş durum
@@ -78,10 +89,20 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
   int _pass = 0;
   int _rowInPass = 0; // sessionRows içindeki hangi satırdayız
   int _stage = 0; // 0=kök, 1=kök+orta, 2=kök+orta+uzun (hepsi yan yana görünür)
+  int _speedLevel = 0; // öğrencinin seçtiği hız seviyesi (0=yavaş..2=hızlı)
   // Test sadece GERÇEKTEN gösterilmiş satırları sorsun diye (erken durunca
   // henüz görülmemiş kelimeler haksız yere sorulmasın).
   final Set<int> _seenRowIndices = {};
   Timer? _timer;
+  // Kelime uzayıp kart genişleyince en yeni (en uzun) biçim kart görünür
+  // alanın dışında kalıp kesik görünüyordu — her yeni aşamada bu kaydırıcı
+  // otomatik olarak en sona kayar, kelime her zaman tam görünür.
+  final ScrollController _familyScrollController = ScrollController();
+
+  int _recallIndex = 0;
+  int _recallCorrectCount = 0;
+  int? _recallSelectedIndex;
+  Set<String> _recallShownWords = {};
 
   @override
   void initState() {
@@ -92,28 +113,60 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _familyScrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollFamilyToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_familyScrollController.hasClients) return;
+      _familyScrollController.animateTo(
+        _familyScrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _prepareSession() {
     final shuffled = List<_WordRow>.from(_allRows)..shuffle(_random);
     _sessionRows = shuffled.take(_rowsPerSession).toList();
     _seenRowIndices.clear();
-    _selectedOptions.clear();
+    _showRecall = false;
+    _recallIndex = 0;
+    _recallCorrectCount = 0;
+    _recallSelectedIndex = null;
   }
 
-  // Test SADECE gerçekten gösterilmiş satırlardan hazırlanır — Durdur'a
-  // erken basılırsa henüz görülmemiş kelimeler soru olarak çıkmaz.
-  void _prepareRecallOptions() {
-    final seenLongs = _seenRowIndices.map((i) => _sessionRows[i].long).toSet();
-    final otherLongs = _allRows
+  // "Hangisini görmedin?" testi: her soruda gösterilmiş 3 kelime + hiç
+  // gösterilmemiş 1 kelime karışık sırayla sunulur, öğrenci görmediğini
+  // bulmaya çalışır. Test SADECE gerçekten gösterilmiş satırlardan
+  // hazırlanır — Durdur'a erken basılırsa henüz görülmemiş kelimeler
+  // "gösterilmiş" seçenek olarak çıkmaz.
+  void _prepareRecallQuestions() {
+    final seenLongs = _seenRowIndices.map((i) => _sessionRows[i].long).toList()..shuffle(_random);
+    _recallShownWords = seenLongs.toSet();
+    if (seenLongs.isEmpty) {
+      _recallQuestions = [];
+      return;
+    }
+    final notSeenPool = _allRows
         .where((r) => !seenLongs.contains(r.long))
         .map((r) => r.long)
         .toList()
       ..shuffle(_random);
-    final options = <String>{...seenLongs};
-    options.addAll(otherLongs.take(4));
-    _recallOptions = options.toList()..shuffle(_random);
+
+    final realSlotsPerQuestion = min(3, seenLongs.length);
+    final questions = <_RecallQuestion>[];
+    for (int i = 0; i < _recallQuestionCount; i++) {
+      final notSeen = notSeenPool[i % notSeenPool.length];
+      final reals = [
+        for (int j = 0; j < realSlotsPerQuestion; j++) seenLongs[(i + j) % seenLongs.length],
+      ];
+      final options = [notSeen, ...reals]..shuffle(_random);
+      questions.add(_RecallQuestion(options, notSeen));
+    }
+    _recallQuestions = questions;
   }
 
   void _startReading() {
@@ -151,16 +204,19 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
 
   void _goToRecallNow() {
     _timer?.cancel();
-    _prepareRecallOptions();
+    _prepareRecallQuestions();
     setState(() {
       _isReading = false;
       _isPaused = false;
       _showRecall = true;
+      _recallIndex = 0;
+      _recallCorrectCount = 0;
+      _recallSelectedIndex = null;
     });
   }
 
   void _scheduleNext() {
-    final baseStep = _passStepMs[_pass.clamp(0, _passStepMs.length - 1)];
+    final baseStep = _speedStepsMs[_speedLevel];
     // Üçü de (kök+orta+uzun) yan yana göründüğünde, karşılaştırıp okumaya
     // vakit versin diye bir sonraki kelimeye geçiş biraz daha yavaş.
     final stepMs = _stage >= 2 ? (baseStep * 1.6).round() : baseStep;
@@ -182,36 +238,51 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
             _stage = 0;
           });
         } else {
-          _prepareRecallOptions();
+          _prepareRecallQuestions();
           setState(() {
             _isReading = false;
             _showRecall = true;
+            _recallIndex = 0;
+            _recallCorrectCount = 0;
+            _recallSelectedIndex = null;
           });
           return;
         }
       }
+      _scrollFamilyToEnd();
       _scheduleNext();
     });
   }
 
-  void _toggleOption(String word) {
-    setState(() {
-      if (_selectedOptions.contains(word)) {
-        _selectedOptions.remove(word);
+  void _answerRecallQuestion(int optionIndex) {
+    if (_recallSelectedIndex != null) return;
+    final q = _recallQuestions[_recallIndex];
+    final isCorrect = q.options[optionIndex] == q.notSeenWord;
+    if (isCorrect) {
+      _recallCorrectCount++;
+      SoundManager.playCorrect();
+    } else {
+      SoundManager.playGentleTap();
+    }
+    setState(() => _recallSelectedIndex = optionIndex);
+    Future.delayed(const Duration(milliseconds: 900), () {
+      if (!mounted) return;
+      if (_recallIndex < _recallQuestions.length - 1) {
+        setState(() {
+          _recallIndex++;
+          _recallSelectedIndex = null;
+        });
       } else {
-        _selectedOptions.add(word);
+        _finishAll();
       }
     });
   }
 
-  void _submitRecall() {
+  void _finishAll() {
     _hasCompletedOnce = true;
-    final correctSet = _seenRowIndices.map((i) => _sessionRows[i].long).toSet();
-    final correctPicks = _selectedOptions.intersection(correctSet).length;
-    final wrongPicks = _selectedOptions.difference(correctSet).length;
-    final score = ((correctPicks - wrongPicks) / correctSet.length * 100).round().clamp(0, 100);
-    ProgressManager.recordAttentionScore(score);
-    final isGood = score >= 60;
+    final overallScore = (_recallCorrectCount / _recallQuestions.length * 100).round();
+    ProgressManager.recordAttentionScore(overallScore);
+    final isGood = overallScore >= 60;
 
     if (isGood) {
       SoundManager.playSuccess();
@@ -221,7 +292,7 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
 
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Uzayan Kelimeler',
-      result: '$correctPicks/${correctSet.length} doğru · %$score',
+      result: '$_recallCorrectCount/${_recallQuestions.length} doğru · %$overallScore',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -229,17 +300,17 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: Text(isGood ? '🎉 Harika Hafıza!' : '📖 Tekrar Deneyelim'),
+        title: Text(isGood ? '🎉 Harika!' : '📖 Tekrar Deneyelim'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Doğru hatırlanan: $correctPicks / ${correctSet.length}'),
-            Text('Puan: %$score'),
+            Text('Hafıza testi: $_recallCorrectCount / ${_recallQuestions.length} doğru'),
+            Text('Puan: %$overallScore'),
             const SizedBox(height: 10),
             const Text('Gösterilen kelimeler:', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text('• ${correctSet.join("\n• ")}'),
+            Text('• ${_recallShownWords.join("\n• ")}'),
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
               const Text('🎉 Yeni Başarım Kazandın!',
@@ -336,20 +407,51 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
               ),
             ),
             Text(
-              '$_rowsPerSession satır, giderek hızlanır',
+              '$_rowsPerSession satır',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Text(
-          _isPaused
-              ? 'Duraklatıldı — kelimenin eklerine bakabilirsin. Devam et ya da testi başlat!'
-              : 'Kelime kökten başlayıp yan yana büyüyecek. Sonunda hangi uzun kelimeleri gördüğün sorulacak, dikkatli oku!',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            const Text('Hız: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            const SizedBox(width: 6),
+            for (int i = 0; i < _speedLabels.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              _speedChip(i),
+            ],
+          ],
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _isPaused ? Icons.pause_circle_outline_rounded : Icons.info_outline_rounded,
+                color: const Color(0xFF2563EB),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _isPaused
+                      ? 'Duraklatıldı — kelimenin eklerine bakabilirsin. Devam et ya da testi başlat!'
+                      : 'Kelime kökten başlayıp yan yana büyüyecek. İstediğin an hızını değiştirebilirsin. '
+                        'Sonunda hangi uzun kelimeleri gördüğün sorulacak, dikkatli oku!',
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
         Expanded(
           child: Center(
             child: Container(
@@ -477,14 +579,40 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
       );
     }
 
-    // FittedBox: hepsi TEK satırda kalsın diye (alt satıra kaymasın), uzun
-    // kelimelerde satır gerekirse tamamı orantılı küçültülür.
-    return FittedBox(
-      fit: BoxFit.scaleDown,
+    // Uzun kelime eklendiğinde yazı küçülmesin diye FittedBox kullanılmıyor;
+    // gerekirse yatay kaydırılır, tüm biçimler her zaman aynı punto kalır.
+    // _scrollFamilyToEnd her yeni aşamada bu kaydırıcıyı sona götürür, en
+    // yeni (en uzun) biçim asla kesik kalmaz.
+    return SingleChildScrollView(
+      controller: _familyScrollController,
+      scrollDirection: Axis.horizontal,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: children,
       ),
+    );
+  }
+
+  static const List<IconData> _speedIcons = [
+    Icons.hourglass_bottom_rounded,
+    Icons.directions_walk_rounded,
+    Icons.bolt_rounded,
+  ];
+
+  Widget _speedChip(int level) {
+    final selected = _speedLevel == level;
+    return ChoiceChip(
+      avatar: Icon(_speedIcons[level], size: 18, color: selected ? Colors.white : const Color(0xFF2563EB)),
+      label: Text(_speedLabels[level]),
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: selected ? Colors.white : const Color(0xFF2563EB),
+      ),
+      selected: selected,
+      onSelected: (_) => setState(() => _speedLevel = level),
+      selectedColor: const Color(0xFF2563EB),
+      backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.08),
+      side: BorderSide(color: const Color(0xFF2563EB).withValues(alpha: selected ? 1 : 0.3)),
     );
   }
 
@@ -509,18 +637,31 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
   }
 
   Widget _buildRecallView({Key? key}) {
+    final q = _recallQuestions[_recallIndex];
     return Column(
       key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            'Soru: ${_recallIndex + 1}/${_recallQuestions.length}',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+          ),
+        ),
+        const SizedBox(height: 16),
         const Text(
-          'Az önce hangi kelimeleri gördün? Doğrularını seç:',
+          'Aşağıdakilerden hangisini GÖRMEDİN?',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         Expanded(
           child: GridView.builder(
-            itemCount: _recallOptions.length,
+            itemCount: q.options.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 10,
@@ -528,50 +669,47 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
               childAspectRatio: 2.4,
             ),
             itemBuilder: (context, index) {
-              final word = _recallOptions[index];
-              final isSelected = _selectedOptions.contains(word);
+              final word = q.options[index];
+              final isNotSeen = word == q.notSeenWord;
+              final isSelected = _recallSelectedIndex == index;
+              final answered = _recallSelectedIndex != null;
+
+              Color bg = Colors.white;
+              Color border = Colors.grey.shade300;
+              Color textColor = Colors.black87;
+              if (answered && isNotSeen) {
+                bg = Colors.green.shade50;
+                border = Colors.green.shade400;
+                textColor = Colors.green.shade800;
+              } else if (answered && isSelected) {
+                bg = Colors.red.shade50;
+                border = Colors.red.shade400;
+                textColor = Colors.red.shade800;
+              }
+
               return InkWell(
-                onTap: () => _toggleOption(word),
+                onTap: answered ? null : () => _answerRecallQuestion(index),
                 borderRadius: BorderRadius.circular(14),
                 child: Container(
                   alignment: Alignment.center,
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF2563EB) : Colors.white,
+                    color: bg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isSelected ? const Color(0xFF2563EB) : Colors.grey.shade300,
-                      width: 2,
-                    ),
+                    border: Border.all(color: border, width: 2),
                   ),
                   child: Text(
                     word,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: isSelected ? Colors.white : Colors.black87,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
                   ),
                 ),
               );
             },
           ),
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: _selectedOptions.isEmpty ? null : _submitRecall,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('KONTROL ET', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          ),
-        ),
       ],
     );
   }
+
 }

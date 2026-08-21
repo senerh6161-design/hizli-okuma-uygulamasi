@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/comprehension_data.dart';
 import '../../models/progress_manager.dart';
+import '../../widgets/word_definition_sheet.dart';
 
 enum _TestPhase { intro, reading, quiz, result }
 
@@ -202,7 +203,18 @@ class _WpmTestPageState extends State<WpmTestPage> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Icon(Icons.touch_app_rounded, size: 14, color: Colors.grey.shade500),
+            const SizedBox(width: 4),
+            Text(
+              'Anlamını bilmediğin bir kelimeye dokun!',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         Expanded(
           child: SingleChildScrollView(
             child: Container(
@@ -213,10 +225,7 @@ class _WpmTestPageState extends State<WpmTestPage> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade300),
               ),
-              child: Text(
-                _passage.content,
-                style: const TextStyle(fontSize: 17, height: 1.6, color: Colors.black87),
-              ),
+              child: buildInteractiveText(context, _passage.content),
             ),
           ),
         ),

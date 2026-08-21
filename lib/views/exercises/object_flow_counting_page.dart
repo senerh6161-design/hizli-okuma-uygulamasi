@@ -13,43 +13,39 @@ class _ObjectItem {
 
 /// 1. Bölüm'ün her turu: kendi hedef/çeldiricisi, kendi akışı ve kendi
 /// sorusu olan bağımsız bir tur. 1. Bölüm bunlardan 3 tanesini sırayla
-/// (duyuru → akış → soru) çalıştırır.
+/// (duyuru → akış → soru) çalıştırır. Akışta aktif satırdaki nesneler TEK
+/// TEK belirir, satır dolunca hepsi birden kaybolup yeni satır gelir — tüm
+/// sayfayı aynı anda emojiyle doldurmaz.
 class _Stage1Round {
   final _ObjectItem target;
   final _ObjectItem decoy;
-  final List<_ObjectItem> sequence;
+  final List<List<_ObjectItem>> lines;
   final int correctCount;
   int? answer;
   bool? wasCorrect;
   _Stage1Round({
     required this.target,
     required this.decoy,
-    required this.sequence,
+    required this.lines,
     required this.correctCount,
   });
 }
 
-/// 2. Bölüm'ün her turu: 1. Bölüm ile AYNI mantık (tek hedef duyur → akış →
-/// soru), sadece akışın GÖRSEL TARZI farklı — nesneler birikmiyor, satır
-/// satır akıp kayboluyor. Öğrenci her turda SADECE 1 nesneyi aklında tutar.
-class _Stage2Round {
-  final String targetName;
-  final int correctCount;
-  final List<List<_ObjectItem>> lines;
-  int? answer;
-  bool? wasCorrect;
-  _Stage2Round({
-    required this.targetName,
-    required this.correctCount,
-    required this.lines,
-  });
+/// Eşleştirme oyunundaki tek bir kart: arkası kapalıyken sadece '?' görünür,
+/// çevrilince (ya da eşleşince) emojisi gösterilir.
+class _MatchCard {
+  final _ObjectItem item;
+  bool isFlipped = false;
+  bool isMatched = false;
+  _MatchCard(this.item);
 }
 
 /// Öğretmen dokümanındaki nesne akışı etkinliği: satır üstünde hareketli
 /// nesneler akar, bazı nesneler defalarca tekrarlanır. İki bölümden oluşur:
-/// 1. Bölüm'de nesneler tek tek birikerek akar, 2. Bölüm'de satır satır akıp
-/// kaybolur — her ikisi de 3'er tur, her turda tek bir hedef nesne önceden
-/// duyurulup sonunda "kaç kez gördün?" diye sorulur.
+/// 1. Bölüm'de her satırdaki nesneler TEK TEK belirip satır dolunca hepsi
+/// birden kaybolur, yeni satır gelir — 3 tur, her turda tek bir hedef nesne
+/// önceden duyurulup sonunda "kaç kez gördün?" diye sorulur. 2. Bölüm'de ise
+/// kartların arkası kapalı halde emoji eşleştirme oyunu oynanır.
 class ObjectFlowCountingPage extends StatefulWidget {
   const ObjectFlowCountingPage({super.key});
 
@@ -131,50 +127,49 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     ['Muz', 'Mango'],
   ];
 
-  // Doğrudan doğrulanabilir bir örnek doküman değeri yok, doğrudan
-  // dokümanın verdiği "kitap kaç kez gösterildi" örneğiyle uyumlu bir hedef
-  // seti seçildi.
-  static const Map<String, int> _targetCounts = {
-    'Kitap': 14,
-    'Kalem': 10,
-    'Silgi': 7,
-  };
+  // Türk bayrağı her oturumda KESİNLİKLE sorulan nesnelerden biri olsun diye
+  // ayrı tutuluyor — _prepareStage1Rounds bu çifti rastgele seçime bırakmadan
+  // her zaman 3 turdan birine dahil eder.
+  static const List<String> _flagPair = ['Ay Yıldız Bayrak', 'Balon'];
 
-  static const int _totalPasses = 2;
-  static const int _lineIntervalMs = 1500;
-  static const int _itemsPerLine = 10;
-  static const int _fillerObjectCount = 18;
+  static const int _itemsPerLine = 6;
+  static const int _rowsPerRound = 30;
+  // Akış ilerledikçe nesneler giderek hızlı belirir — ilk satırlarda
+  // rahat say, sonlara doğru dikkat gerektirecek şekilde hızlanır.
+  static const int _startItemMs = 450;
+  static const int _endItemMs = 180;
+  static const int _rowPauseMs = 500; // satır tamamlanınca kaybolmadan önceki bekleme
+  // Eşleştirme oyunu 3 turda kolaydan zora gider: az emojiden çok emojiye.
+  static const List<int> _matchPairCountsByStage = [4, 6, 8];
 
   final Random _random = Random();
   bool _hasCompletedOnce = false;
 
-  // 1. BÖLÜM (ÖNCE çalışır): 3 AYRI tur — her turda tek bir hedef nesne
-  // önceden duyurulur, nesneler TEK TEK yan yana birikerek akar, aralarına
-  // kasıtlı bir çeldirici karışır, sonunda "kaç kez gördün?" diye o turun
-  // sorusu sorulur.
+  // TEK BÖLÜM: 3 AYRI tur — her turda tek bir hedef nesne önceden duyurulur,
+  // aktif satırdaki nesneler TEK TEK belirir, satır dolunca hepsi birden
+  // kaybolur ve yeni satır gelir; aralarına kasıtlı bir çeldirici karışır,
+  // sonunda "kaç kez gördün?" diye o turun sorusu sorulur.
   late List<_Stage1Round> _stage1Rounds; // her zaman 3 eleman
   int _stage1RoundIndex = 0;
   bool _stage1FlowRunning = false;
   bool _stage1ShowQuestion = false;
-  int _stage1FlowIndex = 0; // aktif turun akışındaki konum
+  int _stage1LineIndex = 0; // aktif turun akışındaki satır
+  int _stage1ItemIndex = 0; // aktif satırda kaç nesne belirdi (0 = henüz hiçbiri)
   Timer? _stage1Timer;
 
   _Stage1Round get _stage1Round => _stage1Rounds[_stage1RoundIndex];
 
-  // 2. BÖLÜM (1. Bölüm bitince başlar): AYNI mantık (tek hedef duyur → akış
-  // → soru) 3 tur, ama akış görsel olarak satır satır akıp kayboluyor
-  // (1. Bölüm'deki gibi birikmiyor) — bkz. _oldFlowStarted.
-  bool _oldFlowStarted = false;
-  bool _showOldFlowIntro = false;
-  late List<_Stage2Round> _stage2Rounds; // her zaman 3 eleman
-  int _stage2RoundIndex = 0;
-  bool _isRunning = false;
-  bool _showQuestions = false;
-  int _pass = 0;
-  int _lineIndex = 0;
-  Timer? _timer;
-
-  _Stage2Round get _oldRound => _stage2Rounds[_stage2RoundIndex];
+  // 2. BÖLÜM (1. Bölüm bitince başlar): kartların arkası kapalı, öğrenci
+  // ikişer ikişer çevirip aynı emojiyi eşleştirmeye çalışır. 3 tur var,
+  // her turda çift sayısı artar (kolaydan zora).
+  bool _matchingStageStarted = false;
+  bool _showMatchingIntro = false;
+  int _matchStageIndex = 0; // 0..2
+  late List<_MatchCard> _matchCards;
+  int? _firstFlippedIndex;
+  bool _matchInputLocked = false;
+  int _matchMoves = 0; // 3 tur boyunca toplam hamle
+  int _matchedPairs = 0; // aktif turda eşleşen çift sayısı
 
   @override
   void initState() {
@@ -184,7 +179,6 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
 
   @override
   void dispose() {
-    _timer?.cancel();
     _stage1Timer?.cancel();
     super.dispose();
   }
@@ -196,22 +190,20 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   }
 
   void _prepareStage1Rounds() {
-    final pairPool = _confusablePairNames.toList()..shuffle(_random);
-    final chosenPairs = pairPool.take(3).toList();
+    // Bayrak çifti HER OTURUMDA garanti edilsin diye ayrı tutulup rastgele
+    // seçilen diğer 2 çiftle birleştiriliyor, sonra tur sırası karıştırılıyor.
+    final otherPairs = _confusablePairNames.where((p) => p != _flagPair).toList()..shuffle(_random);
+    final chosenPairs = [_flagPair, ...otherPairs.take(2)]..shuffle(_random);
 
     _stage1Rounds = chosenPairs.map((pairNames) {
       final flipped = _random.nextBool();
       final target = _byName(flipped ? pairNames[1] : pairNames[0]);
       final decoy = _byName(flipped ? pairNames[0] : pairNames[1]);
 
-      // "30 satır" dediğimiz, tek tek gelen nesnelerin TOPLAMDA sayfayı
-      // doldurması gerekiyordu — 25-30 nesne yan yana birikince sayfanın
-      // yarısı boş kalıyordu. Sayıyı büyüttük ki birikince gerçekten tüm
-      // sayfayı kaplasın (oran aynı kaldı: hedef ~%20, çeldirici ~%15).
-      // Hedef/çeldirici sayısı görünen satır sayısına (~12-14) yakın
-      // tutuluyor ki dizinin tamamına eşit dağıtıldıklarında satır başına
-      // gerçekten ~1 tane düşsün, birden fazla olmasın.
-      final totalLength = 70 + _random.nextInt(21); // 70-90 nesne
+      // 30 satır, her satırda TAM OLARAK en fazla 1 hedef ve en fazla 1
+      // çeldirici olacak şekilde satır bazında üretiliyor — böylece "aynı
+      // satırda 2 hedef" ihtimali baştan imkansız (eski akış-sonra-böl
+      // yönteminde jitter yüzünden bazen 2 tane aynı satıra düşebiliyordu).
       final targetCount = 10 + _random.nextInt(4); // 10-13 kez
       final decoyCount = 8 + _random.nextInt(3); // 8-10 kez
 
@@ -220,112 +212,99 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           .toList()
         ..shuffle(_random);
 
-      final bag = <_ObjectItem>[
-        ...List.filled(targetCount, target),
-        ...List.filled(decoyCount, decoy),
-      ];
-      final remaining = totalLength - bag.length;
-      for (int i = 0; i < remaining; i++) {
-        bag.add(fillerPool[i % fillerPool.length]);
+      final targetRows = (List.generate(_rowsPerRound, (i) => i)..shuffle(_random)).take(targetCount).toSet();
+      final decoyRows = (List.generate(_rowsPerRound, (i) => i)..shuffle(_random)).take(decoyCount).toSet();
+
+      final lines = <List<_ObjectItem>>[];
+      for (int r = 0; r < _rowsPerRound; r++) {
+        final slots = List<_ObjectItem?>.filled(_itemsPerLine, null);
+        final positions = List.generate(_itemsPerLine, (i) => i)..shuffle(_random);
+        int cursor = 0;
+        if (targetRows.contains(r)) {
+          slots[positions[cursor]] = target;
+          cursor++;
+        }
+        if (decoyRows.contains(r)) {
+          slots[positions[cursor]] = decoy;
+          cursor++;
+        }
+        // Aynı satırda dolgu nesnelerden de asla tekrar olmasın diye her
+        // satır için ayrı karıştırılmış bir havuzdan SIRAYLA farklı öğeler
+        // alınıyor (rastgele indeksle tekrar çekmek yerine).
+        final rowFillers = List<_ObjectItem>.from(fillerPool)..shuffle(_random);
+        int fillerCursor = 0;
+        for (int i = 0; i < _itemsPerLine; i++) {
+          if (slots[i] == null) {
+            slots[i] = rowFillers[fillerCursor];
+            fillerCursor++;
+          }
+        }
+        lines.add(slots.map((e) => e!).toList());
       }
 
       return _Stage1Round(
         target: target,
         decoy: decoy,
-        sequence: _spreadOut(bag),
+        lines: lines,
         correctCount: targetCount,
       );
     }).toList();
 
     _stage1RoundIndex = 0;
-    _oldFlowStarted = false;
-    _showOldFlowIntro = false;
     _stage1FlowRunning = false;
     _stage1ShowQuestion = false;
-    _stage1FlowIndex = 0;
-  }
-
-  // ÖNEMLİ: eski algoritma her adımda "en çok kalan türü" seçiyordu — bu da
-  // hedef/çeldirici gibi yüksek sayılı türlerin dizinin BAŞINDA art arda
-  // tüketilip (ör. ilk 3 satır sadece mango/muz), az sayılı dolgu
-  // nesnelerin sona itilmesine yol açıyordu. Bunun yerine her türü kendi
-  // sayısına göre dizinin TAMAMINA eşit aralıklarla yerleştiriyoruz —
-  // hedef/çeldirici artık ilk satırda değil, tüm akış boyunca dengeli
-  // dağılıyor. Tek sayıda (1) geçen dolgular ise kalan boşluklara rastgele
-  // serpiştirilir.
-  List<_ObjectItem> _spreadOut(List<_ObjectItem> bag) {
-    final n = bag.length;
-    final Map<String, List<_ObjectItem>> groups = {};
-    for (final item in bag) {
-      groups.putIfAbsent(item.name, () => []).add(item);
-    }
-    final result = List<_ObjectItem?>.filled(n, null);
-
-    int nearestEmptySlot(int idealPos) {
-      if (result[idealPos] == null) return idealPos;
-      for (int offset = 1; offset < n; offset++) {
-        final right = idealPos + offset;
-        final left = idealPos - offset;
-        if (right < n && result[right] == null) return right;
-        if (left >= 0 && result[left] == null) return left;
-      }
-      return result.indexWhere((e) => e == null); // güvenlik ağı
-    }
-
-    final namesByCountDesc = groups.keys.toList()
-      ..sort((a, b) => groups[b]!.length.compareTo(groups[a]!.length));
-
-    for (final name in namesByCountDesc) {
-      final items = groups[name]!;
-      final count = items.length;
-      if (count <= 1) continue; // tekiller sona, rastgele boşluklara
-      final interval = n / count;
-      for (int i = 0; i < count; i++) {
-        // Tam ortalama aralığa koymak ("her satırda tam 1 tane") çok
-        // düzenli/robotik duruyordu. Aralığa rastgele bir sapma (jitter)
-        // ekleyerek doğal, karışık bir dağılım elde ediyoruz — bazı
-        // satırlarda hiç olmayabilir, bazılarında 2 olabilir, ama yine de
-        // baştan sona genel olarak dengeli yayılmış olur.
-        final basePos = (i + 0.5) * interval;
-        final jitter = (_random.nextDouble() - 0.5) * interval * 1.4;
-        final idealPos = (basePos + jitter).round().clamp(0, n - 1);
-        result[nearestEmptySlot(idealPos)] = items[i];
-      }
-    }
-
-    final emptySlots = [for (int i = 0; i < n; i++) if (result[i] == null) i]..shuffle(_random);
-    var cursor = 0;
-    for (final name in namesByCountDesc) {
-      final items = groups[name]!;
-      if (items.length != 1) continue;
-      result[emptySlots[cursor]] = items[0];
-      cursor++;
-    }
-
-    return result.map((e) => e!).toList();
+    _stage1LineIndex = 0;
+    _stage1ItemIndex = 0;
+    _matchingStageStarted = false;
+    _showMatchingIntro = false;
   }
 
   void _startStage1Flow() {
     _stage1Timer?.cancel();
     setState(() {
       _stage1FlowRunning = true;
-      _stage1FlowIndex = 0;
+      _stage1LineIndex = 0;
+      _stage1ItemIndex = 1; // ilk nesne hemen belirsin
     });
-    _scheduleStage1Next();
+    _scheduleStage1ItemReveal();
   }
 
-  void _scheduleStage1Next() {
-    _stage1Timer = Timer(const Duration(milliseconds: 450), () {
+  // Akış ilerledikçe (satırdan satıra) nesnelerin belirme hızı _startItemMs'
+  // den _endItemMs'e doğru kademeli olarak artar — ilk satırlar rahat, son
+  // satırlar dikkat gerektirecek kadar hızlıdır.
+  int _currentItemRevealMs() {
+    final totalLines = _stage1Round.lines.length;
+    final progress = totalLines <= 1 ? 0.0 : _stage1LineIndex / (totalLines - 1);
+    return (_startItemMs - (_startItemMs - _endItemMs) * progress).round();
+  }
+
+  // Aktif satırdaki nesneler TEK TEK belirir (ör. mısır, sonra elma, sonra
+  // mısır...); satır tamamen dolunca kısa bir süre öylece durup öğrenciye
+  // sayma fırsatı verir, sonra hepsi birden kaybolup yeni satır aynı şekilde
+  // tek tek belirmeye başlar.
+  void _scheduleStage1ItemReveal() {
+    final lines = _stage1Round.lines;
+    final currentLine = lines[_stage1LineIndex];
+    final rowComplete = _stage1ItemIndex >= currentLine.length;
+    final delay = rowComplete ? _rowPauseMs : _currentItemRevealMs();
+    _stage1Timer = Timer(Duration(milliseconds: delay), () {
       if (!mounted) return;
-      if (_stage1FlowIndex >= _stage1Round.sequence.length - 1) {
+      if (rowComplete) {
+        if (_stage1LineIndex >= lines.length - 1) {
+          setState(() {
+            _stage1FlowRunning = false;
+            _stage1ShowQuestion = true;
+          });
+          return;
+        }
         setState(() {
-          _stage1FlowRunning = false;
-          _stage1ShowQuestion = true;
+          _stage1LineIndex++;
+          _stage1ItemIndex = 1;
         });
-        return;
+      } else {
+        setState(() => _stage1ItemIndex++);
       }
-      setState(() => _stage1FlowIndex++);
-      _scheduleStage1Next();
+      _scheduleStage1ItemReveal();
     });
   }
 
@@ -349,86 +328,10 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           _stage1RoundIndex++;
           _stage1FlowRunning = false;
           _stage1ShowQuestion = false;
-          _stage1FlowIndex = 0;
+          _stage1LineIndex = 0;
         });
       } else {
-        _goToOldFlow();
-      }
-    });
-  }
-
-  void _goToOldFlow() {
-    _prepareStage2Rounds();
-    setState(() => _oldFlowStarted = true);
-  }
-
-  void _prepareStage2Rounds() {
-    final entries = _targetCounts.entries.toList()..shuffle(_random);
-
-    _stage2Rounds = entries.map((entry) {
-      final bag = <_ObjectItem>[];
-      bag.addAll(List.filled(entry.value, _byName(entry.key)));
-
-      final fillerPool = _objectPool.where((o) => o.name != entry.key).toList()..shuffle(_random);
-      for (final item in fillerPool.take(_fillerObjectCount)) {
-        final repeat = _random.nextBool() ? 3 : 5;
-        bag.addAll(List.filled(repeat, item));
-      }
-      bag.shuffle(_random);
-
-      final lines = <List<_ObjectItem>>[];
-      for (int i = 0; i < bag.length; i += _itemsPerLine) {
-        final end = min(i + _itemsPerLine, bag.length);
-        final chunk = bag.sublist(i, end);
-        if (chunk.length < _itemsPerLine && lines.isNotEmpty) {
-          lines.last.addAll(chunk);
-        } else {
-          lines.add(chunk);
-        }
-      }
-
-      return _Stage2Round(targetName: entry.key, correctCount: entry.value, lines: lines);
-    }).toList();
-
-    _stage2RoundIndex = 0;
-    _showOldFlowIntro = true;
-    _isRunning = false;
-    _showQuestions = false;
-    _pass = 0;
-    _lineIndex = 0;
-  }
-
-  void _startOldFlowFromIntro() {
-    setState(() => _showOldFlowIntro = false);
-    _start();
-  }
-
-  void _start() {
-    _timer?.cancel();
-    setState(() {
-      _isRunning = true;
-      _showQuestions = false;
-      _pass = 0;
-      _lineIndex = 0;
-    });
-    _timer = Timer.periodic(const Duration(milliseconds: _lineIntervalMs), (_) {
-      if (!mounted) return;
-      final lines = _oldRound.lines;
-      if (_lineIndex >= lines.length - 1) {
-        if (_pass >= _totalPasses - 1) {
-          _timer?.cancel();
-          setState(() {
-            _isRunning = false;
-            _showQuestions = true;
-          });
-          return;
-        }
-        setState(() {
-          _pass++;
-          _lineIndex = 0;
-        });
-      } else {
-        setState(() => _lineIndex++);
+        _goToMatchingGame();
       }
     });
   }
@@ -444,50 +347,101 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     return list;
   }
 
-  void _answerOldQuestion(int chosen) {
-    final round = _oldRound;
-    if (round.answer != null) return;
-    final isCorrect = chosen == round.correctCount;
+  void _goToMatchingGame() {
+    _matchStageIndex = 0;
+    _matchMoves = 0;
+    _matchingStageStarted = true;
+    _prepareMatchStage();
+  }
+
+  void _prepareMatchStage() {
+    final pairCount = _matchPairCountsByStage[_matchStageIndex];
+    final chosen = (List<_ObjectItem>.from(_objectPool)..shuffle(_random)).take(pairCount).toList();
+    final cards = [...chosen, ...chosen].map((item) => _MatchCard(item)).toList()..shuffle(_random);
     setState(() {
-      round.answer = chosen;
-      round.wasCorrect = isCorrect;
+      _matchCards = cards;
+      _firstFlippedIndex = null;
+      _matchInputLocked = false;
+      _matchedPairs = 0;
+      _showMatchingIntro = true;
     });
-    if (isCorrect) {
-      SoundManager.playCorrect();
-    } else {
-      SoundManager.playGentleTap();
+  }
+
+  void _startMatchingFromIntro() {
+    setState(() => _showMatchingIntro = false);
+  }
+
+  void _flipCard(int index) {
+    if (_matchInputLocked) return;
+    final card = _matchCards[index];
+    if (card.isMatched || card.isFlipped) return;
+
+    if (_firstFlippedIndex == null) {
+      setState(() {
+        card.isFlipped = true;
+        _firstFlippedIndex = index;
+      });
+      return;
     }
 
-    Future.delayed(const Duration(milliseconds: 900), () {
-      if (!mounted) return;
-      if (_stage2RoundIndex < _stage2Rounds.length - 1) {
-        setState(() {
-          _stage2RoundIndex++;
-          _showOldFlowIntro = true;
-          _isRunning = false;
-          _showQuestions = false;
-          _pass = 0;
-          _lineIndex = 0;
-        });
-      } else {
-        _finish();
-      }
+    setState(() {
+      card.isFlipped = true;
+      _matchMoves++;
     });
+
+    final first = _matchCards[_firstFlippedIndex!];
+    final second = _matchCards[index];
+    if (first.item.name == second.item.name) {
+      SoundManager.playCorrect();
+      setState(() {
+        first.isMatched = true;
+        second.isMatched = true;
+        _matchedPairs++;
+        _firstFlippedIndex = null;
+      });
+      if (_matchedPairs == _matchPairCountsByStage[_matchStageIndex]) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (!mounted) return;
+          if (_matchStageIndex < _matchPairCountsByStage.length - 1) {
+            _matchStageIndex++;
+            _prepareMatchStage();
+          } else {
+            _finish();
+          }
+        });
+      }
+    } else {
+      SoundManager.playGentleTap();
+      _matchInputLocked = true;
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (!mounted) return;
+        setState(() {
+          first.isFlipped = false;
+          second.isFlipped = false;
+          _firstFlippedIndex = null;
+          _matchInputLocked = false;
+        });
+      });
+    }
   }
 
   void _finish() {
     _hasCompletedOnce = true;
     final stage1Correct = _stage1Rounds.where((r) => r.wasCorrect ?? false).length;
-    final stage2Correct = _stage2Rounds.where((r) => r.wasCorrect ?? false).length;
-    final total = _stage1Rounds.length + _stage2Rounds.length;
-    final totalCorrect = stage1Correct + stage2Correct;
-    final percent = (totalCorrect / total * 100).round();
+    final total = _stage1Rounds.length;
+    final countingPercent = (stage1Correct / total * 100).round();
+    // Eşleştirme oyunu ayrı bir beceriyi (görsel hafıza) ölçtüğü için sayma
+    // doğruluğuyla ortalanır — en verimli sonuç 3 turun toplam çift sayısı
+    // kadar hamlede bitirmek olduğundan oran buna göre hesaplanır.
+    final totalMatchPairs = _matchPairCountsByStage.reduce((a, b) => a + b);
+    final matchPercent = (totalMatchPairs / _matchMoves.clamp(totalMatchPairs, 999) * 100).round();
+    final percent = ((countingPercent + matchPercent) / 2).round();
     ProgressManager.recordAttentionScore(percent);
 
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Nesne Akışı (Sayma)',
-      result: '$totalCorrect/$total doğru · %$percent',
+      result: '$stage1Correct/$total doğru · $_matchMoves hamlede eşleşti · %$percent',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -500,8 +454,9 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Doğru: $totalCorrect / $total (%$percent)',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Sayma testi: $stage1Correct / $total doğru'),
+            Text('Eşleştirme: $_matchMoves hamlede tamamlandı'),
+            Text('Puan: %$percent', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
               const Text('🎉 Yeni Başarım Kazandın!',
@@ -574,25 +529,19 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   }
 
   Widget _buildBody() {
-    if (!_oldFlowStarted) {
-      if (_stage1ShowQuestion) {
-        return KeyedSubtree(key: const ValueKey('new-question'), child: _buildStage1Question());
+    if (_matchingStageStarted) {
+      if (_showMatchingIntro) {
+        return KeyedSubtree(key: ValueKey('match-intro-$_matchStageIndex'), child: _buildMatchingIntro());
       }
-      if (_stage1FlowRunning) {
-        return KeyedSubtree(key: const ValueKey('new-flow'), child: _buildStage1Flow());
-      }
-      return KeyedSubtree(key: const ValueKey('new-intro'), child: _buildStage1Intro());
+      return KeyedSubtree(key: ValueKey('match-game-$_matchStageIndex'), child: _buildMatchingGame());
     }
-    if (_showOldFlowIntro) {
-      return KeyedSubtree(
-        key: ValueKey('old-intro-$_stage2RoundIndex'),
-        child: _buildOldFlowIntro(),
-      );
+    if (_stage1ShowQuestion) {
+      return KeyedSubtree(key: const ValueKey('new-question'), child: _buildStage1Question());
     }
-    return KeyedSubtree(
-      key: ValueKey('old-flow-$_stage2RoundIndex'),
-      child: _showQuestions ? _buildOldQuestionView() : _buildOldFlowView(),
-    );
+    if (_stage1FlowRunning) {
+      return KeyedSubtree(key: const ValueKey('new-flow'), child: _buildStage1Flow());
+    }
+    return KeyedSubtree(key: const ValueKey('new-intro'), child: _buildStage1Intro());
   }
 
   Widget _buildStage1Intro() {
@@ -607,7 +556,7 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
-            'Hedef: ${_stage1RoundIndex + 1}/${_stage1Rounds.length}',
+            '1. Bölüm · Hedef: ${_stage1RoundIndex + 1}/${_stage1Rounds.length}',
             style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
           ),
         ),
@@ -627,7 +576,7 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'TEK bir nesneye odaklan — ${round.target.name}! Akış boyunca kaç kez '
+                  "'${round.target.name}' nesnesine odaklan! Akış boyunca kaç kez "
                   'göreceğini dikkatlice say.',
                   style: const TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
                 ),
@@ -668,7 +617,8 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                'Hedef ${_stage1RoundIndex + 1}/${_stage1Rounds.length} · ${_stage1FlowIndex + 1}/${round.sequence.length}',
+                '1. Bölüm · Hedef ${_stage1RoundIndex + 1}/${_stage1Rounds.length} · '
+                'Satır ${_stage1LineIndex + 1}/${round.lines.length}',
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
               ),
             ),
@@ -692,22 +642,26 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                 BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10),
               ],
             ),
-            child: SingleChildScrollView(
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 10,
-                runSpacing: 10,
+            // Row (Wrap DEĞİL): satır TEK satır kalmalı, alt satıra kaymamalı
+            // — kaç nesne olursa olsun (en fazla _itemsPerLine kadar) yan
+            // yana sığar, dolunca hepsi birden kaybolur.
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  for (int i = 0; i <= _stage1FlowIndex; i++)
-                    TweenAnimationBuilder<double>(
-                      key: ValueKey('s1-$_stage1RoundIndex-$i'),
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 220),
-                      builder: (context, value, child) => Opacity(
-                        opacity: value,
-                        child: Transform.scale(scale: 0.8 + 0.2 * value, child: child),
+                  for (int i = 0; i < _stage1ItemIndex && i < round.lines[_stage1LineIndex].length; i++)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: TweenAnimationBuilder<double>(
+                        key: ValueKey('s1-$_stage1RoundIndex-$_stage1LineIndex-$i'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 220),
+                        builder: (context, value, child) => Opacity(
+                          opacity: value,
+                          child: Transform.scale(scale: 0.8 + 0.2 * value, child: child),
+                        ),
+                        child: Text(round.lines[_stage1LineIndex][i].emoji, style: const TextStyle(fontSize: 34)),
                       ),
-                      child: Text(round.sequence[i].emoji, style: const TextStyle(fontSize: 34)),
                     ),
                 ],
               ),
@@ -727,8 +681,8 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
       children: [
         Text(
           isLastRound
-              ? 'Son Soru (${_stage1RoundIndex + 1}/${_stage1Rounds.length})'
-              : 'Soru ${_stage1RoundIndex + 1}/${_stage1Rounds.length}',
+              ? '1. Bölüm · Son Soru (${_stage1RoundIndex + 1}/${_stage1Rounds.length})'
+              : '1. Bölüm · Soru ${_stage1RoundIndex + 1}/${_stage1Rounds.length}',
           style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB), fontSize: 16),
         ),
         const SizedBox(height: 24),
@@ -739,28 +693,7 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
         ),
-        const SizedBox(height: 16),
-        if (round.answer != null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: (round.wasCorrect ?? false) ? Colors.green.shade50 : Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              (round.wasCorrect ?? false)
-                  ? '🎉 Aferin, çok dikkatlisin!'
-                  : '📖 Tekrar dene, daha dikkatli sayalım!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: (round.wasCorrect ?? false) ? Colors.green.shade800 : Colors.orange.shade800,
-              ),
-            ),
-          ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 20),
         Expanded(
           child: GridView.builder(
             itemCount: options.length,
@@ -803,42 +736,41 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     );
   }
 
-  Widget _buildOldFlowIntro() {
-    final round = _oldRound;
-    final emoji = _byName(round.targetName).emoji;
+  Widget _buildMatchingIntro() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF0D9488).withValues(alpha: 0.1),
+            color: const Color(0xFF059669).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
-            '2. Bölüm · Hedef: ${_stage2RoundIndex + 1}/${_stage2Rounds.length}',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488)),
+            '2. Bölüm · Tur ${_matchStageIndex + 1}/${_matchPairCountsByStage.length}',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF059669)),
           ),
         ),
         const Spacer(),
-        Center(child: Text(emoji, style: const TextStyle(fontSize: 96))),
+        const Center(child: Text('🧩', style: TextStyle(fontSize: 96))),
         const SizedBox(height: 20),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFF0D9488).withValues(alpha: 0.1),
+            color: const Color(0xFF059669).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
             children: [
-              const Icon(Icons.flag_rounded, color: Color(0xFF0D9488), size: 20),
+              const Icon(Icons.grid_view_rounded, color: Color(0xFF059669), size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Bu sefer nesneler satır satır akıp kaybolacak. TEK bir nesneyi '
-                  'aklında tut — ${round.targetName}! Kaç kez göreceğini dikkatlice say.',
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF115E59), fontWeight: FontWeight.w600),
+                  'Kartların arkası kapalı! İkişer ikişer çevirip aynı emojiyi bulmaya çalış — '
+                  'bu turda ${_matchPairCountsByStage[_matchStageIndex]} çift var. '
+                  'Eşleşmezlerse tekrar kapanırlar, eşleşirlerse açık kalırlar.',
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF065F46), fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -849,11 +781,11 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           width: double.infinity,
           height: 52,
           child: ElevatedButton.icon(
-            onPressed: _startOldFlowFromIntro,
+            onPressed: _startMatchingFromIntro,
             icon: const Icon(Icons.play_arrow),
             label: const Text('BAŞLA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0D9488),
+              backgroundColor: const Color(0xFF059669),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
@@ -863,9 +795,7 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     );
   }
 
-  Widget _buildOldFlowView() {
-    final round = _oldRound;
-    final emoji = _byName(round.targetName).emoji;
+  Widget _buildMatchingGame() {
     return Column(
       children: [
         Row(
@@ -874,155 +804,52 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF0D9488).withValues(alpha: 0.1),
+                color: const Color(0xFF059669).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                _isRunning ? 'Tur: ${_pass + 1}/$_totalPasses' : 'Hazır',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488)),
+                'Tur ${_matchStageIndex + 1}/${_matchPairCountsByStage.length} · '
+                'Eşleşen: $_matchedPairs/${_matchPairCountsByStage[_matchStageIndex]}',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF059669)),
               ),
             ),
-            const SizedBox(width: 10),
-            Text('$emoji say', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+            Text('Hamle: $_matchMoves', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
           ],
         ),
-        const Spacer(),
-        Container(
-          width: double.infinity,
-          height: 110,
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.grey.shade300),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10),
-            ],
-          ),
-          child: Center(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              transitionBuilder: (child, animation) => SlideTransition(
-                position: Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero).animate(animation),
-                child: FadeTransition(opacity: animation, child: child),
-              ),
-              child: !_isRunning
-                  ? const Text(
-                      'BAŞLAT\'a bas',
-                      key: ValueKey('idle'),
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey),
-                    )
-                  : SingleChildScrollView(
-                      key: ValueKey('$_pass-$_lineIndex'),
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: round.lines[_lineIndex].map((item) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Text(item.emoji, style: const TextStyle(fontSize: 44)),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-            ),
-          ),
-        ),
-        const Spacer(),
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: _isRunning ? null : _start,
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('BAŞLAT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0D9488),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOldQuestionView() {
-    final round = _oldRound;
-    final options = _optionsFor(round.correctCount);
-    final emoji = _byName(round.targetName).emoji;
-    final isLastRound = _stage2RoundIndex == _stage2Rounds.length - 1;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          isLastRound
-              ? 'Son Soru (${_stage2RoundIndex + 1}/${_stage2Rounds.length})'
-              : 'Soru ${_stage2RoundIndex + 1}/${_stage2Rounds.length}',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488), fontSize: 16),
-        ),
-        const SizedBox(height: 24),
-        Center(child: Text(emoji, style: const TextStyle(fontSize: 52))),
-        const SizedBox(height: 12),
-        Text(
-          '"${round.targetName}" nesnesi kaç kez gösterildi?',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-        ),
         const SizedBox(height: 16),
-        if (round.answer != null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: (round.wasCorrect ?? false) ? Colors.green.shade50 : Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              (round.wasCorrect ?? false)
-                  ? '🎉 Aferin, çok dikkatlisin!'
-                  : '📖 Tekrar dene, daha dikkatli sayalım!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: (round.wasCorrect ?? false) ? Colors.green.shade800 : Colors.orange.shade800,
-              ),
-            ),
-          ),
-        const SizedBox(height: 14),
         Expanded(
           child: GridView.builder(
-            itemCount: options.length,
+            itemCount: _matchCards.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: 1.6,
+              crossAxisCount: 4,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 0.85,
             ),
             itemBuilder: (context, index) {
-              final value = options[index];
-              final isSelected = round.answer == value;
-              Color bg = Colors.white;
-              Color textColor = Colors.black87;
-              if (isSelected) {
-                bg = (round.wasCorrect ?? false) ? Colors.green.shade500 : Colors.red.shade400;
-                textColor = Colors.white;
-              }
-              return InkWell(
-                onTap: () => _answerOldQuestion(value),
-                borderRadius: BorderRadius.circular(16),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: bg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade300, width: 2),
-                  ),
-                  child: Text(
-                    '$value',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: textColor),
+              final card = _matchCards[index];
+              final revealed = card.isFlipped || card.isMatched;
+              return GestureDetector(
+                onTap: () => _flipCard(index),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                  child: Container(
+                    key: ValueKey('$index-$revealed'),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: card.isMatched
+                          ? Colors.green.shade50
+                          : (revealed ? Colors.white : const Color(0xFF059669)),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: card.isMatched ? Colors.green.shade400 : const Color(0xFF059669),
+                        width: 2,
+                      ),
+                    ),
+                    child: revealed
+                        ? Text(card.item.emoji, style: const TextStyle(fontSize: 30))
+                        : const Icon(Icons.help_outline_rounded, color: Colors.white, size: 26),
                   ),
                 ),
               );

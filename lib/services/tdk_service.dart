@@ -21,10 +21,18 @@ class TdkService {
     return null;
   }
 
+  // sozluk.gov.tr, Dart'ın varsayılan User-Agent'ıyla (ör. "Dart/3.x
+  // (dart:io)") gelen isteklerde bağlantıyı yanıt tamamlanmadan kapatıyor —
+  // tarayıcı benzeri bir User-Agent gönderilince sorun ortadan kalkıyor.
+  static const Map<String, String> _requestHeaders = {
+    'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+  };
+
   static Future<List<String>?> _lookupExact(String word) async {
     try {
       final uri = Uri.https('sozluk.gov.tr', '/gts', {'ara': word});
-      final response = await http.get(uri).timeout(const Duration(seconds: 8));
+      final response = await http.get(uri, headers: _requestHeaders).timeout(const Duration(seconds: 8));
       if (response.statusCode != 200) return null;
 
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));

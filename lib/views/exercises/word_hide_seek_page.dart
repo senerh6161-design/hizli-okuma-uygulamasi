@@ -90,6 +90,16 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
     });
   }
 
+  // Öğrenci beklemeden manuel ipucu isteyebilsin diye — otomatik 30 sn'lik
+  // ipucu zamanlayıcısıyla çakışmaz, çünkü zamanlayıcı sadece _stage GERİDE
+  // kaldıysa ileri alır (_stage < X kontrolü), az önce elle ilerletilmiş bir
+  // aşamayı asla geri almaz.
+  void _requestHint() {
+    if (_stage >= 3) return;
+    SoundManager.playGentleTap();
+    setState(() => _stage++);
+  }
+
   int get _currentPointValue {
     switch (_stage) {
       case 0:
@@ -285,6 +295,28 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontStyle: FontStyle.italic),
         ),
+        const SizedBox(height: 20),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.amber.shade50,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.lightbulb_outline_rounded, color: Colors.amber.shade800, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '30 saniye içinde cevap veremezsen ipucu kendiliğinden gelir. Beklemek '
+                  'istemiyorsan "İPUCU AL" butonuna basıp hemen bir ipucu alabilirsin!',
+                  style: TextStyle(fontSize: 13, color: Colors.amber.shade900, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
         const Spacer(),
         SizedBox(
           width: double.infinity,
@@ -368,6 +400,20 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
               _hintChip('💡 İpucu 2: ${puzzle.hint2}'),
             if (_stage >= 3)
               _hintChip('💡 İpucu 3: İlk üç harf "${puzzle.hint3}"'),
+            if (_stage < 3)
+              Center(
+                child: OutlinedButton.icon(
+                  onPressed: _requestHint,
+                  icon: const Icon(Icons.lightbulb_outline_rounded),
+                  label: const Text('İPUCU AL', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.amber.shade800,
+                    side: BorderSide(color: Colors.amber.shade400),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 18),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
             const Spacer(),
             if (_feedback != null)
               Padding(
