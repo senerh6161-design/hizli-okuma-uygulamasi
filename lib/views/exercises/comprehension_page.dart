@@ -44,6 +44,10 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
   bool isReadingPhase = true; // Önce okuma aşaması, sonra soru aşaması
   int questionIndex = 0;
   int score = 0;
+  // Sorular veride hep aynı sırada (çoğunlukla Doğru-Yanlış-Doğru) —
+  // çocuk bu kalıbı fark edip okumadan cevaplayabiliyordu. Okuma bitip
+  // sorulara geçilince KARIŞTIRILMIŞ bir kopya kullanılır.
+  List<Map<String, dynamic>> _quizQuestions = [];
 
   @override
   void initState() {
@@ -54,6 +58,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
       isReadingPhase = !widget.skipReadingPhase;
       questionIndex = 0;
       score = 0;
+      _quizQuestions = List<Map<String, dynamic>>.from(currentPassage.questions)..shuffle(random);
       if (isReadingPhase) AudioManager.startAmbient();
     } else {
       _loadRandomPassage();
@@ -78,6 +83,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
       isReadingPhase = true;
       questionIndex = 0;
       score = 0;
+      _quizQuestions = List<Map<String, dynamic>>.from(next.questions)..shuffle(random);
     });
     AudioManager.startAmbient();
   }
@@ -90,7 +96,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
 
   void answer(int selectedIndex) {
     final isCorrect =
-        selectedIndex == currentPassage.questions[questionIndex]['correct'];
+        selectedIndex == _quizQuestions[questionIndex]['correct'];
     if (isCorrect) {
       score++;
       SoundManager.playCorrect();
@@ -98,7 +104,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
       SoundManager.playGentleTap();
     }
 
-    if (questionIndex < currentPassage.questions.length - 1) {
+    if (questionIndex < _quizQuestions.length - 1) {
       setState(() {
         questionIndex++;
       });
@@ -108,7 +114,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
   }
 
   void _finish() {
-    final totalQuestions = currentPassage.questions.length;
+    final totalQuestions = _quizQuestions.length;
     final scorePercent = ((score / totalQuestions) * 100).round();
 
     // Hızlı okuma temposu bu sonuca göre değişecek mi, önce/sonra çarpanını
@@ -364,7 +370,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
 
   // 2. AŞAMA: SORU ÇÖZME EKRANI
   Widget _buildQuizView() {
-    final currentQuestion = currentPassage.questions[questionIndex];
+    final currentQuestion = _quizQuestions[questionIndex];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,7 +379,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Soru ${questionIndex + 1}/${currentPassage.questions.length}',
+              'Soru ${questionIndex + 1}/${_quizQuestions.length}',
               style: const TextStyle(
                 color: Color(0xFF2563EB),
                 fontWeight: FontWeight.bold,

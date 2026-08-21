@@ -16,6 +16,7 @@ const List<BackgroundTrack> kBackgroundTracks = [
   BackgroundTrack('calm', '🎶 Sakin Ton', 'audio/calm_ambient.wav'),
   BackgroundTrack('motivational', '🎵 Motivasyon', 'audio/bg_motivational.mp3'),
   BackgroundTrack('inspiration', '🎵 İlham', 'audio/bg_inspiration.wav'),
+  BackgroundTrack('rain', '🌧️ Yağmur', 'audio/bg_rain.mp3'),
 ];
 
 BackgroundTrack trackById(String id) =>

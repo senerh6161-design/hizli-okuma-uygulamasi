@@ -188,6 +188,13 @@ class _CityAnagramTestPageState extends State<CityAnagramTestPage> {
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // dialogu kapat
+              Navigator.pop(context); // menüye dön
+            },
+            child: const Text('Bitir'),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);

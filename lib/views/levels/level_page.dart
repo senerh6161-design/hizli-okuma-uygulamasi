@@ -627,7 +627,9 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
             // Stack + Alignment.center: kelime HER ZAMAN kutunun tam
             // merkezinde kalır (bir Column'da nokta+boşluk eklemek kelimeyi
             // merkezden kaydırıyordu). Kırmızı nokta, kelimenin kendi
-            // merkezine göre ~1cm (56px) aşağıya kaydırılmış ayrı bir katman.
+            // merkezine göre aşağıya kaydırılmış ayrı bir katman — kelimeyle
+            // çakışmayacak kadar boşluk bırakılıp, mümkün olduğunca yukarı
+            // (yakın) tutuldu.
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -662,7 +664,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
                   ),
                 ),
                 Transform.translate(
-                  offset: const Offset(0, 56),
+                  offset: const Offset(0, 32),
                   child: const SizedBox(
                     width: 8,
                     height: 8,

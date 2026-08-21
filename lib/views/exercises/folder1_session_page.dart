@@ -61,6 +61,12 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
 
   int _quizIndex = 0;
   int _quizCorrect = 0;
+  // Sorular veride hep aynı sırada (çoğunlukla Doğru-Yanlış-Doğru) —
+  // çocuk bu kalıbı fark edip okumadan cevaplayabiliyordu. Her metin
+  // başladığında sorular KARIŞTIRILMIŞ bir kopyaya alınır ki sıra her
+  // seferinde gerçekten rastgele olsun.
+  List<Map<String, dynamic>> _preQuizQuestions = [];
+  List<Map<String, dynamic>> _postQuizQuestions = [];
 
   late final List<_ActivityRef> _activities;
   final Set<int> _activityDone = {};
@@ -183,18 +189,19 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
       _phase = _Phase.preQuiz;
       _quizIndex = 0;
       _quizCorrect = 0;
+      _preQuizQuestions = List<Map<String, dynamic>>.from(_preText!.questions)..shuffle(_random);
     });
   }
 
-  void _answerQuiz(ReadingPassage passage, int index, VoidCallback onDone) {
-    final q = passage.questions[_quizIndex];
+  void _answerQuiz(List<Map<String, dynamic>> questions, int index, VoidCallback onDone) {
+    final q = questions[_quizIndex];
     if (index == q['correct']) {
       _quizCorrect++;
       SoundManager.playCorrect();
     } else {
       SoundManager.playGentleTap();
     }
-    if (_quizIndex < passage.questions.length - 1) {
+    if (_quizIndex < questions.length - 1) {
       setState(() => _quizIndex++);
     } else {
       onDone();
@@ -273,6 +280,9 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
     );
     if (!mounted) return;
     if (completed == true) {
+      // "Bitir" (ya da normal tamamlama) sadece işaretleyip egzersiz
+      // listesine döner — başka bir etkinliğe otomatik geçmez, öğrenci
+      // sıradakini kendi seçer.
       setState(() => _activityDone.add(index));
     } else {
       ScaffoldMessenger.of(context).clearSnackBars();
@@ -305,6 +315,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
       _phase = _Phase.postQuiz;
       _quizIndex = 0;
       _quizCorrect = 0;
+      _postQuizQuestions = List<Map<String, dynamic>>.from(_postText!.questions)..shuffle(_random);
     });
   }
 
@@ -674,7 +685,8 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   }
 
   Widget _quizBody(ReadingPassage passage, {required bool isPost}) {
-    final q = passage.questions[_quizIndex];
+    final questions = isPost ? _postQuizQuestions : _preQuizQuestions;
+    final q = questions[_quizIndex];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -682,7 +694,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(color: Color(0xFFDBEAFE), borderRadius: BorderRadius.circular(8)),
           child: Text(
-            '${isPost ? "SON" : "ÖN"} METİN · D/Y ${_quizIndex + 1}/${passage.questions.length}',
+            '${isPost ? "SON" : "ÖN"} METİN · D/Y ${_quizIndex + 1}/${questions.length}',
             style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 12),
           ),
         ),
@@ -692,11 +704,11 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
         Row(
           children: [
             Expanded(
-              child: _dyButton('D) Doğru', Colors.green, () => _handleQuizAnswer(passage, 0, isPost)),
+              child: _dyButton('D) Doğru', Colors.green, () => _handleQuizAnswer(questions, 0, isPost)),
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: _dyButton('Y) Yanlış', Colors.red, () => _handleQuizAnswer(passage, 1, isPost)),
+              child: _dyButton('Y) Yanlış', Colors.red, () => _handleQuizAnswer(questions, 1, isPost)),
             ),
           ],
         ),
@@ -716,8 +728,8 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
     );
   }
 
-  void _handleQuizAnswer(ReadingPassage passage, int index, bool isPost) {
-    _answerQuiz(passage, index, isPost ? _finishPostQuiz : _finishPreQuiz);
+  void _handleQuizAnswer(List<Map<String, dynamic>> questions, int index, bool isPost) {
+    _answerQuiz(questions, index, isPost ? _finishPostQuiz : _finishPreQuiz);
   }
 
   void _confirmSkipToPostText() {

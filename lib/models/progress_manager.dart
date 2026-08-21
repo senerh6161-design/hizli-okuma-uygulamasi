@@ -76,6 +76,20 @@ class ProgressManager {
     completedExercises = prefs.getInt(_kCompleted) ?? 0;
     currentLevel = prefs.getInt(_kLevel) ?? 1;
     levelProgress = prefs.getDouble(_kLevelProgress) ?? 0.0;
+
+    // Anlama Testi tamamlamaları eskiden "Tamamlanan" sayacını artırıyordu
+    // ama Seviye'yi artırmıyordu — cihazda "97 tamamladım ama seviye 7'deyim"
+    // gibi tutarsız bir durum kalmış olabilir. completedExercises ve
+    // seviye artık HER ZAMAN birlikte ilerlediği için (bkz. _advanceLevelProgress),
+    // buradan tek seferlik bir düzeltme yapılıp gerçek sayıyla eşitleniyor.
+    final expectedLevel = _levelForCompletions(completedExercises);
+    var needsPersist = false;
+    if (expectedLevel.$1 != currentLevel || (expectedLevel.$2 - levelProgress).abs() > 0.001) {
+      currentLevel = expectedLevel.$1;
+      levelProgress = expectedLevel.$2;
+      needsPersist = true;
+    }
+
     speedAdjustment = prefs.getDouble(_kSpeedAdj) ?? 1.0;
     currentStreak = prefs.getInt(_kStreak) ?? 0;
     longestStreak = prefs.getInt(_kLongestStreak) ?? 0;
@@ -116,8 +130,32 @@ class ProgressManager {
     final beforePrune = history.length;
     history = history.where((item) => DateTime.tryParse(item['date'] ?? '') != null).toList();
     if (history.length != beforePrune) {
+      needsPersist = true;
+    }
+
+    if (needsPersist) {
       await _persist();
     }
+  }
+
+  // n tamamlama sayısına göre beklenen (seviye, ilerleme) çiftini hesaplar.
+  // _advanceLevelProgress ile AYNI kuralı kullanır (10 tamamlamada 2.
+  // seviye, sonrası her 8 tamamlamada bir sonraki seviye) — böylece
+  // completedExercises tek doğruluk kaynağı olur, ikisi asla birbirinden
+  // kopmaz.
+  static (int, double) _levelForCompletions(int n) {
+    if (n <= 0) return (1, 0.0);
+    if (n < 10) return (1, n * 0.1);
+
+    var remaining = n - 10;
+    var level = 2;
+    var progress = 0.2;
+    while (remaining >= 8) {
+      remaining -= 8;
+      level++;
+    }
+    progress += remaining * 0.1;
+    return (level, progress);
   }
 
   static Future<void> _persist() async {
@@ -145,6 +183,19 @@ class ProgressManager {
     await prefs.setInt(_kTodayCount, todayCompletedCount);
     if (todayCountDate != null) {
       await prefs.setString(_kTodayCountDate, todayCountDate!);
+    }
+  }
+
+  // "Tamamlanan" sayacına giren HER şey (egzersizler + Anlama Testi) seviye
+  // ilerlemesine de katkı yapsın diye ortak hale getirildi — önceden sadece
+  // egzersiz tamamlamaları seviyeyi artırıyordu, Anlama Testi'ni saymıyordu,
+  // bu da "97 tamamladım ama seviye 7'deyim" gibi kafa karıştırıcı bir
+  // tutarsızlığa yol açıyordu.
+  static void _advanceLevelProgress() {
+    levelProgress += 0.10;
+    if (levelProgress >= 1.0) {
+      levelProgress = 0.20;
+      currentLevel++; // Seviye atladı!
     }
   }
 
@@ -231,12 +282,7 @@ class ProgressManager {
       wpm = newWpm.clamp(0, 900);
     }
 
-    // İlerleme çubuğunu artır
-    levelProgress += 0.10;
-    if (levelProgress >= 1.0) {
-      levelProgress = 0.20;
-      currentLevel++; // Seviye atladı!
-    }
+    _advanceLevelProgress();
 
     // Geçmişe ekle (en fazla son 50 kayıt tutulur)
     history.insert(0, {
@@ -282,6 +328,7 @@ class ProgressManager {
     // %70-89 arası: speedAdjustment sabit kalır.
 
     completedExercises++;
+    _advanceLevelProgress();
     history.insert(0, {
       'title': title,
       'result': '%$scorePercent doğru',

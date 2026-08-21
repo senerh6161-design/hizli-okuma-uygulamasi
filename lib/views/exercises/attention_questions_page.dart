@@ -197,6 +197,13 @@ class _AttentionQuestionsPageState extends State<AttentionQuestionsPage> {
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // dialogu kapat
+              Navigator.pop(context, true); // Klasör 1'e dön, tamamlandı olarak işaretle
+            },
+            child: const Text('Bitir'),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);

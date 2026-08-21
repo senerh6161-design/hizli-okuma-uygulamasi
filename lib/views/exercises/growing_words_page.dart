@@ -44,6 +44,22 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
     _WordRow('Bayrak', 'Bayraktar', 'Bayraklaşmak'),
     _WordRow('Yıldız', 'Yıldızlı', 'Yıldızlaşmak'),
     _WordRow('Çare', 'Çaresiz', 'Çare "siz"siniz'),
+    _WordRow('Oku', 'Okul', 'Okullarımız'),
+    _WordRow('Yaz', 'Yazar', 'Yazarlarımız'),
+    _WordRow('Konuş', 'Konuşma', 'Konuşmacılar'),
+    _WordRow('Anla', 'Anlam', 'Anlamlıdır'),
+    _WordRow('Sor', 'Soru', 'Sorumluluk'),
+    _WordRow('Kal', 'Kalem', 'Kalemlikler'),
+    _WordRow('Renk', 'Renkli', 'Renklendirmek'),
+    _WordRow('Resim', 'Resimli', 'Resimlendirmek'),
+    _WordRow('Şarkı', 'Şarkıcı', 'Şarkıcılarımız'),
+    _WordRow('Oyun', 'Oyuncu', 'Oyuncularımız'),
+    _WordRow('Spor', 'Sporcu', 'Sporcularımız'),
+    _WordRow('Deniz', 'Denizci', 'Denizcilerimiz'),
+    _WordRow('Orman', 'Ormancı', 'Ormancılıkta'),
+    _WordRow('Toprak', 'Topraklı', 'Topraklarımız'),
+    _WordRow('Güven', 'Güvenli', 'Güvenlikçiler'),
+    _WordRow('Temiz', 'Temizlik', 'Temizlikçiler'),
   ];
 
   static const int _rowsPerSession = 6;
@@ -259,6 +275,13 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // dialogu kapat
+              Navigator.pop(context, true); // Klasör 1'e dön, tamamlandı olarak işaretle
+            },
+            child: const Text('Bitir'),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
