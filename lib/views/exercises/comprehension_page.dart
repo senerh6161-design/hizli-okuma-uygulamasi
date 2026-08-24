@@ -49,6 +49,21 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
   // sorulara geçilince KARIŞTIRILMIŞ bir kopya kullanılır.
   List<Map<String, dynamic>> _quizQuestions = [];
 
+  // Sırayı karıştırmak yetmiyordu: her metnin havuzunda hep 2 Doğru + 1
+  // Yanlış cümle vardı, bu yüzden çocuk sırayla "Doğru" deyip her seferinde
+  // garanti 2/3 alabiliyordu. Bunu kırmak için her metnin 4 aday sorusu
+  // (2 Doğru + 2 Yanlış) var; her denemede rastgele ya 2D+1Y ya da 1D+2Y
+  // seçilir — hangi oranın çıkacağı da önceden tahmin edilemez.
+  List<Map<String, dynamic>> _pickQuizQuestions(List<Map<String, dynamic>> pool) {
+    final trueOnes = pool.where((q) => q['correct'] == 0).toList()..shuffle(random);
+    final falseOnes = pool.where((q) => q['correct'] == 1).toList()..shuffle(random);
+    final wantTwoTrue = random.nextBool();
+    final picked = wantTwoTrue
+        ? [...trueOnes.take(2), ...falseOnes.take(1)]
+        : [...trueOnes.take(1), ...falseOnes.take(2)];
+    return picked..shuffle(random);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +73,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
       isReadingPhase = !widget.skipReadingPhase;
       questionIndex = 0;
       score = 0;
-      _quizQuestions = List<Map<String, dynamic>>.from(currentPassage.questions)..shuffle(random);
+      _quizQuestions = _pickQuizQuestions(currentPassage.questions);
       if (isReadingPhase) AudioManager.startAmbient();
     } else {
       _loadRandomPassage();
@@ -83,7 +98,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
       isReadingPhase = true;
       questionIndex = 0;
       score = 0;
-      _quizQuestions = List<Map<String, dynamic>>.from(next.questions)..shuffle(random);
+      _quizQuestions = _pickQuizQuestions(next.questions);
     });
     AudioManager.startAmbient();
   }

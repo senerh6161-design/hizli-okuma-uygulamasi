@@ -68,6 +68,21 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   List<Map<String, dynamic>> _preQuizQuestions = [];
   List<Map<String, dynamic>> _postQuizQuestions = [];
 
+  // Sırayı karıştırmak yetmiyordu: her metnin havuzunda hep 2 Doğru + 1
+  // Yanlış cümle vardı, bu yüzden çocuk sırayla "Doğru" deyip her seferinde
+  // garanti 2/3 alabiliyordu. Bunu kırmak için her metnin 4 aday sorusu
+  // (2 Doğru + 2 Yanlış) var; her denemede rastgele ya 2D+1Y ya da 1D+2Y
+  // seçilir — hangi oranın çıkacağı da önceden tahmin edilemez.
+  List<Map<String, dynamic>> _pickQuizQuestions(List<Map<String, dynamic>> pool) {
+    final trueOnes = pool.where((q) => q['correct'] == 0).toList()..shuffle(_random);
+    final falseOnes = pool.where((q) => q['correct'] == 1).toList()..shuffle(_random);
+    final wantTwoTrue = _random.nextBool();
+    final picked = wantTwoTrue
+        ? [...trueOnes.take(2), ...falseOnes.take(1)]
+        : [...trueOnes.take(1), ...falseOnes.take(2)];
+    return picked..shuffle(_random);
+  }
+
   late final List<_ActivityRef> _activities;
   final Set<int> _activityDone = {};
 
@@ -189,7 +204,7 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
       _phase = _Phase.preQuiz;
       _quizIndex = 0;
       _quizCorrect = 0;
-      _preQuizQuestions = List<Map<String, dynamic>>.from(_preText!.questions)..shuffle(_random);
+      _preQuizQuestions = _pickQuizQuestions(_preText!.questions);
     });
   }
 
@@ -209,10 +224,10 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   }
 
   void _finishPreQuiz() {
-    _preComprehensionPercent = ((_quizCorrect / _preText!.questions.length) * 100).round();
+    _preComprehensionPercent = ((_quizCorrect / _preQuizQuestions.length) * 100).round();
     ProgressManager.recordComprehensionResult(
       correct: _quizCorrect,
-      total: _preText!.questions.length,
+      total: _preQuizQuestions.length,
       title: 'Klasör 1 · Ön Metin',
     );
     _showPreTextReport();
@@ -315,15 +330,15 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
       _phase = _Phase.postQuiz;
       _quizIndex = 0;
       _quizCorrect = 0;
-      _postQuizQuestions = List<Map<String, dynamic>>.from(_postText!.questions)..shuffle(_random);
+      _postQuizQuestions = _pickQuizQuestions(_postText!.questions);
     });
   }
 
   void _finishPostQuiz() {
-    _postComprehensionPercent = ((_quizCorrect / _postText!.questions.length) * 100).round();
+    _postComprehensionPercent = ((_quizCorrect / _postQuizQuestions.length) * 100).round();
     ProgressManager.recordComprehensionResult(
       correct: _quizCorrect,
-      total: _postText!.questions.length,
+      total: _postQuizQuestions.length,
       title: 'Klasör 1 · Son Metin',
     );
     _finishSession();

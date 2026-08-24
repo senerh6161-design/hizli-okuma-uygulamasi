@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'views/homes/home_page.dart';
@@ -13,10 +14,15 @@ Future<void> main() async {
   // hazır olması gerekir.
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Uygulamanın geneli dikey tasarlandı — Klasör 2'deki "Hızlı Odaklanma"
+  // gibi yatay isteyen sayfalar bunu kendi içinde geçici olarak açar.
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   // Firebase'i başlat (Authentication + Firestore için gerekli).
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Kayıtlı ilerleme ve ayarları diskten yükle. runApp'ten önce bittiği için
   // ekranlar ilk çizildiğinde zaten doğru (kalıcı) değerlerle açılıyor.
@@ -36,9 +42,7 @@ class SpeedReadingApp extends StatelessWidget {
       title: 'Hızlı Okuma Lab',
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4F46E5),
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4F46E5)),
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
       ),
       home: const MainNavigation(),

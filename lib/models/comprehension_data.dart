@@ -75,6 +75,11 @@ class ComprehensionData {
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
+        {
+          'question': 'Hızlı okuma tekniklerinin beyinle hiçbir ilgisi yoktur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -98,6 +103,11 @@ class ComprehensionData {
           'question': 'Yapay zekâ, veri analizi ve kalıp tanıma yetenekleriyle öne çıkar.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
+        },
+        {
+          'question': 'Yapay zekânın başarısı kullanılan verilerden bağımsızdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
         },
       ],
     ),
@@ -123,6 +133,11 @@ class ComprehensionData {
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
+        {
+          'question': 'Arılar tozlaşmada hiçbir rol oynamaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -146,6 +161,11 @@ class ComprehensionData {
           'question': 'Dünya, Güneş\'e olan mesafesi sayesinde yaşama uygun sıcaklığa sahiptir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
+        },
+        {
+          'question': 'Güneş Sistemi\'nin merkezinde Dünya bulunur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
         },
       ],
     ),
@@ -171,6 +191,11 @@ class ComprehensionData {
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
+        {
+          'question': 'Sporcular takım arkadaşlarına güvenmeyi hiç öğrenmez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -194,6 +219,11 @@ class ComprehensionData {
           'question': 'Sanat tarihinde her dönem, kendi zamanının izlerini taşıyan akımlar doğurmuştur.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
+        },
+        {
+          'question': 'Renklerin duygularla hiçbir ilişkisi yoktur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
         },
       ],
     ),
@@ -219,6 +249,11 @@ class ComprehensionData {
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
+        {
+          'question': 'Yunuslar birbirleriyle hiçbir şekilde iletişim kurmaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -242,6 +277,11 @@ class ComprehensionData {
           'question': 'Yağmur ormanları, Dünya\'daki bitki ve hayvan türlerinin yarısından fazlasına ev sahipliği yapar.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
+        },
+        {
+          'question': 'Yağmur ormanları oksijen üretmez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
         },
       ],
     ),
@@ -267,6 +307,11 @@ class ComprehensionData {
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
+        {
+          'question': 'Robotlar sadece uzayda kullanılır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -290,6 +335,11 @@ class ComprehensionData {
           'question': 'Kodlama hem yaratıcılık hem sabır gerektirir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
+        },
+        {
+          'question': 'Kodlama hiçbir dikkat ya da özen gerektirmez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
         },
       ],
     ),
@@ -315,6 +365,11 @@ class ComprehensionData {
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
+        {
+          'question': 'Tahıllar vücuda hiç enerji vermez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -338,6 +393,11 @@ class ComprehensionData {
           'question': 'Her kitap okuyana farklı bir bakış açısı kazandırır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
+        },
+        {
+          'question': 'Kitap okumak empati kurma becerisini hiç geliştirmez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
         },
       ],
     ),
@@ -363,6 +423,11 @@ class ComprehensionData {
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
+        {
+          'question': 'Dünya üzerinde sadece 10 ülke bulunur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -386,6 +451,11 @@ class ComprehensionData {
           'question': 'İbni Sina, küçük yaşta tıp, felsefe ve matematik alanlarında kendini yetiştirmiştir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
+        },
+        {
+          'question': 'İbni Sina hiçbir zaman hekim olmamıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
         },
       ],
     ),
@@ -411,6 +481,11 @@ class ComprehensionData {
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
+        {
+          'question': 'Ali Kuşçu hiçbir gök cismi gözlemi yapmamıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -435,6 +510,11 @@ class ComprehensionData {
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
+        {
+          'question': 'Bîrûnî sadece Avrupa\'yı ziyaret etmiştir, Hindistan\'a hiç gitmemiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -447,6 +527,7 @@ class ComprehensionData {
         {'question': 'Mikroplar çıplak gözle görülemeyecek kadar küçüktür.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Bütün mikroplar vücudumuza zarar verir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Elleri düzenli yıkamak zararlı mikroplardan korunmanın etkili bir yoludur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Mikroplar mikroskopla bile görülemez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -459,6 +540,7 @@ class ComprehensionData {
         {'question': 'Güneş, dünyadaki en büyük enerji kaynağıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Enerji yoktan var edilip yok edilebilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Rüzgar türbinleri rüzgarın hareket enerjisini elektrik enerjisine çevirir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Bitkiler güneş enerjisini hiçbir şekilde kullanmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -471,6 +553,7 @@ class ComprehensionData {
         {'question': 'Deneyler bir fikrin doğru olup olmadığını anlamak için yapılır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Bir deneyi sadece bir kez yapmak sonuçların güvenilirliği için yeterlidir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Deneyler sırasında elde edilen veriler kaydedilmez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {'question': 'Bir deney yapmadan önce dikkatli bir plan hazırlanır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
       ],
     ),
     ReadingPassage(
@@ -483,6 +566,7 @@ class ComprehensionData {
         {'question': 'Karınca kolonisinde farklı görevler üstlenen karıncalar vardır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Karıncalar kendi ağırlıklarını bile taşıyamayacak kadar güçsüzdür.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Karıncalar birbirleriyle özel kokular bırakarak iletişim kurar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Karıncalar birbirleriyle hiçbir şekilde iletişim kurmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -495,6 +579,7 @@ class ComprehensionData {
         {'question': 'Kutup ayılarının kalın kürkü ve yağ tabakası onları soğuktan korur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Kutup ayıları yüzmeyi hiç beceremez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Buzların erimesi kutup ayıları için bir tehdit oluşturur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Kutup ayılarının beslenmesi foklarla hiç ilgili değildir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -507,6 +592,7 @@ class ComprehensionData {
         {'question': 'Kelebeğin hayatı bir yumurtayla başlar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Tırtıl, kozaya girmeden doğrudan kelebeğe dönüşür.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Bu dönüşüm sürecine başkalaşım (metamorfoz) denir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Kelebekler nektarla değil etle beslenir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -519,6 +605,7 @@ class ComprehensionData {
         {'question': 'İskenderiye Kütüphanesi Mısır\'daydı.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Eskiden kitaplar matbaa makineleriyle saniyeler içinde basılırdı.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Günümüz kütüphaneleri sadece basılı kitap sunar, dijital kaynak sunmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {'question': 'Eskiden kitaplar el yazmasıyla yazılırdı.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
       ],
     ),
     ReadingPassage(
@@ -531,6 +618,7 @@ class ComprehensionData {
         {'question': 'Bir kitap yazmak bir fikir bulmakla başlar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Yazarlar ilk taslağı yazdıktan sonra hiç değişiklik yapmadan kitabı yayınlar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Metni gözden geçirip düzeltme sürecine editleme denir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Yazar, hikayesinin karakterlerini ve olay örgüsünü hiç planlamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -543,6 +631,7 @@ class ComprehensionData {
         {'question': 'E-kitaplar bir cihazla yüzlerce kitabı taşımaya olanak tanır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Kağıt kitapların hiçbir avantajı yoktur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Kitap biçimi tercihi genellikle okuyucunun alışkanlıklarına bağlıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Kağıt kitaplar göz yorgunluğunu artırır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -555,6 +644,7 @@ class ComprehensionData {
         {'question': 'Algoritma, bir problemi çözmek için izlenen adım adım talimatlardır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Algoritmalar sadece bilgisayarlarda kullanılır, günlük hayatta kullanılmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'İyi bir algoritma doğru sonucu vermeli ve hızlı çalışmalıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Algoritmalar günlük hayatta hiç kullanılmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -567,6 +657,7 @@ class ComprehensionData {
         {'question': 'Bir robotun hareketleri arkasındaki koda bağlıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Robotlar çevrelerini hiçbir sensör kullanmadan algılar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Kodlama sayesinde robotlar farklı birçok işi yapabilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Programcılar robota nasıl duracağını hiç öğretmez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -579,6 +670,7 @@ class ComprehensionData {
         {'question': 'Video oyunları yüzlerce satır kodla çalışan programlardır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Bir oyunu kodlamak hiç zaman almaz, anında tamamlanır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Programcılar oyunun kurallarını ve karakter hareketlerini kodla belirler.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Grafik tasarımcılar oyunun kod motorunu yazar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -591,6 +683,7 @@ class ComprehensionData {
         {'question': 'Heykel üç boyutlu eserler yaratma sanatıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Heykeller sadece tek bir açıdan izlenebilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Davut Heykeli Michelangelo tarafından yapılmıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Heykel yapmak hiçbir sabır gerektirmez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -603,6 +696,7 @@ class ComprehensionData {
         {'question': 'Müzik, sesleri belirli bir düzen içinde bir araya getiren bir sanattır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Müziğin duyguları harekete geçirme gücü sadece bazı kültürlerde geçerlidir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Müzik dinlemenin stresi azaltabileceği keşfedilmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Bir beste yazmak sadece notaları sıraya koymaktır, duygu gerekmez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -615,6 +709,7 @@ class ComprehensionData {
         {'question': 'Tiyatro insanların bir hikayeyi canlı olarak sahnede canlandırmasıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Antik Yunan\'da tiyatronun toplumsal konularla hiçbir ilgisi yoktu.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Antik Yunan\'da oyuncular maskeler takarak karakterleri canlandırırdı.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Tiyatro yirminci yüzyılda ortaya çıkmış yeni bir sanattır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -627,6 +722,7 @@ class ComprehensionData {
         {'question': 'Olimpiyat Oyunları ilk olarak Antik Yunanistan\'da başlamıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Modern Olimpiyatlar ilk kez Paris\'te düzenlenmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Olimpiyat Oyunları her yıl düzenlenir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {'question': 'Dört yılda bir dünyanın dört bir yanından sporcular bir araya gelir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
       ],
     ),
     ReadingPassage(
@@ -639,6 +735,7 @@ class ComprehensionData {
         {'question': 'Yüzme vücuttaki hemen hemen tüm kasları çalıştırır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Su içinde hareket etmek eklemlere kara sporlarından daha fazla yük bindirir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Düzenli yüzmek kalp ve akciğer sağlığını güçlendirir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Yüzme kalp ve akciğer sağlığına hiçbir katkı sağlamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -651,6 +748,7 @@ class ComprehensionData {
         {'question': 'Satranç Uluslararası Olimpiyat Komitesi tarafından "zihin sporu" olarak tanınır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Satranç oynamak beyni hiç yormaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Satranç, rakibin hamlelerini önceden tahmin etme becerisini geliştirir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Profesyonel satranç oyuncuları maç sırasında hiç kalori harcamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -663,6 +761,7 @@ class ComprehensionData {
         {'question': 'Japonya\'da çay seremonisi sakinlik ve saygıyı simgeler.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Japonya geleneklerini tamamen terk etmiş, sadece teknolojiye odaklanmıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Hanami, kiraz çiçeklerini izleme etkinliğidir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Hanami, kış mevsiminde yapılan bir kar festivalidir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -675,6 +774,7 @@ class ComprehensionData {
         {'question': 'Mısır piramitleri firavunlar için mezar olarak inşa edilmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Giza\'daki Büyük Piramit dünyanın en küçük yapısıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Piramitler modern makineler kullanılarak inşa edilmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {'question': 'Piramitlerin nasıl inşa edildiği hâlâ bilim insanlarını şaşırtmaktadır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
       ],
     ),
     ReadingPassage(
@@ -687,6 +787,7 @@ class ComprehensionData {
         {'question': 'Antarktika\'nın neredeyse tamamı kalın buzla kaplıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Antarktika\'da milyonlarca daimi vatandaş yaşar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Antarktika, Dünya\'nın en soğuk yerlerinden biridir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Antarktika Dünya\'nın en sıcak yeridir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -699,6 +800,7 @@ class ComprehensionData {
         {'question': 'İnsanoğlu ilk kez 1969 yılında Ay\'a ayak basmıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Ay\'da yoğun bir atmosfer bulunur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Ay\'dan getirilen kayalar Güneş Sistemi hakkında bilgi vermiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Ay\'a ilk ayak basan kişi bir Rus kozmonottur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -711,6 +813,7 @@ class ComprehensionData {
         {'question': 'Yıldızlar dev gaz ve toz bulutlarının çökmesiyle oluşur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Güneşimiz hiçbir bulut olmadan aniden ortaya çıkmıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Bir yıldızın ömrü boyutuna bağlı olarak değişebilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Bütün yıldızların ömrü birbirinin tamamen aynısıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -723,6 +826,7 @@ class ComprehensionData {
         {'question': 'Uluslararası Uzay İstasyonu\'nda astronotlar havada süzülerek hareket eder.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Uzay istasyonunda yerçekimi Dünya\'dakiyle tamamen aynıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Astronotlar kaslarının erimemesi için her gün egzersiz yapar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Uzay istasyonunda yemekler tabaklarda normal şekilde servis edilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -735,6 +839,7 @@ class ComprehensionData {
         {'question': 'Ekmek eski Mısırlılar tarafından mayalanarak yapılmaya başlanmıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Dünyanın her yerinde sadece tek bir çeşit ekmek yapılır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Baget, Fransa\'da öne çıkan bir ekmek çeşididir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Ekmek hamuru fırınlanmadan doğrudan yenir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -747,6 +852,7 @@ class ComprehensionData {
         {'question': 'Her ülkenin mutfağı o toplumun kültürünü yansıtır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Suşi, İtalyan mutfağının bir parçasıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Baharatlar yemeklere lezzet ve renk katar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Köri baharatı Japon mutfağında sıkça kullanılır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -759,6 +865,7 @@ class ComprehensionData {
         {'question': 'Portakal ve çilek C vitamini bakımından zengindir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Meyvelerdeki lifler sindirim sistemine hiçbir katkı sağlamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Günde birkaç porsiyon meyve tüketmek sağlıklı bir alışkanlıktır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Meyveler vücudumuza hiçbir vitamin sağlamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -771,6 +878,7 @@ class ComprehensionData {
         {'question': 'Mevsimlerin oluşmasının temel nedeni Dünya\'nın ekseninin eğik olmasıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Bütün bölgeler Güneş\'ten her zaman aynı miktarda ışık alır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Mevsimler bazı hayvanların göç etme zamanını belirler.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Mevsimler hayvanların davranışlarını hiç etkilemez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -783,6 +891,7 @@ class ComprehensionData {
         {'question': 'Su döngüsünde su buharlaşıp yağış hâlinde geri döner.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Bulutlar suyun hiçbir aşamasında rol oynamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Su döngüsü sayesinde Dünya\'daki su sürekli yeniden kullanılır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Su döngüsünde Dünya\'daki su miktarı giderek azalır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -795,6 +904,7 @@ class ComprehensionData {
         {'question': 'İnternet başlangıçta askeri ve akademik amaçlarla geliştirilmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'World Wide Web 1800\'lerde icat edilmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'İnternet günümüzde hayatımızın her alanında yer almaktadır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'İnternet en başından beri herkesin kolayca kullanabileceği bir araç olmuştur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -807,6 +917,7 @@ class ComprehensionData {
         {'question': 'İlk cep telefonları sadece arama yapmak için kullanılırdı.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Akıllı telefonlarda dokunmatik ekran teknolojisi kullanılmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Akıllı telefonlar sayesinde insanlar anında bilgiye ulaşabilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'İlk cep telefonları kamera ve internet tarayıcısıyla gelirdi.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
     ReadingPassage(
@@ -819,6 +930,7 @@ class ComprehensionData {
         {'question': 'Mimar Sinan, Süleymaniye Camii\'ni tasarlamıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
         {'question': 'Mimar Sinan\'ın eserlerinin hiçbiri günümüze ulaşmamıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
         {'question': 'Sinan, Selimiye Camii\'ni kendi "ustalık eserim" olarak nitelendirmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {'question': 'Mimar Sinan hiçbir camiyi tasarlamamıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
       ],
     ),
   ];

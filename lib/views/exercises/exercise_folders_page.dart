@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'folder1_session_page.dart';
+import 'folder2_session_page.dart';
 
 class _FolderInfo {
   final int number;
@@ -7,6 +8,7 @@ class _FolderInfo {
   final bool isUnlocked;
   final int readyCount;
   final int totalCount;
+  final Widget Function()? page; // kilitliyse null, hiç kullanılmaz
 
   const _FolderInfo({
     required this.number,
@@ -14,19 +16,35 @@ class _FolderInfo {
     required this.isUnlocked,
     required this.readyCount,
     required this.totalCount,
+    this.page,
   });
 }
 
 /// Egzersizler sekmesinin giriş ekranı: toplamda 10 klasör (her biri 10
-/// egzersiz, toplam 100 egzersiz) planlanıyor. Şu an yalnızca Klasör 1
-/// içeriği hazır; diğerleri hoca yeni etkinlikleri paylaştıkça açılacak.
+/// egzersiz, toplam 100 egzersiz) planlanıyor. Şu an Klasör 1 tamamen,
+/// Klasör 2 ise ilk etkinliğiyle hazır; diğerleri hoca yeni etkinlikleri
+/// paylaştıkça açılacak.
 class ExerciseFoldersPage extends StatelessWidget {
   const ExerciseFoldersPage({super.key});
 
-  static const List<_FolderInfo> _folders = [
-    _FolderInfo(number: 1, title: 'Klasör 1', isUnlocked: true, readyCount: 10, totalCount: 10),
-    _FolderInfo(number: 2, title: 'Klasör 2', isUnlocked: false, readyCount: 0, totalCount: 10),
-    _FolderInfo(number: 3, title: 'Klasör 3', isUnlocked: false, readyCount: 0, totalCount: 10),
+  static final List<_FolderInfo> _folders = [
+    _FolderInfo(
+      number: 1,
+      title: 'Klasör 1',
+      isUnlocked: true,
+      readyCount: 10,
+      totalCount: 10,
+      page: () => const Folder1SessionPage(),
+    ),
+    _FolderInfo(
+      number: 2,
+      title: 'Klasör 2',
+      isUnlocked: true,
+      readyCount: 1,
+      totalCount: 10,
+      page: () => const Folder2SessionPage(),
+    ),
+    const _FolderInfo(number: 3, title: 'Klasör 3', isUnlocked: false, readyCount: 0, totalCount: 10),
     _FolderInfo(number: 4, title: 'Klasör 4', isUnlocked: false, readyCount: 0, totalCount: 10),
     _FolderInfo(number: 5, title: 'Klasör 5', isUnlocked: false, readyCount: 0, totalCount: 10),
     _FolderInfo(number: 6, title: 'Klasör 6', isUnlocked: false, readyCount: 0, totalCount: 10),
@@ -70,7 +88,7 @@ class ExerciseFoldersPage extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Her klasörde 10 egzersiz olacak. Şimdilik Klasör 1 açık.',
+                          'Her klasörde 10 egzersiz olacak. Şimdilik Klasör 1 ve 2 açık.',
                           style: TextStyle(color: Colors.white70, fontSize: 13),
                         ),
                       ],
@@ -112,10 +130,10 @@ class _FolderCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () {
-          if (folder.isUnlocked) {
+          if (folder.isUnlocked && folder.page != null) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const Folder1SessionPage()),
+              MaterialPageRoute(builder: (_) => folder.page!()),
             );
           } else {
             ScaffoldMessenger.of(context).clearSnackBars();

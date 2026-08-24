@@ -41,10 +41,13 @@ class _WordFlowRound {
 
 /// Öğretmen dokümanındaki "Etkinlik 8'in kelime versiyonu": satır üstünde
 /// akan kelimeler, bazı kelimeler etkinlik sonuna kadar belirli bir sayıda
-/// tekrarlanır. İki bölümden oluşur: 1. Bölüm'de kelimeler tek tek birikerek
+/// tekrarlanır. Üç bölümden oluşur: 1. Bölüm'de kelimeler tek tek birikerek
 /// akar, 2. Bölüm'de satır satır akıp kaybolur — her ikisi de 3'er tur, her
 /// turda tek bir hedef kelime önceden duyurulup sonunda "kaç kez gördün?"
-/// diye sorulur.
+/// diye sorulur. 3. Bölüm'de ise soru yok, sadece takip var: kelimeler
+/// satırın bir ucundan diğerine kayar, her kelimede yön değişir (soldan
+/// sağa, sonra sağdan sola...), öğrenci başını oynatmadan gözleriyle takip
+/// eder.
 class WordFlowCountingPage extends StatefulWidget {
   const WordFlowCountingPage({super.key});
 
@@ -141,6 +144,15 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
 
   _WordFlowRound get _oldRound => _stage2Rounds[_stage2RoundIndex];
 
+  // 3. BÖLÜM (2. Bölüm bitince başlar): soru yok, sadece takip. Kelimeler
+  // tek tek satırın bir ucundan diğerine kayar, yön her kelimede değişir.
+  static const int _slideWordCount = 14;
+  static const int _slideDurationMs = 1800;
+  bool _slideStageStarted = false;
+  bool _showSlideIntro = false;
+  late List<String> _slideWords;
+  int _slideIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -201,6 +213,9 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
     _stage1FlowRunning = false;
     _stage1ShowQuestion = false;
     _stage1FlowIndex = 0;
+    _slideStageStarted = false;
+    _showSlideIntro = false;
+    _slideIndex = 0;
   }
 
   // Düz bir shuffle, hedef/çeldirici gibi yüksek sayılı kelimelerin ya
@@ -422,9 +437,32 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
           _lineIndex = 0;
         });
       } else {
-        _finish();
+        _goToSlideStage();
       }
     });
+  }
+
+  void _goToSlideStage() {
+    final pool = List<String>.from(_wordPool)..shuffle(_random);
+    setState(() {
+      _slideWords = pool.take(_slideWordCount).toList();
+      _slideIndex = 0;
+      _slideStageStarted = true;
+      _showSlideIntro = true;
+    });
+  }
+
+  void _startSlideFromIntro() {
+    setState(() => _showSlideIntro = false);
+  }
+
+  void _advanceSlideWord() {
+    if (!mounted) return;
+    if (_slideIndex >= _slideWords.length - 1) {
+      _finish();
+      return;
+    }
+    setState(() => _slideIndex++);
   }
 
   void _finish() {
@@ -526,6 +564,12 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
   }
 
   Widget _buildBody() {
+    if (_slideStageStarted) {
+      if (_showSlideIntro) {
+        return KeyedSubtree(key: const ValueKey('slide-intro'), child: _buildSlideIntro());
+      }
+      return KeyedSubtree(key: ValueKey('slide-flow-$_slideIndex'), child: _buildSlideFlow());
+    }
     if (!_oldFlowStarted) {
       if (_stage1ShowQuestion) {
         return KeyedSubtree(key: const ValueKey('new-question'), child: _buildStage1Question());
@@ -992,6 +1036,126 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
                 ),
               );
             },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSlideIntro() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE11D48).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Text(
+            '3. Bölüm · Kelime Takibi',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE11D48)),
+          ),
+        ),
+        const Spacer(),
+        const Center(child: Text('↔️', style: TextStyle(fontSize: 72))),
+        const SizedBox(height: 20),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE11D48).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.remove_red_eye_rounded, color: Color(0xFFE11D48), size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Bu sefer soru yok! Kelimeler satırın bir ucundan diğerine kayacak, '
+                  'her kelimede yön değişecek. Başını oynatmadan, sadece gözlerinle takip et.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF9F1239), fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Spacer(),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _startSlideFromIntro,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('BAŞLA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE11D48),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSlideFlow() {
+    final word = _slideWords[_slideIndex];
+    // Yön her kelimede değişir: çift index soldan sağa, tek index sağdan
+    // sola kayar — gözler hem bir yöne hem diğerine takip alıştırması yapar.
+    final leftToRight = _slideIndex.isEven;
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE11D48).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '3. Bölüm · Kelime ${_slideIndex + 1}/${_slideWords.length}',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE11D48)),
+              ),
+            ),
+            Icon(
+              leftToRight ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
+              color: const Color(0xFFE11D48),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade300),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10),
+              ],
+            ),
+            child: TweenAnimationBuilder<double>(
+              key: ValueKey(_slideIndex),
+              tween: Tween(begin: leftToRight ? 0.0 : 1.0, end: leftToRight ? 1.0 : 0.0),
+              duration: const Duration(milliseconds: _slideDurationMs),
+              curve: Curves.linear,
+              onEnd: _advanceSlideWord,
+              builder: (context, t, child) {
+                return Align(
+                  alignment: Alignment(-1 + 2 * t, 0),
+                  child: Text(
+                    word,
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFE11D48)),
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ],

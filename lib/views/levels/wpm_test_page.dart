@@ -33,6 +33,7 @@ class _WpmTestPageState extends State<WpmTestPage> {
 
   int _questionIndex = 0;
   int _score = 0;
+  List<Map<String, dynamic>> _quizQuestions = [];
 
   int _measuredWpm = 0;
   int _finalWpm = 0;
@@ -80,14 +81,28 @@ class _WpmTestPageState extends State<WpmTestPage> {
       _phase = _TestPhase.quiz;
       _questionIndex = 0;
       _score = 0;
+      // Her metnin 2 Doğru + 2 Yanlış'lık 4 aday sorusundan, her denemede
+      // rastgele 2D+1Y ya da 1D+2Y'lik 3'lük bir alt küme çekilir — sabit
+      // bir oran olmadığı için "hep Doğru de" gibi bir kısayol işlemez.
+      _quizQuestions = _pickQuizQuestions(_passage.questions);
     });
   }
 
+  List<Map<String, dynamic>> _pickQuizQuestions(List<Map<String, dynamic>> pool) {
+    final trueOnes = pool.where((q) => q['correct'] == 0).toList()..shuffle(_random);
+    final falseOnes = pool.where((q) => q['correct'] == 1).toList()..shuffle(_random);
+    final wantTwoTrue = _random.nextBool();
+    final picked = wantTwoTrue
+        ? [...trueOnes.take(2), ...falseOnes.take(1)]
+        : [...trueOnes.take(1), ...falseOnes.take(2)];
+    return picked..shuffle(_random);
+  }
+
   void _answer(int selectedIndex) {
-    if (selectedIndex == _passage.questions[_questionIndex]['correct']) {
+    if (selectedIndex == _quizQuestions[_questionIndex]['correct']) {
       _score++;
     }
-    if (_questionIndex < _passage.questions.length - 1) {
+    if (_questionIndex < _quizQuestions.length - 1) {
       setState(() => _questionIndex++);
     } else {
       _finishQuiz();
@@ -95,7 +110,7 @@ class _WpmTestPageState extends State<WpmTestPage> {
   }
 
   void _finishQuiz() {
-    final total = _passage.questions.length;
+    final total = _quizQuestions.length;
     _comprehensionPercent = total == 0 ? 100 : ((_score / total) * 100).round();
 
     // Hızlı ama anlamadan okumuşsa ölçülen hıza tam güvenmiyoruz —
@@ -252,7 +267,7 @@ class _WpmTestPageState extends State<WpmTestPage> {
   }
 
   Widget _buildQuiz() {
-    final q = _passage.questions[_questionIndex];
+    final q = _quizQuestions[_questionIndex];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -263,7 +278,7 @@ class _WpmTestPageState extends State<WpmTestPage> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            'KONTROL SORUSU ${_questionIndex + 1}/${_passage.questions.length}',
+            'KONTROL SORUSU ${_questionIndex + 1}/${_quizQuestions.length}',
             style: const TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 12),
           ),
         ),

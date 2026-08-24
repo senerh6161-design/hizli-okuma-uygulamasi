@@ -41,11 +41,15 @@ class _MatchCard {
 }
 
 /// Öğretmen dokümanındaki nesne akışı etkinliği: satır üstünde hareketli
-/// nesneler akar, bazı nesneler defalarca tekrarlanır. İki bölümden oluşur:
-/// 1. Bölüm'de her satırdaki nesneler TEK TEK belirip satır dolunca hepsi
-/// birden kaybolur, yeni satır gelir — 3 tur, her turda tek bir hedef nesne
-/// önceden duyurulup sonunda "kaç kez gördün?" diye sorulur. 2. Bölüm'de ise
-/// kartların arkası kapalı halde emoji eşleştirme oyunu oynanır.
+/// nesneler akar, bazı nesneler defalarca tekrarlanır. Üç bölümden oluşur:
+/// 1. Bölüm bir ISINMA turu — nesneler TEK SATIRDA durur, aktif olan
+/// KENDİLİĞİNDEN sırayla döner (süresi yok, öğrenci DEVAM ET'e basana
+/// kadar sürer), öğrenci sadece izler ve her nesneye anlık odaklanır
+/// (soru/puan yok). 2. Bölüm'de her satırdaki nesneler TEK TEK
+/// belirip satır dolunca hepsi birden kaybolur, yeni satır gelir — 3 tur,
+/// her turda tek bir hedef nesne önceden duyurulup sonunda "kaç kez
+/// gördün?" diye sorulur. 3. Bölüm'de ise kartların arkası kapalı halde
+/// emoji eşleştirme oyunu oynanır.
 class ObjectFlowCountingPage extends StatefulWidget {
   const ObjectFlowCountingPage({super.key});
 
@@ -138,14 +142,28 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   // rahat say, sonlara doğru dikkat gerektirecek şekilde hızlanır.
   static const int _startItemMs = 450;
   static const int _endItemMs = 180;
-  static const int _rowPauseMs = 500; // satır tamamlanınca kaybolmadan önceki bekleme
+  static const int _rowPauseMs =
+      500; // satır tamamlanınca kaybolmadan önceki bekleme
   // Eşleştirme oyunu 3 turda kolaydan zora gider: az emojiden çok emojiye.
   static const List<int> _matchPairCountsByStage = [4, 6, 8];
+
+  static const int _warmupObjectCount = 6;
+  static const int _warmupStepMs = 550;
 
   final Random _random = Random();
   bool _hasCompletedOnce = false;
 
-  // TEK BÖLÜM: 3 AYRI tur — her turda tek bir hedef nesne önceden duyurulur,
+  // 1. BÖLÜM (en başta çalışır, ısınma turu): nesneler TEK SATIRDA durur,
+  // aktif olan KENDİLİĞİNDEN sırayla döner — süresi yok, öğrenci hazır
+  // olduğunda kendisi DEVAM ET'e basana kadar sürer. Öğrenci sadece izler,
+  // her nesneye "fotoğrafını çeker gibi" anlık odaklanır. Soru/puan yok.
+  bool _warmupDone = false;
+  bool _warmupRunning = false;
+  late List<_ObjectItem> _warmupObjects;
+  int _warmupActiveIndex = 0;
+  Timer? _warmupTimer;
+
+  // 2. BÖLÜM: 3 AYRI tur — her turda tek bir hedef nesne önceden duyurulur,
   // aktif satırdaki nesneler TEK TEK belirir, satır dolunca hepsi birden
   // kaybolur ve yeni satır gelir; aralarına kasıtlı bir çeldirici karışır,
   // sonunda "kaç kez gördün?" diye o turun sorusu sorulur.
@@ -154,7 +172,8 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   bool _stage1FlowRunning = false;
   bool _stage1ShowQuestion = false;
   int _stage1LineIndex = 0; // aktif turun akışındaki satır
-  int _stage1ItemIndex = 0; // aktif satırda kaç nesne belirdi (0 = henüz hiçbiri)
+  int _stage1ItemIndex =
+      0; // aktif satırda kaç nesne belirdi (0 = henüz hiçbiri)
   Timer? _stage1Timer;
 
   _Stage1Round get _stage1Round => _stage1Rounds[_stage1RoundIndex];
@@ -180,19 +199,60 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   @override
   void dispose() {
     _stage1Timer?.cancel();
+    _warmupTimer?.cancel();
     super.dispose();
   }
 
-  _ObjectItem _byName(String name) => _objectPool.firstWhere((o) => o.name == name);
+  _ObjectItem _byName(String name) =>
+      _objectPool.firstWhere((o) => o.name == name);
 
   void _prepareSession() {
+    _prepareWarmup();
     _prepareStage1Rounds();
+  }
+
+  void _prepareWarmup() {
+    final pool = List<_ObjectItem>.from(_objectPool)..shuffle(_random);
+    _warmupObjects = pool.take(_warmupObjectCount).toList();
+    _warmupActiveIndex = 0;
+    _warmupRunning = false;
+    _warmupDone = false;
+  }
+
+  void _startWarmup() {
+    _warmupTimer?.cancel();
+    setState(() {
+      _warmupRunning = true;
+      _warmupActiveIndex = 0;
+    });
+    _scheduleWarmupStep();
+  }
+
+  // Süresi yok — öğrenci "DEVAM ET"e basana kadar sürekli döner.
+  void _finishWarmup() {
+    _warmupTimer?.cancel();
+    setState(() {
+      _warmupRunning = false;
+      _warmupDone = true;
+    });
+  }
+
+  void _scheduleWarmupStep() {
+    _warmupTimer = Timer(const Duration(milliseconds: _warmupStepMs), () {
+      if (!mounted) return;
+      setState(() {
+        _warmupActiveIndex = (_warmupActiveIndex + 1) % _warmupObjects.length;
+      });
+      _scheduleWarmupStep();
+    });
   }
 
   void _prepareStage1Rounds() {
     // Bayrak çifti HER OTURUMDA garanti edilsin diye ayrı tutulup rastgele
     // seçilen diğer 2 çiftle birleştiriliyor, sonra tur sırası karıştırılıyor.
-    final otherPairs = _confusablePairNames.where((p) => p != _flagPair).toList()..shuffle(_random);
+    final otherPairs =
+        _confusablePairNames.where((p) => p != _flagPair).toList()
+          ..shuffle(_random);
     final chosenPairs = [_flagPair, ...otherPairs.take(2)]..shuffle(_random);
 
     _stage1Rounds = chosenPairs.map((pairNames) {
@@ -207,18 +267,26 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
       final targetCount = 10 + _random.nextInt(4); // 10-13 kez
       final decoyCount = 8 + _random.nextInt(3); // 8-10 kez
 
-      final fillerPool = _objectPool
-          .where((o) => o.name != target.name && o.name != decoy.name)
-          .toList()
-        ..shuffle(_random);
+      final fillerPool =
+          _objectPool
+              .where((o) => o.name != target.name && o.name != decoy.name)
+              .toList()
+            ..shuffle(_random);
 
-      final targetRows = (List.generate(_rowsPerRound, (i) => i)..shuffle(_random)).take(targetCount).toSet();
-      final decoyRows = (List.generate(_rowsPerRound, (i) => i)..shuffle(_random)).take(decoyCount).toSet();
+      final targetRows = (List.generate(
+        _rowsPerRound,
+        (i) => i,
+      )..shuffle(_random)).take(targetCount).toSet();
+      final decoyRows = (List.generate(
+        _rowsPerRound,
+        (i) => i,
+      )..shuffle(_random)).take(decoyCount).toSet();
 
       final lines = <List<_ObjectItem>>[];
       for (int r = 0; r < _rowsPerRound; r++) {
         final slots = List<_ObjectItem?>.filled(_itemsPerLine, null);
-        final positions = List.generate(_itemsPerLine, (i) => i)..shuffle(_random);
+        final positions = List.generate(_itemsPerLine, (i) => i)
+          ..shuffle(_random);
         int cursor = 0;
         if (targetRows.contains(r)) {
           slots[positions[cursor]] = target;
@@ -274,7 +342,9 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   // satırlar dikkat gerektirecek kadar hızlıdır.
   int _currentItemRevealMs() {
     final totalLines = _stage1Round.lines.length;
-    final progress = totalLines <= 1 ? 0.0 : _stage1LineIndex / (totalLines - 1);
+    final progress = totalLines <= 1
+        ? 0.0
+        : _stage1LineIndex / (totalLines - 1);
     return (_startItemMs - (_startItemMs - _endItemMs) * progress).round();
   }
 
@@ -321,19 +391,22 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     } else {
       SoundManager.playGentleTap();
     }
-    Future.delayed(const Duration(milliseconds: 900), () {
-      if (!mounted) return;
-      if (_stage1RoundIndex < _stage1Rounds.length - 1) {
-        setState(() {
-          _stage1RoundIndex++;
-          _stage1FlowRunning = false;
-          _stage1ShowQuestion = false;
-          _stage1LineIndex = 0;
-        });
-      } else {
-        _goToMatchingGame();
-      }
-    });
+    // Otomatik geçiş çok hızlı olup öğrencinin parmağı ekrandayken bir
+    // sonraki ekrana yanlışlıkla dokunmasına yol açıyordu — artık öğrenci
+    // "DEVAM ET" butonuna basana kadar bekleniyor.
+  }
+
+  void _advanceFromStage1Question() {
+    if (_stage1RoundIndex < _stage1Rounds.length - 1) {
+      setState(() {
+        _stage1RoundIndex++;
+        _stage1FlowRunning = false;
+        _stage1ShowQuestion = false;
+        _stage1LineIndex = 0;
+      });
+    } else {
+      _goToMatchingGame();
+    }
   }
 
   List<int> _optionsFor(int correct) {
@@ -356,8 +429,13 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
 
   void _prepareMatchStage() {
     final pairCount = _matchPairCountsByStage[_matchStageIndex];
-    final chosen = (List<_ObjectItem>.from(_objectPool)..shuffle(_random)).take(pairCount).toList();
-    final cards = [...chosen, ...chosen].map((item) => _MatchCard(item)).toList()..shuffle(_random);
+    final chosen = (List<_ObjectItem>.from(
+      _objectPool,
+    )..shuffle(_random)).take(pairCount).toList();
+    final cards = [
+      ...chosen,
+      ...chosen,
+    ].map((item) => _MatchCard(item)).toList()..shuffle(_random);
     setState(() {
       _matchCards = cards;
       _firstFlippedIndex = null;
@@ -427,21 +505,26 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
 
   void _finish() {
     _hasCompletedOnce = true;
-    final stage1Correct = _stage1Rounds.where((r) => r.wasCorrect ?? false).length;
+    final stage1Correct = _stage1Rounds
+        .where((r) => r.wasCorrect ?? false)
+        .length;
     final total = _stage1Rounds.length;
     final countingPercent = (stage1Correct / total * 100).round();
     // Eşleştirme oyunu ayrı bir beceriyi (görsel hafıza) ölçtüğü için sayma
     // doğruluğuyla ortalanır — en verimli sonuç 3 turun toplam çift sayısı
     // kadar hamlede bitirmek olduğundan oran buna göre hesaplanır.
     final totalMatchPairs = _matchPairCountsByStage.reduce((a, b) => a + b);
-    final matchPercent = (totalMatchPairs / _matchMoves.clamp(totalMatchPairs, 999) * 100).round();
+    final matchPercent =
+        (totalMatchPairs / _matchMoves.clamp(totalMatchPairs, 999) * 100)
+            .round();
     final percent = ((countingPercent + matchPercent) / 2).round();
     ProgressManager.recordAttentionScore(percent);
 
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Nesne Akışı (Sayma)',
-      result: '$stage1Correct/$total doğru · $_matchMoves hamlede eşleşti · %$percent',
+      result:
+          '$stage1Correct/$total doğru · $_matchMoves hamlede eşleşti · %$percent',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -456,18 +539,26 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           children: [
             Text('Sayma testi: $stage1Correct / $total doğru'),
             Text('Eşleştirme: $_matchMoves hamlede tamamlandı'),
-            Text('Puan: %$percent', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              'Puan: %$percent',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
-              const Text('🎉 Yeni Başarım Kazandın!',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const Text(
+                '🎉 Yeni Başarım Kazandın!',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: unlocked.map((a) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.amber.shade50,
                       borderRadius: BorderRadius.circular(10),
@@ -478,11 +569,14 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                       children: [
                         Icon(a.icon, size: 14, color: Colors.amber.shade800),
                         const SizedBox(width: 4),
-                        Text(a.title,
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.amber.shade900)),
+                        Text(
+                          a.title,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber.shade900,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -495,7 +589,10 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context); // dialogu kapat
-              Navigator.pop(context, true); // Klasör 1'e dön, tamamlandı olarak işaretle
+              Navigator.pop(
+                context,
+                true,
+              ); // Klasör 1'e dön, tamamlandı olarak işaretle
             },
             child: const Text('Bitir'),
           ),
@@ -516,32 +613,59 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-      appBar: AppBar(title: const Text('📦 Nesne Akışı')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
-          child: _buildBody(),
+        appBar: AppBar(title: const Text('📦 Nesne Akışı')),
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: _buildBody(),
+          ),
         ),
-      ),
       ),
     );
   }
 
   Widget _buildBody() {
+    if (!_warmupDone) {
+      if (_warmupRunning) {
+        return KeyedSubtree(
+          key: const ValueKey('warmup-flow'),
+          child: _buildWarmupFlow(),
+        );
+      }
+      return KeyedSubtree(
+        key: const ValueKey('warmup-intro'),
+        child: _buildWarmupIntro(),
+      );
+    }
     if (_matchingStageStarted) {
       if (_showMatchingIntro) {
-        return KeyedSubtree(key: ValueKey('match-intro-$_matchStageIndex'), child: _buildMatchingIntro());
+        return KeyedSubtree(
+          key: ValueKey('match-intro-$_matchStageIndex'),
+          child: _buildMatchingIntro(),
+        );
       }
-      return KeyedSubtree(key: ValueKey('match-game-$_matchStageIndex'), child: _buildMatchingGame());
+      return KeyedSubtree(
+        key: ValueKey('match-game-$_matchStageIndex'),
+        child: _buildMatchingGame(),
+      );
     }
     if (_stage1ShowQuestion) {
-      return KeyedSubtree(key: const ValueKey('new-question'), child: _buildStage1Question());
+      return KeyedSubtree(
+        key: const ValueKey('new-question'),
+        child: _buildStage1Question(),
+      );
     }
     if (_stage1FlowRunning) {
-      return KeyedSubtree(key: const ValueKey('new-flow'), child: _buildStage1Flow());
+      return KeyedSubtree(
+        key: const ValueKey('new-flow'),
+        child: _buildStage1Flow(),
+      );
     }
-    return KeyedSubtree(key: const ValueKey('new-intro'), child: _buildStage1Intro());
+    return KeyedSubtree(
+      key: const ValueKey('new-intro'),
+      child: _buildStage1Intro(),
+    );
   }
 
   Widget _buildStage1Intro() {
@@ -556,12 +680,17 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
-            '1. Bölüm · Hedef: ${_stage1RoundIndex + 1}/${_stage1Rounds.length}',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+            '2. Bölüm · Hedef: ${_stage1RoundIndex + 1}/${_stage1Rounds.length}',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2563EB),
+            ),
           ),
         ),
         const Spacer(),
-        Center(child: Text(round.target.emoji, style: const TextStyle(fontSize: 96))),
+        Center(
+          child: Text(round.target.emoji, style: const TextStyle(fontSize: 96)),
+        ),
         const SizedBox(height: 20),
         Container(
           width: double.infinity,
@@ -572,13 +701,21 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.info_outline_rounded, color: Color(0xFF2563EB), size: 20),
+              const Icon(
+                Icons.info_outline_rounded,
+                color: Color(0xFF2563EB),
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   "'${round.target.name}' nesnesine odaklan! Akış boyunca kaç kez "
                   'göreceğini dikkatlice say.',
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF1E3A8A),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -591,11 +728,16 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           child: ElevatedButton.icon(
             onPressed: _startStage1Flow,
             icon: const Icon(Icons.play_arrow),
-            label: const Text('BAŞLA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            label: const Text(
+              'BAŞLA',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
         ),
@@ -617,14 +759,20 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                '1. Bölüm · Hedef ${_stage1RoundIndex + 1}/${_stage1Rounds.length} · '
+                '2. Bölüm · Hedef ${_stage1RoundIndex + 1}/${_stage1Rounds.length} · '
                 'Satır ${_stage1LineIndex + 1}/${round.lines.length}',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
+                ),
               ),
             ),
             Row(
               children: [
-                Text('${round.target.emoji} say', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                Text(
+                  '${round.target.emoji} say',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
               ],
             ),
           ],
@@ -639,7 +787,10 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.grey.shade300),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                ),
               ],
             ),
             // Row (Wrap DEĞİL): satır TEK satır kalmalı, alt satıra kaymamalı
@@ -649,18 +800,31 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  for (int i = 0; i < _stage1ItemIndex && i < round.lines[_stage1LineIndex].length; i++)
+                  for (
+                    int i = 0;
+                    i < _stage1ItemIndex &&
+                        i < round.lines[_stage1LineIndex].length;
+                    i++
+                  )
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 5),
                       child: TweenAnimationBuilder<double>(
-                        key: ValueKey('s1-$_stage1RoundIndex-$_stage1LineIndex-$i'),
+                        key: ValueKey(
+                          's1-$_stage1RoundIndex-$_stage1LineIndex-$i',
+                        ),
                         tween: Tween(begin: 0.0, end: 1.0),
                         duration: const Duration(milliseconds: 220),
                         builder: (context, value, child) => Opacity(
                           opacity: value,
-                          child: Transform.scale(scale: 0.8 + 0.2 * value, child: child),
+                          child: Transform.scale(
+                            scale: 0.8 + 0.2 * value,
+                            child: child,
+                          ),
                         ),
-                        child: Text(round.lines[_stage1LineIndex][i].emoji, style: const TextStyle(fontSize: 34)),
+                        child: Text(
+                          round.lines[_stage1LineIndex][i].emoji,
+                          style: const TextStyle(fontSize: 34),
+                        ),
                       ),
                     ),
                 ],
@@ -681,17 +845,27 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
       children: [
         Text(
           isLastRound
-              ? '1. Bölüm · Son Soru (${_stage1RoundIndex + 1}/${_stage1Rounds.length})'
-              : '1. Bölüm · Soru ${_stage1RoundIndex + 1}/${_stage1Rounds.length}',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB), fontSize: 16),
+              ? '2. Bölüm · Son Soru (${_stage1RoundIndex + 1}/${_stage1Rounds.length})'
+              : '2. Bölüm · Soru ${_stage1RoundIndex + 1}/${_stage1Rounds.length}',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2563EB),
+            fontSize: 16,
+          ),
         ),
         const SizedBox(height: 24),
-        Center(child: Text(round.target.emoji, style: const TextStyle(fontSize: 52))),
+        Center(
+          child: Text(round.target.emoji, style: const TextStyle(fontSize: 52)),
+        ),
         const SizedBox(height: 12),
         Text(
           '"${round.target.name}" nesnesini kaç kez gördün?',
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+          ),
         ),
         const SizedBox(height: 20),
         Expanded(
@@ -709,7 +883,9 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
               Color bg = Colors.white;
               Color textColor = Colors.black87;
               if (isSelected) {
-                bg = (round.wasCorrect ?? false) ? Colors.green.shade500 : Colors.red.shade400;
+                bg = (round.wasCorrect ?? false)
+                    ? Colors.green.shade500
+                    : Colors.red.shade400;
                 textColor = Colors.white;
               }
               return InkWell(
@@ -725,13 +901,39 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                   ),
                   child: Text(
                     '$value',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: textColor),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: textColor,
+                    ),
                   ),
                 ),
               );
             },
           ),
         ),
+        if (round.answer != null) ...[
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: _advanceFromStage1Question,
+              icon: const Icon(Icons.arrow_forward_rounded),
+              label: const Text(
+                'DEVAM ET',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -747,8 +949,11 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
-            '2. Bölüm · Tur ${_matchStageIndex + 1}/${_matchPairCountsByStage.length}',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+            '3. Bölüm · Tur ${_matchStageIndex + 1}/${_matchPairCountsByStage.length}',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF059669),
+            ),
           ),
         ),
         const Spacer(),
@@ -763,14 +968,22 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.grid_view_rounded, color: Color(0xFF059669), size: 20),
+              const Icon(
+                Icons.grid_view_rounded,
+                color: Color(0xFF059669),
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Kartların arkası kapalı! İkişer ikişer çevirip aynı emojiyi bulmaya çalış — '
                   'bu turda ${_matchPairCountsByStage[_matchStageIndex]} çift var. '
                   'Eşleşmezlerse tekrar kapanırlar, eşleşirlerse açık kalırlar.',
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF065F46), fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF065F46),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -783,11 +996,16 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           child: ElevatedButton.icon(
             onPressed: _startMatchingFromIntro,
             icon: const Icon(Icons.play_arrow),
-            label: const Text('BAŞLA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            label: const Text(
+              'BAŞLA',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF059669),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
         ),
@@ -810,10 +1028,16 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
               child: Text(
                 'Tur ${_matchStageIndex + 1}/${_matchPairCountsByStage.length} · '
                 'Eşleşen: $_matchedPairs/${_matchPairCountsByStage[_matchStageIndex]}',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF059669),
+                ),
               ),
             ),
-            Text('Hamle: $_matchMoves', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+            Text(
+              'Hamle: $_matchMoves',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -833,7 +1057,8 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                 onTap: () => _flipCard(index),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
-                  transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                  transitionBuilder: (child, animation) =>
+                      ScaleTransition(scale: animation, child: child),
                   child: Container(
                     key: ValueKey('$index-$revealed'),
                     alignment: Alignment.center,
@@ -843,17 +1068,197 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                           : (revealed ? Colors.white : const Color(0xFF059669)),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: card.isMatched ? Colors.green.shade400 : const Color(0xFF059669),
+                        color: card.isMatched
+                            ? Colors.green.shade400
+                            : const Color(0xFF059669),
                         width: 2,
                       ),
                     ),
                     child: revealed
-                        ? Text(card.item.emoji, style: const TextStyle(fontSize: 30))
-                        : const Icon(Icons.help_outline_rounded, color: Colors.white, size: 26),
+                        ? Text(
+                            card.item.emoji,
+                            style: const TextStyle(fontSize: 30),
+                          )
+                        : const Icon(
+                            Icons.help_outline_rounded,
+                            color: Colors.white,
+                            size: 26,
+                          ),
                   ),
                 ),
               );
             },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWarmupIntro() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Text(
+            '1. Bölüm · Odaklanma',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2563EB),
+            ),
+          ),
+        ),
+        const Spacer(),
+        const Center(child: Text('📸', style: TextStyle(fontSize: 96))),
+        const SizedBox(height: 20),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Row(
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                color: Color(0xFF2563EB),
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Nesneler daire üzerinde kendiliğinden dönecek. Her nesneye sırayla, sanki '
+                  'fotoğrafını çekiyormuş gibi anlık odaklan — sen sadece izle!',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF1E3A8A),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Spacer(),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _startWarmup,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text(
+              'BAŞLA',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWarmupFlow() {
+    final n = _warmupObjects.length;
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Text(
+            '1. Bölüm · Odaklanma',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2563EB),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: Center(
+            // Dairesel DEĞİL, Wrap DEĞİL: nesneler TEK satırda kalmalı,
+            // alt satıra kaymamalı — aktif olan kendiliğinden soldan sağa
+            // sırayla döner, süresi yoktur.
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (int i = 0; i < n; i++)
+                  Builder(
+                    builder: (_) {
+                      final isActive = i == _warmupActiveIndex;
+                      final nodeSize = isActive ? 64.0 : 48.0;
+                      // Bilerek animasyonsuz (Container, AnimatedContainer
+                      // DEĞİL) — anlık geçiş, "gölge kalması" sorununu
+                      // kökten çözen köklü desen.
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Container(
+                          width: nodeSize,
+                          height: nodeSize,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isActive
+                                ? const Color(0xFF2563EB)
+                                : Colors.white,
+                            border: Border.all(
+                              color: const Color(0xFF2563EB),
+                              width: isActive ? 3 : 2,
+                            ),
+                            boxShadow: isActive
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF2563EB,
+                                      ).withValues(alpha: 0.4),
+                                      blurRadius: 14,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          child: Text(
+                            _warmupObjects[i].emoji,
+                            style: TextStyle(fontSize: isActive ? 32 : 22),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _finishWarmup,
+            icon: const Icon(Icons.arrow_forward_rounded),
+            label: const Text(
+              'DEVAM ET',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
           ),
         ),
       ],

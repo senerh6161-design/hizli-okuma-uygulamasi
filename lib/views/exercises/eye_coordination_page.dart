@@ -82,6 +82,9 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
 
   final Random _random = Random();
   late List<Offset> _points;
+  // Her BAŞLAT'ta 3 tur için 3 FARKLI rota karıştırılıp sıraya konur — tur
+  // boyunca hep aynı rotayı görme sorunu böyle çözülür, her tur ayrı şekil.
+  late List<List<Offset>> _lapRoutes;
   _IconTheme _theme = _IconTheme.dot;
 
   int _currentIndex = 0;
@@ -104,10 +107,14 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
 
   void _start() {
     _timer?.cancel();
+    // 3 turun her biri kendi rotasını alsın diye şablonlar karıştırılıp
+    // sıraya konur (3 şablon, 3 tur — hiçbiri tekrar etmez).
+    _lapRoutes = List<List<Offset>>.from(_pathTemplates)..shuffle(_random);
     setState(() {
       _isRunning = true;
       _currentIndex = 0;
       _lapsCompleted = 0;
+      _points = _lapRoutes[0];
     });
     _scheduleTick();
   }
@@ -125,6 +132,7 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
         setState(() {
           _currentIndex = 0;
           _lapsCompleted = nextLap;
+          _points = _lapRoutes[nextLap];
         });
       } else {
         setState(() => _currentIndex++);
@@ -155,13 +163,14 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
     setState(() => _isRunning = false);
   }
 
+  // Koşu SIRASINDA rota değiştirmek, egzersizi en baştan sıfırlayıp
+  // öğrencinin o ana kadarki turunu boşa çıkarıyordu — bu yüzden buton
+  // sadece BOŞTAYKEN (henüz başlamamışken) önizleme rotasını değiştirir;
+  // koşarken devre dışı bırakılır (bkz. build'deki onPressed).
   void _shufflePath() {
-    _timer?.cancel();
+    if (_isRunning) return;
     setState(() {
       _points = _pathTemplates[_random.nextInt(_pathTemplates.length)];
-      _currentIndex = 0;
-      _lapsCompleted = 0;
-      _isRunning = false;
     });
   }
 
@@ -374,7 +383,7 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: _shufflePath,
+                          onPressed: _isRunning ? null : _shufflePath,
                           icon: const Icon(Icons.shuffle),
                           label: const Text('Farklı Rota'),
                           style: OutlinedButton.styleFrom(
