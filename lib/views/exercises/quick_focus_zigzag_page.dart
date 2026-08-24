@@ -51,7 +51,7 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
   // Ekranda AYNI ANDA birden fazla yüz duruyor ama SADECE biri "aktif"
   // (yanıp sönen) — öğrenci hepsine değil, sadece o anki hedefe basmaya
   // çalışıyor. Hepsine aynı anda basmak zaten mümkün değildi.
-  static const int _reactionTargetCount = 5;
+  static const int _reactionTargetCount = 8;
 
   // Hızı öğrenci kendi seçer — her iki mekanik de bu ortak seviyeden
   // besleniyor, değişiklik bir sonraki tetiklemede devreye girer.
@@ -137,9 +137,8 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
     ],
   ];
 
-  // Zikzak bölümleri gerçek yeşil kullanır — kitaptaki sayfalarda da aynı
-  // yeşil vurgu kullanılıyordu.
-  static const Color _zigzagColor = Color(0xFF16A34A);
+  // Zikzak bölümleri uygulamanın kendi ana marka rengini (indigo) kullanır.
+  static const Color _zigzagColor = Color(0xFF4F46E5);
 
   final Random _random = Random();
   _Phase _phase = _Phase.reactionIntro;
@@ -240,16 +239,22 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
   // Ekranda birkaç yüz birden duruyor ama üst üste binmesinler diye
   // konumlar arasında minimum mesafe bırakılıyor.
   List<_ReactionTarget> _generateTargetLayout() {
+    // 8 nesneyi az deneme hakkıyla yerleştirmeye çalışmak çoğu zaman
+    // başarısız oluyordu — sonraki nesneler boş yer bulamayınca öncekinin
+    // neredeyse üstüne biniyor, ekranda sadece 2-3 taneymiş gibi
+    // görünüyordu. Bu yüzden hem deneme sayısı arttırıldı hem de minimum
+    // mesafe, nesne sayısına göre otomatik daralıyor.
+    final minDist = min(0.16, 0.6 / _reactionTargetCount);
     final list = <_ReactionTarget>[];
     for (int i = 0; i < _reactionTargetCount; i++) {
       double x = 0.5, y = 0.5;
-      for (int attempt = 0; attempt < 8; attempt++) {
+      for (int attempt = 0; attempt < 40; attempt++) {
         x = 0.08 + _random.nextDouble() * 0.8;
         y = 0.08 + _random.nextDouble() * 0.75;
         final tooClose = list.any((t) {
           final dx = t.x - x;
           final dy = t.y - y;
-          return dx * dx + dy * dy < 0.16 * 0.16;
+          return dx * dx + dy * dy < minDist * minDist;
         });
         if (!tooClose) break;
       }
@@ -343,7 +348,14 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
       Duration(milliseconds: _zigzagStepMsBySpeed[_speedLevel]),
       () {
         if (!mounted) return;
-        setState(() => _zigzagActiveIndex = (_zigzagActiveIndex + 1) % total);
+        final next = _zigzagActiveIndex + 1;
+        // Çapraz Zikzak'ta cümle bir kez okununca başa DÖNMÜYOR — otomatik
+        // olarak sıradaki cümleye geçiyor (ya da son cümleyse bitiyor).
+        if (_phase == _Phase.crossZigzag && next >= total) {
+          _finishCrossZigzagRound();
+          return;
+        }
+        setState(() => _zigzagActiveIndex = next % total);
         if (_phase == _Phase.zigzag) _scrollZigzagToActive();
         _scheduleZigzagStep(total);
       },
@@ -400,7 +412,11 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
       setState(() => _elapsedSec++);
       if (_elapsedSec >= _stageDurationSec) _finishCrossZigzagRound();
     });
-    _scheduleZigzagStep(_crossZigzagTop[_crossZigzagRoundIndex].length);
+    // Çizgiler sadece "gidiş" yönünde değil — son sütuna varınca çizgi
+    // GERİ dönüp bu kez öbür satırı takip ederek başa kadar devam ediyor
+    // (ör. "...inanmalısın, inanç yoksa başarı da yoktur, çünkü..."). Bu
+    // yüzden toplam adım sayısı 2×sütun: gidiş + dönüş.
+    _scheduleZigzagStep(_crossZigzagTop[_crossZigzagRoundIndex].length * 2);
   }
 
   void _finishCrossZigzagRound() {
@@ -651,35 +667,28 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        badge,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: color,
-                        ),
-                      ),
-                    ),
-                    if (extra != null) ...[const SizedBox(height: 14), extra],
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    badge,
+                    style: TextStyle(fontWeight: FontWeight.bold, color: color),
+                  ),
                 ),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 16),
+                    // Amaç/Yöntem kutusu ekranın ORTASINDA, emojiyle
+                    // birlikte tek grup olarak duruyor — sayfanın en
+                    // üstüne sıkışmıyor.
+                    if (extra != null) ...[extra, const SizedBox(height: 16)],
                     Center(
                       child: Text(emoji, style: const TextStyle(fontSize: 64)),
                     ),
@@ -784,16 +793,17 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCFCE7),
+        color: const Color(0xFFE0E7FF),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF16A34A), width: 1.5),
+        border: Border.all(color: const Color(0xFF4F46E5), width: 1.5),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text.rich(
+            textAlign: TextAlign.center,
             TextSpan(
-              style: const TextStyle(fontSize: 13, color: Color(0xFF14532D)),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF312E81)),
               children: [
                 const TextSpan(
                   text: 'Amaç: ',
@@ -807,8 +817,9 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
           ),
           const SizedBox(height: 6),
           Text.rich(
+            textAlign: TextAlign.center,
             TextSpan(
-              style: const TextStyle(fontSize: 13, color: Color(0xFF14532D)),
+              style: const TextStyle(fontSize: 13, color: Color(0xFF312E81)),
               children: [
                 const TextSpan(
                   text: 'Yöntem: ',
@@ -835,7 +846,7 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
       instruction:
           'Kelimeler iki satırda, çapraz (X) çizgilerle bağlı duracak. Aktif olan kendiliğinden '
           'sırayla vurgulanacak — gözlerinle çapraz çizgiyi takip et, doğru sırayla okuyunca bir '
-          'cümle oluşacak. 60 saniye sürecek!',
+          'cümle oluşacak. Cümle bitince otomatik olarak sıradaki cümleye geçilecek!',
       onStart: _startCrossZigzagRound,
       extra: _buildAmacYontemBox(seconds: 30),
     );
@@ -1048,18 +1059,28 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
   // ayırt edip doğru olana basmaya çalışıyor.
   Widget _reactionBubble({required bool isActive}) {
     if (!isActive) {
-      return Opacity(
-        opacity: 0.4,
-        child: Container(
-          width: 50,
-          height: 50,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey.shade200,
-            border: Border.all(color: Colors.grey.shade400, width: 1.5),
-          ),
-          child: const Text('😊', style: TextStyle(fontSize: 24)),
+      // Sadece daire yarı saydam olursa arka planla karışıp "boş" bir
+      // daire gibi görünüyordu — bu yüzden daire tam opak ve belirgin,
+      // sadece içindeki emoji hafifçe soluk (dikkat dağıtıcı olduğu
+      // hissedilsin diye).
+      return Container(
+        width: 50,
+        height: 50,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          border: Border.all(color: Colors.grey.shade300, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 6,
+            ),
+          ],
+        ),
+        child: Opacity(
+          opacity: 0.55,
+          child: const Text('😊', style: TextStyle(fontSize: 26)),
         ),
       );
     }
@@ -1429,6 +1450,20 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
                   ];
                 }
 
+                // Okuma çizgisi önce sağa doğru gider (sütun sütun, çiftse
+                // üst tekse alt), son sütunda GERİ döner ve bu kez öbür
+                // satırı takip ederek başa kadar devam eder — ör.
+                // "...inanmalısın, inanç yoksa başarı da yoktur, çünkü...".
+                final int activeCol;
+                final bool activeIsTop;
+                if (_zigzagActiveIndex < n) {
+                  activeCol = _zigzagActiveIndex;
+                  activeIsTop = activeCol.isEven;
+                } else {
+                  activeCol = n - 1 - (_zigzagActiveIndex - n);
+                  activeIsTop = !activeCol.isEven;
+                }
+
                 return Stack(
                   children: [
                     CustomPaint(
@@ -1439,19 +1474,17 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
                         color: color,
                       ),
                     ),
-                    // Okuma sırası sütun sütun ilerler: sütun çiftse üst,
-                    // tekse alt satırdaki kelime "aktif" olur.
                     for (int i = 0; i < n; i++) ...[
                       ...node(
                         topPositions[i],
                         top[i],
-                        _zigzagActiveIndex == i && i.isEven,
+                        activeCol == i && activeIsTop,
                         true,
                       ),
                       ...node(
                         bottomPositions[i],
                         bottom[i],
-                        _zigzagActiveIndex == i && !i.isEven,
+                        activeCol == i && !activeIsTop,
                         false,
                       ),
                     ],
@@ -1468,8 +1501,6 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
   }
 }
 
-// Her hedefin etrafında kalan süreyi gösteren daire — yeşilden kırmızıya
-// doğru geçer, kaybolmadan önce ne kadar vaktin kaldığını hissettirir.
 class _ZigzagPainter extends CustomPainter {
   final List<Offset> positions;
   final Color color;
@@ -1512,6 +1543,11 @@ class _CrossZigzagPainter extends CustomPainter {
     for (int i = 0; i < topPositions.length - 1; i++) {
       canvas.drawLine(topPositions[i], bottomPositions[i + 1], paint);
       canvas.drawLine(bottomPositions[i], topPositions[i + 1], paint);
+    }
+    // Son sütunun üst-alt kelimesi birbirine BAĞLI görünsün diye dikey
+    // bir çizgiyle birleştiriliyor — "kopuk/boşluktaymış" hissi kalmasın.
+    if (topPositions.isNotEmpty) {
+      canvas.drawLine(topPositions.last, bottomPositions.last, paint);
     }
   }
 
