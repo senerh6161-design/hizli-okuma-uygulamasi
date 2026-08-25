@@ -10,7 +10,13 @@ class _HidePuzzle {
   final String hint1; // ilk/son harf
   final String hint2; // kategori ipucu
   final String hint3; // ilk üç harf
-  const _HidePuzzle(this.given, this.answer, this.hint1, this.hint2, this.hint3);
+  const _HidePuzzle(
+    this.given,
+    this.answer,
+    this.hint1,
+    this.hint2,
+    this.hint3,
+  );
 }
 
 String _normalize(String s) => s
@@ -33,12 +39,27 @@ class WordHideSeekPage extends StatefulWidget {
 
 class _WordHideSeekPageState extends State<WordHideSeekPage> {
   static const List<_HidePuzzle> _puzzles = [
-    _HidePuzzle('AKSARAY', 'SAKARYA', 'İlk harfi S, son harfi A',
-        'İstanbul\'a yakın bir şehir', 'Sak..'),
-    _HidePuzzle('BİSULTAN', 'İSTANBUL', 'İlk harfi İ, son harfi L',
-        'Şehirlerin en güzeli', 'İst..'),
-    _HidePuzzle('KANKA EL AÇ', 'ÇANAKKALE', 'İlk harfi Ç, son harfi E',
-        'Destan yazılan bir şehir', 'Çan..'),
+    _HidePuzzle(
+      'AKSARAY',
+      'SAKARYA',
+      'İlk harfi S, son harfi A',
+      'İstanbul\'a yakın bir şehir',
+      'Sak..',
+    ),
+    _HidePuzzle(
+      'BİSULTAN',
+      'İSTANBUL',
+      'İlk harfi İ, son harfi L',
+      'Şehirlerin en güzeli',
+      'İst..',
+    ),
+    _HidePuzzle(
+      'KANKA EL AÇ',
+      'ÇANAKKALE',
+      'İlk harfi Ç, son harfi E',
+      'Destan yazılan bir şehir',
+      'Çan..',
+    ),
   ];
 
   static const int _stageSeconds = 30;
@@ -134,7 +155,9 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
       SoundManager.playGentleTap();
       setState(() {
         _isWrongFlash = true;
-        _feedback = isSameAsGiven ? '✍️ Yeni bir kelime bulmalısın, aynısını yazma!' : null;
+        _feedback = isSameAsGiven
+            ? '✍️ Yeni bir kelime bulmalısın, aynısını yazma!'
+            : null;
       });
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) setState(() => _isWrongFlash = false);
@@ -155,7 +178,9 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
   void _finish() {
     _hasCompletedOnce = true;
     final maxScore = _puzzles.length * 100;
-    ProgressManager.recordAttentionScore((_totalScore / maxScore * 100).round());
+    ProgressManager.recordAttentionScore(
+      (_totalScore / maxScore * 100).round(),
+    );
 
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
@@ -173,19 +198,26 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Toplam Puan: $_totalScore / $maxScore',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              'Toplam Puan: $_totalScore / $maxScore',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
-              const Text('🎉 Yeni Başarım Kazandın!',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const Text(
+                '🎉 Yeni Başarım Kazandın!',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: unlocked.map((a) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.amber.shade50,
                       borderRadius: BorderRadius.circular(10),
@@ -196,11 +228,14 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
                       children: [
                         Icon(a.icon, size: 14, color: Colors.amber.shade800),
                         const SizedBox(width: 4),
-                        Text(a.title,
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.amber.shade900)),
+                        Text(
+                          a.title,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber.shade900,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -213,7 +248,10 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context); // dialogu kapat
-              Navigator.pop(context, true); // Klasör 1'e dön, tamamlandı olarak işaretle
+              Navigator.pop(
+                context,
+                true,
+              ); // Klasör 1'e dön, tamamlandı olarak işaretle
             },
             child: const Text('Bitir'),
           ),
@@ -238,11 +276,11 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-      appBar: AppBar(title: const Text('🙈 Kelimelerle Saklambaç')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: _showIntro ? _buildIntro() : _buildPuzzle(),
-      ),
+        appBar: AppBar(title: const Text('🙈 Kelimelerle Saklambaç')),
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: _showIntro ? _buildIntro() : _buildPuzzle(),
+        ),
       ),
     );
   }
@@ -251,19 +289,35 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Nasıl Oynanır?', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        const Text(
+          'Nasıl Oynanır?',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 10),
         Text(
           'Sana verilen harflerin TÜMÜNÜ kullanarak YENİ bir kelime bulacaksın. '
           'Bulduğun kelime, verilen kelimenin aynısı olamaz ve ek almamış olmalı.',
-          style: TextStyle(color: Colors.grey.shade700, fontSize: 14, height: 1.5),
+          style: TextStyle(
+            color: Colors.grey.shade700,
+            fontSize: 14,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8)),
-          child: Text('ÖRNEK',
-              style: TextStyle(color: Colors.amber.shade900, fontWeight: FontWeight.bold, fontSize: 12)),
+          decoration: BoxDecoration(
+            color: Colors.amber.shade50,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'ÖRNEK',
+            style: TextStyle(
+              color: Colors.amber.shade900,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         Center(
@@ -274,7 +328,10 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: Colors.pink, width: 2),
             ),
-            child: const Text('KALEM', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'KALEM',
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
         const SizedBox(height: 14),
@@ -284,7 +341,14 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
             children: [
               Icon(Icons.arrow_downward, color: Colors.green.shade600),
               const SizedBox(width: 8),
-              Text('EMLAK', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green.shade700)),
+              Text(
+                'EMLAK',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green.shade700,
+                ),
+              ),
             ],
           ),
         ),
@@ -293,7 +357,11 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
           'KALEM\'in harfleri (K, A, L, E, M) kullanılarak EMLAK kelimesi bulunmuş — '
           'aynı harfler, yeni bir kelime!',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontStyle: FontStyle.italic),
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 12,
+            fontStyle: FontStyle.italic,
+          ),
         ),
         const SizedBox(height: 20),
         Container(
@@ -305,13 +373,21 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
           ),
           child: Row(
             children: [
-              Icon(Icons.lightbulb_outline_rounded, color: Colors.amber.shade800, size: 20),
+              Icon(
+                Icons.lightbulb_outline_rounded,
+                color: Colors.amber.shade800,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '30 saniye içinde cevap veremezsen ipucu kendiliğinden gelir. Beklemek '
                   'istemiyorsan "İPUCU AL" butonuna basıp hemen bir ipucu alabilirsin!',
-                  style: TextStyle(fontSize: 13, color: Colors.amber.shade900, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.amber.shade900,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -324,11 +400,16 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
           child: ElevatedButton.icon(
             onPressed: _startPuzzles,
             icon: const Icon(Icons.play_arrow),
-            label: const Text('ANLADIM, BAŞLA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            label: const Text(
+              'ANLADIM, BAŞLA',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.pink,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
         ),
@@ -338,134 +419,164 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
 
   Widget _buildPuzzle() {
     final puzzle = _puzzles[_index];
-    final remaining = (_stageSeconds - (_elapsedSeconds % _stageSeconds)) % _stageSeconds;
+    final remaining =
+        (_stageSeconds - (_elapsedSeconds % _stageSeconds)) % _stageSeconds;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    'Soru ${_index + 1}/${_puzzles.length}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.shade100,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    'Şu an: $_currentPointValue puan',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade900),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Verilen tüm harfleri kullanarak YENİ bir kelime bul. Bulduğun kelime ek almamış olmalı.',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                decoration: BoxDecoration(
-                  color: Colors.pink.shade50,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: _isWrongFlash ? Colors.red : Colors.pink,
-                    width: 2,
-                  ),
-                ),
-                child: Text(
-                  puzzle.given,
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Soru ${_index + 1}/${_puzzles.length}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            if (_stage >= 1)
-              _hintChip('💡 İpucu 1: ${puzzle.hint1}'),
-            if (_stage >= 2)
-              _hintChip('💡 İpucu 2: ${puzzle.hint2}'),
-            if (_stage >= 3)
-              _hintChip('💡 İpucu 3: İlk üç harf "${puzzle.hint3}"'),
-            if (_stage < 3)
-              Center(
-                child: OutlinedButton.icon(
-                  onPressed: _requestHint,
-                  icon: const Icon(Icons.lightbulb_outline_rounded),
-                  label: const Text('İPUCU AL', style: TextStyle(fontWeight: FontWeight.bold)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.amber.shade800,
-                    side: BorderSide(color: Colors.amber.shade400),
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 18),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Şu an: $_currentPointValue puan',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber.shade900,
                 ),
               ),
-            const Spacer(),
-            if (_feedback != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  _feedback!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.pink),
-                ),
-              ),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: InputDecoration(
-                      hintText: 'Yeni kelimeni yaz...',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                    onSubmitted: (_) => _submit(),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () => _submit(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pink,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: const Icon(Icons.check),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: (remaining <= 10 && _stage < 3)
-                  ? Text(
-                      'Sonraki ipucuna: $remaining sn',
-                      style: TextStyle(
-                        color: Colors.red.shade400,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : const SizedBox(height: 16),
             ),
           ],
-        );
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Verilen tüm harfleri kullanarak YENİ bir kelime bul. Bulduğun kelime ek almamış olmalı.',
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            decoration: BoxDecoration(
+              color: Colors.pink.shade50,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: _isWrongFlash ? Colors.red : Colors.pink,
+                width: 2,
+              ),
+            ),
+            child: Text(
+              puzzle.given,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        if (_stage >= 1) _hintChip('💡 İpucu 1: ${puzzle.hint1}'),
+        if (_stage >= 2) _hintChip('💡 İpucu 2: ${puzzle.hint2}'),
+        if (_stage >= 3) _hintChip('💡 İpucu 3: İlk üç harf "${puzzle.hint3}"'),
+        if (_stage < 3)
+          Center(
+            child: OutlinedButton.icon(
+              onPressed: _requestHint,
+              icon: const Icon(Icons.lightbulb_outline_rounded),
+              label: const Text(
+                'İPUCU AL',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.amber.shade800,
+                side: BorderSide(color: Colors.amber.shade400),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        const Spacer(),
+        if (_feedback != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              _feedback!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.pink,
+              ),
+            ),
+          ),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  hintText: 'Yeni kelimeni yaz...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+                onSubmitted: (_) => _submit(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: () => _submit(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pink,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 18,
+                  horizontal: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Icon(Icons.check),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: (remaining <= 10 && _stage < 3)
+              ? Text(
+                  'Sonraki ipucuna: $remaining sn',
+                  style: TextStyle(
+                    color: Colors.red.shade400,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              : const SizedBox(height: 16),
+        ),
+      ],
+    );
   }
 
   Widget _hintChip(String text) {
@@ -477,7 +588,13 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.amber.shade300),
       ),
-      child: Text(text, style: TextStyle(color: Colors.amber.shade900, fontWeight: FontWeight.w600)),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.amber.shade900,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

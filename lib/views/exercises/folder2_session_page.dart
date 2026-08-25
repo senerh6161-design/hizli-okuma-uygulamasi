@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
+import 'anagram_word_hunt_page.dart';
+import 'attention_question_page.dart';
+import 'classroom_objects_page.dart';
+import 'classroom_words_page.dart';
+import 'missing_city_page.dart';
 import 'quick_focus_zigzag_page.dart';
+import 'visual_span_page.dart';
+import 'word_pair_count_page.dart';
+import 'word_recall_grid_page.dart';
+import 'word_span_page.dart';
 
 class _Folder2Activity {
   final String title;
@@ -33,13 +42,88 @@ class Folder2SessionPage extends StatelessWidget {
       color: const Color(0xFF2563EB),
       build: () => const QuickFocusZigzagPage(),
     ),
+    _Folder2Activity(
+      title: 'Görsel Genişlik',
+      subtitle: 'Satır Akışı + Görsel Alan + Quiz',
+      badge: 'Etkinlik 2',
+      icon: Icons.remove_red_eye_outlined,
+      color: const Color(0xFF0D9488),
+      build: () => const VisualSpanPage(),
+    ),
+    _Folder2Activity(
+      title: 'Görsel Genişlik · Kelime',
+      subtitle: 'Aynı egzersiz, kelimelerle',
+      badge: 'Etkinlik 3',
+      icon: Icons.text_fields_rounded,
+      color: const Color(0xFFE11D48),
+      build: () => const WordSpanPage(),
+    ),
+    _Folder2Activity(
+      title: 'Eksik Şehri Bul',
+      subtitle: 'Hız ve doğrulukla puan kazan',
+      badge: 'Etkinlik 4',
+      icon: Icons.map_outlined,
+      color: const Color(0xFFD97706),
+      build: () => const MissingCityPage(),
+    ),
+    _Folder2Activity(
+      title: 'İkili Kelime Grubu Say',
+      subtitle: 'Sayfada kaç kere geçti?',
+      badge: 'Etkinlik 5',
+      icon: Icons.grid_view_rounded,
+      color: const Color(0xFF0891B2),
+      build: () => const WordPairCountPage(),
+    ),
+    _Folder2Activity(
+      title: 'Dikkat Sorusu',
+      subtitle: 'Harflerden doğru kelimeyi bul',
+      badge: 'Etkinlik 6',
+      icon: Icons.psychology_outlined,
+      color: const Color(0xFF16A34A),
+      build: () => const AttentionQuestionPage(),
+    ),
+    _Folder2Activity(
+      title: 'Sınıf Eşyaları',
+      subtitle: 'Satır Akışı + Dikkat ve Hafıza',
+      badge: 'Etkinlik 7',
+      icon: Icons.backpack_outlined,
+      color: const Color(0xFF65A30D),
+      build: () => const ClassroomObjectsPage(),
+    ),
+    _Folder2Activity(
+      title: 'Sınıf Eşyaları · Kelime',
+      subtitle: 'Aynı egzersiz, kelimelerle',
+      badge: 'Etkinlik 8',
+      icon: Icons.text_snippet_outlined,
+      color: const Color(0xFF0284C7),
+      build: () => const ClassroomWordsPage(),
+    ),
+    _Folder2Activity(
+      title: 'Kelimelerle Saklambaç',
+      subtitle: 'Harfleri kullanıp kelime bul',
+      badge: 'Etkinlik 9',
+      icon: Icons.visibility_off_outlined,
+      color: const Color(0xFF475569),
+      build: () => const AnagramWordHuntPage(),
+    ),
+    _Folder2Activity(
+      title: 'Nerede Gördüm?',
+      subtitle: 'Kelimeyi karede hızlıca bul',
+      badge: 'Etkinlik 10',
+      icon: Icons.grid_on_rounded,
+      color: const Color(0xFFDC2626),
+      build: () => const WordRecallGridPage(),
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Klasör 2', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Klasör 2',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
       ),
       body: Padding(
@@ -66,12 +150,19 @@ class Folder2SessionPage extends StatelessWidget {
                       children: [
                         const Text(
                           'Klasör 2',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '${_activities.length}/10 egzersiz hazır — yeni etkinlikler eklendikçe burada görünecek.',
-                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -84,7 +175,8 @@ class Folder2SessionPage extends StatelessWidget {
               child: ListView.separated(
                 itemCount: _activities.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) => _ActivityCard(activity: _activities[index]),
+                itemBuilder: (context, index) =>
+                    _ActivityCard(activity: _activities[index]),
               ),
             ),
           ],
@@ -106,7 +198,10 @@ class _ActivityCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => activity.build()));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => activity.build()),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -124,26 +219,47 @@ class _ActivityCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          activity.title,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A)),
+                        Flexible(
+                          child: Text(
+                            activity.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: activity.color.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             activity.badge,
-                            style: TextStyle(color: activity.color, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: activity.color,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Text(activity.subtitle, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                    Text(
+                      activity.subtitle,
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -151,9 +267,20 @@ class _ActivityCard extends StatelessWidget {
               const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Aç', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text(
+                    'Aç',
+                    style: TextStyle(
+                      color: Color(0xFF2563EB),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
                   SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF2563EB)),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: Color(0xFF2563EB),
+                  ),
                 ],
               ),
             ],

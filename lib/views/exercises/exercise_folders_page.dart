@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'exam_words_page.dart';
 import 'folder1_session_page.dart';
 import 'folder2_session_page.dart';
 
@@ -40,25 +41,76 @@ class ExerciseFoldersPage extends StatelessWidget {
       number: 2,
       title: 'Klasör 2',
       isUnlocked: true,
-      readyCount: 1,
+      readyCount: 10,
       totalCount: 10,
       page: () => const Folder2SessionPage(),
     ),
-    const _FolderInfo(number: 3, title: 'Klasör 3', isUnlocked: false, readyCount: 0, totalCount: 10),
-    _FolderInfo(number: 4, title: 'Klasör 4', isUnlocked: false, readyCount: 0, totalCount: 10),
-    _FolderInfo(number: 5, title: 'Klasör 5', isUnlocked: false, readyCount: 0, totalCount: 10),
-    _FolderInfo(number: 6, title: 'Klasör 6', isUnlocked: false, readyCount: 0, totalCount: 10),
-    _FolderInfo(number: 7, title: 'Klasör 7', isUnlocked: false, readyCount: 0, totalCount: 10),
-    _FolderInfo(number: 8, title: 'Klasör 8', isUnlocked: false, readyCount: 0, totalCount: 10),
-    _FolderInfo(number: 9, title: 'Klasör 9', isUnlocked: false, readyCount: 0, totalCount: 10),
-    _FolderInfo(number: 10, title: 'Klasör 10', isUnlocked: false, readyCount: 0, totalCount: 10),
+    const _FolderInfo(
+      number: 3,
+      title: 'Klasör 3',
+      isUnlocked: false,
+      readyCount: 0,
+      totalCount: 10,
+    ),
+    _FolderInfo(
+      number: 4,
+      title: 'Klasör 4',
+      isUnlocked: false,
+      readyCount: 0,
+      totalCount: 10,
+    ),
+    _FolderInfo(
+      number: 5,
+      title: 'Klasör 5',
+      isUnlocked: false,
+      readyCount: 0,
+      totalCount: 10,
+    ),
+    _FolderInfo(
+      number: 6,
+      title: 'Klasör 6',
+      isUnlocked: false,
+      readyCount: 0,
+      totalCount: 10,
+    ),
+    _FolderInfo(
+      number: 7,
+      title: 'Klasör 7',
+      isUnlocked: false,
+      readyCount: 0,
+      totalCount: 10,
+    ),
+    _FolderInfo(
+      number: 8,
+      title: 'Klasör 8',
+      isUnlocked: false,
+      readyCount: 0,
+      totalCount: 10,
+    ),
+    _FolderInfo(
+      number: 9,
+      title: 'Klasör 9',
+      isUnlocked: false,
+      readyCount: 0,
+      totalCount: 10,
+    ),
+    _FolderInfo(
+      number: 10,
+      title: 'Klasör 10',
+      isUnlocked: false,
+      readyCount: 0,
+      totalCount: 10,
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Egzersizler', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Egzersizler',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
       ),
       body: Padding(
@@ -84,7 +136,11 @@ class ExerciseFoldersPage extends StatelessWidget {
                       children: [
                         Text(
                           '10 Klasör, 100 Egzersiz',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                         ),
                         SizedBox(height: 4),
                         Text(
@@ -97,12 +153,90 @@ class ExerciseFoldersPage extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 2,
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ExamWordsPage()),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundColor: Colors.amber.shade100,
+                        child: Icon(
+                          Icons.star_rounded,
+                          color: Colors.amber.shade800,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Sınav Kelimeleri',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Sınavda çıkma ihtimali yüksek kelimeler',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Aç',
+                            style: TextStyle(
+                              color: Color(0xFFB45309),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 14,
+                            color: Color(0xFFB45309),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             Expanded(
               child: ListView.separated(
                 itemCount: _folders.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) => _FolderCard(folder: _folders[index]),
+                itemBuilder: (context, index) =>
+                    _FolderCard(folder: _folders[index]),
               ),
             ),
           ],
@@ -151,11 +285,14 @@ class _FolderCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: (folder.isUnlocked ? const Color(0xFF2563EB) : Colors.grey)
-                    .withValues(alpha: 0.12),
+                backgroundColor:
+                    (folder.isUnlocked ? const Color(0xFF2563EB) : Colors.grey)
+                        .withValues(alpha: 0.12),
                 child: Icon(
                   folder.isUnlocked ? Icons.folder_open : Icons.lock_outline,
-                  color: folder.isUnlocked ? const Color(0xFF2563EB) : Colors.grey,
+                  color: folder.isUnlocked
+                      ? const Color(0xFF2563EB)
+                      : Colors.grey,
                   size: 24,
                 ),
               ),
@@ -169,7 +306,9 @@ class _FolderCard extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: folder.isUnlocked ? const Color(0xFF0F172A) : Colors.grey.shade500,
+                        color: folder.isUnlocked
+                            ? const Color(0xFF0F172A)
+                            : Colors.grey.shade500,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -177,7 +316,10 @@ class _FolderCard extends StatelessWidget {
                       folder.isUnlocked
                           ? '${folder.readyCount}/${folder.totalCount} egzersiz hazır'
                           : '${folder.totalCount} egzersiz',
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -189,22 +331,37 @@ class _FolderCard extends StatelessWidget {
                   children: [
                     Text(
                       'Aç',
-                      style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(
+                        color: Color(0xFF2563EB),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                     SizedBox(width: 4),
-                    Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF2563EB)),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 14,
+                      color: Color(0xFF2563EB),
+                    ),
                   ],
                 )
               else
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
                     'Yakında',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
                   ),
                 ),
             ],
