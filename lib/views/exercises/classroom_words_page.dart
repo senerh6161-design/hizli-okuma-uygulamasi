@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 enum _Phase { streamIntro, stream, quizIntro, quiz }
 
@@ -201,6 +202,7 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
   final Random _random = Random();
   _Phase _phase = _Phase.streamIntro;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
   bool _isReplay = false;
   int _speedLevel = 1;
 
@@ -461,6 +463,25 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
     );
   }
 
+  void _pauseGame() {
+    _streamCountdownTimer?.cancel();
+    _streamTimer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    setState(() => _isPaused = false);
+    if (_phase == _Phase.stream) {
+      final duration = _isReplay ? _replayDurationSec : _streamDurationSec;
+      _streamCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _streamElapsedSec++);
+        if (_streamElapsedSec >= duration) _finishStream();
+      });
+      _scheduleStreamReveal();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CompletionPopScope(
@@ -469,9 +490,15 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
         appBar: AppBar(title: const Text('📝 Sınıf Eşyaları · Kelime')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: _buildBody(),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _buildBody(),
+              ),
+              if (_isPaused)
+                buildPauseOverlay(color: _color, onResume: _resumeGame),
+            ],
           ),
         ),
       ),
@@ -697,7 +724,11 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
     );
   }
 
-  Widget _stageHeader(String badge, {String? timerText}) {
+  Widget _stageHeader(
+    String badge, {
+    String? timerText,
+    bool showPause = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -712,15 +743,22 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
             style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
           ),
         ),
-        if (timerText != null)
-          Text(
-            timerText,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Colors.orange,
-            ),
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (timerText != null)
+              Text(
+                timerText,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.orange,
+                ),
+              ),
+            if (showPause)
+              buildPauseButton(color: _color, onPressed: _pauseGame),
+          ],
+        ),
       ],
     );
   }
@@ -733,6 +771,7 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
         _stageHeader(
           _isReplay ? '1. Bölüm · Hatırlatma' : '1. Bölüm · Satır Akışı',
           timerText: 'Süre: $remaining sn',
+          showPause: true,
         ),
         const SizedBox(height: 10),
         _speedChipRow(),

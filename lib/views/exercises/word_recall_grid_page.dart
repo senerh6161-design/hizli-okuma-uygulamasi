@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 enum _Phase { intro, bolum2Intro, flash, grid }
 
@@ -55,6 +56,7 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
   final Random _random = Random();
   _Phase _phase = _Phase.intro;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
   int _currentBolum = 1;
   int _speedLevel = 1;
 
@@ -131,6 +133,37 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
       if (!mounted) return;
       _answerRound(null);
     });
+  }
+
+  void _pauseGame() {
+    _answerTimer?.cancel();
+    _tickTimer?.cancel();
+    _flashTimer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    setState(() => _isPaused = false);
+    if (_phase == _Phase.flash) {
+      _flashTimer = Timer(
+        Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+        () {
+          if (!mounted) return;
+          _startAnswerWindow();
+        },
+      );
+    } else if (_phase == _Phase.grid) {
+      final answerTimeMs = _answerTimeMsBySpeed[_speedLevel];
+      final remainingMs = (answerTimeMs - _elapsedMs).clamp(0, answerTimeMs);
+      _tickTimer = Timer.periodic(const Duration(milliseconds: 80), (_) {
+        if (!mounted) return;
+        setState(() => _elapsedMs = (_elapsedMs + 80).clamp(0, answerTimeMs));
+      });
+      _answerTimer = Timer(Duration(milliseconds: remainingMs), () {
+        if (!mounted) return;
+        _answerRound(null);
+      });
+    }
   }
 
   void _answerRound(int? index) {
@@ -284,15 +317,21 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
         appBar: AppBar(title: const Text('🔍 Nerede Gördüm?')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: switch (_phase) {
-              _Phase.intro => _buildIntro(),
-              _Phase.bolum2Intro => _buildBolum2Intro(),
-              _Phase.flash || _Phase.grid => _buildRound(
-                key: ValueKey('round-$_currentBolum-$_roundIndex-$_phase'),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: switch (_phase) {
+                  _Phase.intro => _buildIntro(),
+                  _Phase.bolum2Intro => _buildBolum2Intro(),
+                  _Phase.flash || _Phase.grid => _buildRound(
+                    key: ValueKey('round-$_currentBolum-$_roundIndex-$_phase'),
+                  ),
+                },
               ),
-            },
+              if (_isPaused)
+                buildPauseOverlay(color: _color, onResume: _resumeGame),
+            ],
           ),
         ),
       ),
@@ -496,13 +535,20 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
                   ),
                 ),
               ),
-              Text(
-                'Puan: $_totalScore',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: _color,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Puan: $_totalScore',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: _color,
+                    ),
+                  ),
+                  if (!_answered)
+                    buildPauseButton(color: _color, onPressed: _pauseGame),
+                ],
               ),
             ],
           ),

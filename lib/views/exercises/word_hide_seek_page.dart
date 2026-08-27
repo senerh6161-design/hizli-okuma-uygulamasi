@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 class _HidePuzzle {
   final String given;
@@ -66,6 +67,7 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
 
   bool _showIntro = true;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
   int _index = 0;
   int _totalScore = 0;
   int _stage = 0;
@@ -93,6 +95,10 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
     _elapsedSeconds = 0;
     _feedback = null;
     _controller.clear();
+    _startTicking();
+  }
+
+  void _startTicking() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() {
@@ -109,6 +115,16 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
         }
       });
     });
+  }
+
+  void _pauseGame() {
+    _timer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    setState(() => _isPaused = false);
+    _startTicking();
   }
 
   // Öğrenci beklemeden manuel ipucu isteyebilsin diye — otomatik 30 sn'lik
@@ -279,7 +295,13 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
         appBar: AppBar(title: const Text('🙈 Kelimelerle Saklambaç')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: _showIntro ? _buildIntro() : _buildPuzzle(),
+          child: Stack(
+            children: [
+              _showIntro ? _buildIntro() : _buildPuzzle(),
+              if (_isPaused)
+                buildPauseOverlay(color: Colors.pink, onResume: _resumeGame),
+            ],
+          ),
         ),
       ),
     );
@@ -442,19 +464,28 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
                 ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.amber.shade100,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'Şu an: $_currentPointValue puan',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber.shade900,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Şu an: $_currentPointValue puan',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber.shade900,
+                    ),
+                  ),
                 ),
-              ),
+                buildPauseButton(color: Colors.pink, onPressed: _pauseGame),
+              ],
             ),
           ],
         ),

@@ -9,6 +9,7 @@ import '../../models/comprehension_data.dart';
 import '../../models/audio_manager.dart';
 import '../../widgets/confetti_overlay.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 import '../exercises/comprehension_page.dart';
 
 /// Tek bir okuma egzersizi seviyesini tanımlar.
@@ -43,7 +44,11 @@ class LevelPage extends StatelessWidget {
   // üzerinden GERÇEKTEN seviye seçilen akışta true kalır.
   final bool showSchoolLevelInTitle;
 
-  const LevelPage({super.key, required this.schoolLevel, this.showSchoolLevelInTitle = true});
+  const LevelPage({
+    super.key,
+    required this.schoolLevel,
+    this.showSchoolLevelInTitle = true,
+  });
 
   // WPM'i 5'in katına yuvarlar ve 60-900 aralığında tutar (daha okunur
   // rakamlar: 97.5 yerine 100 gibi).
@@ -56,7 +61,8 @@ class LevelPage extends StatelessWidget {
     // Kişisel WPM Testi yapılmışsa (ProgressManager.personalWpmBaseline)
     // taban hız OKUL ORTALAMASI değil, kullanıcının GERÇEK ölçülen hızı
     // olur. Test yapılmamışsa okul yaş grubunun varsayılanına düşer.
-    final rawBase = ProgressManager.personalWpmBaseline ?? schoolLevel.defaultWpm;
+    final rawBase =
+        ProgressManager.personalWpmBaseline ?? schoolLevel.defaultWpm;
     // Anlama Testi performansına göre ProgressManager.speedAdjustment ile
     // ayrıca ölçekleniyor (bkz. recordComprehensionResult).
     // %90+ anlama -> tempo artar, %70 altı -> tempo azalır.
@@ -131,7 +137,9 @@ class LevelPage extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  ProgressManager.personalWpmBaseline != null ? Icons.verified : Icons.info_outline,
+                  ProgressManager.personalWpmBaseline != null
+                      ? Icons.verified
+                      : Icons.info_outline,
                   size: 14,
                   color: Colors.grey.shade600,
                 ),
@@ -141,8 +149,8 @@ class LevelPage extends StatelessWidget {
                     ProgressManager.personalWpmBaseline != null
                         ? 'Taban hız: kişisel ölçümün (~${ProgressManager.personalWpmBaseline} WPM)'
                         : showSchoolLevelInTitle
-                            ? 'Taban hız: ${schoolLevel.title.split('(').first.trim()} ortalaması — "Seviyeni Ölç" ile kişiselleştirebilirsin'
-                            : 'Taban hız: yaş grubu ortalaması — "Seviyeni Ölç" ile kişiselleştirebilirsin',
+                        ? 'Taban hız: ${schoolLevel.title.split('(').first.trim()} ortalaması — "Seviyeni Ölç" ile kişiselleştirebilirsin'
+                        : 'Taban hız: yaş grubu ortalaması — "Seviyeni Ölç" ile kişiselleştirebilirsin',
                     style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                   ),
                 ),
@@ -155,7 +163,9 @@ class LevelPage extends StatelessWidget {
               margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: adjustment > 1.0 ? Colors.green.shade50 : Colors.orange.shade50,
+                color: adjustment > 1.0
+                    ? Colors.green.shade50
+                    : Colors.orange.shade50,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -163,7 +173,9 @@ class LevelPage extends StatelessWidget {
                   Icon(
                     adjustment > 1.0 ? Icons.trending_up : Icons.trending_down,
                     size: 18,
-                    color: adjustment > 1.0 ? Colors.green.shade700 : Colors.orange.shade800,
+                    color: adjustment > 1.0
+                        ? Colors.green.shade700
+                        : Colors.orange.shade800,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -174,7 +186,9 @@ class LevelPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: adjustment > 1.0 ? Colors.green.shade800 : Colors.orange.shade900,
+                        color: adjustment > 1.0
+                            ? Colors.green.shade800
+                            : Colors.orange.shade900,
                       ),
                     ),
                   ),
@@ -189,13 +203,17 @@ class LevelPage extends StatelessWidget {
                 final lvl = levels[index];
                 return Card(
                   margin: const EdgeInsets.only(bottom: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                   elevation: 2,
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(18),
                     leading: CircleAvatar(
                       radius: 26,
-                      backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                      backgroundColor: const Color(
+                        0xFF2563EB,
+                      ).withValues(alpha: 0.1),
                       child: Text(
                         '${lvl.index}',
                         style: const TextStyle(
@@ -207,7 +225,10 @@ class LevelPage extends StatelessWidget {
                     ),
                     title: Text(
                       lvl.title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 6),
@@ -268,6 +289,7 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
 
   _SessionPhase phase = _SessionPhase.ready;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
   int countdownValue = 3;
 
   List<String> _queue = [];
@@ -303,13 +325,18 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
       final passages = ComprehensionData.passages;
       ReadingPassage next;
       if (passages.length > 1 && _currentRealPassage != null) {
-        final others = passages.where((p) => p.id != _currentRealPassage!.id).toList();
+        final others = passages
+            .where((p) => p.id != _currentRealPassage!.id)
+            .toList();
         next = others[_random.nextInt(others.length)];
       } else {
         next = passages[_random.nextInt(passages.length)];
       }
       _currentRealPassage = next;
-      _queue = next.content.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+      _queue = next.content
+          .split(RegExp(r'\s+'))
+          .where((w) => w.isNotEmpty)
+          .toList();
       _queueIndex = 0;
       return;
     }
@@ -359,6 +386,10 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
       currentWord = _nextWord();
     });
 
+    _startRunningTimers();
+  }
+
+  void _startRunningTimers() {
     _wordTimer = Timer.periodic(
       Duration(milliseconds: widget.readingLevel.speedMs),
       (_) {
@@ -385,6 +416,19 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
         setState(() => remainingMs -= 100);
       }
     });
+  }
+
+  void _pauseSession() {
+    _wordTimer?.cancel();
+    _tickTimer?.cancel();
+    AudioManager.stopAmbient();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeSession() {
+    AudioManager.startAmbient();
+    setState(() => _isPaused = false);
+    _startRunningTimers();
   }
 
   void _finishSession() {
@@ -437,18 +481,27 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-      appBar: AppBar(title: Text(widget.readingLevel.title)),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: switch (phase) {
-            _SessionPhase.ready => _buildReady(),
-            _SessionPhase.countdown => _buildCountdown(),
-            _SessionPhase.running => _buildRunning(),
-            _SessionPhase.finished => _buildFinished(),
-          },
+        appBar: AppBar(title: Text(widget.readingLevel.title)),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Stack(
+              children: [
+                switch (phase) {
+                  _SessionPhase.ready => _buildReady(),
+                  _SessionPhase.countdown => _buildCountdown(),
+                  _SessionPhase.running => _buildRunning(),
+                  _SessionPhase.finished => _buildFinished(),
+                },
+                if (_isPaused)
+                  buildPauseOverlay(
+                    color: const Color(0xFF2563EB),
+                    onResume: _resumeSession,
+                  ),
+              ],
+            ),
+          ),
         ),
-      ),
       ),
     );
   }
@@ -526,7 +579,9 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
           ),
         ),
@@ -604,11 +659,17 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
           children: [
             Text(
               'Okunan: $readCount',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
             ),
             Text(
               '$calculatedWpm WPM',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2563EB),
+              ),
             ),
           ],
         ),
@@ -621,7 +682,10 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: Colors.grey.shade300),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 15,
+                ),
               ],
             ),
             // Stack + Alignment.center: kelime HER ZAMAN kutunun tam
@@ -640,12 +704,19 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
                   // belirmeye başlar. Varsayılan AnimatedSwitcher ikisini aynı
                   // anda (çapraz geçiş) oynatıyordu, bu da kelimelerin bir an
                   // üst üste binip "iç içe geçmiş" görünmesine yol açıyordu.
-                  switchOutCurve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+                  switchOutCurve: const Interval(
+                    0.0,
+                    0.5,
+                    curve: Curves.easeOut,
+                  ),
                   switchInCurve: const Interval(0.5, 1.0, curve: Curves.easeIn),
                   transitionBuilder: (child, animation) => FadeTransition(
                     opacity: animation,
                     child: ScaleTransition(
-                      scale: Tween<double>(begin: 0.85, end: 1.0).animate(animation),
+                      scale: Tween<double>(
+                        begin: 0.85,
+                        end: 1.0,
+                      ).animate(animation),
                       child: child,
                     ),
                   ),
@@ -669,7 +740,10 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
                     width: 8,
                     height: 8,
                     child: DecoratedBox(
-                      decoration: BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                 ),
@@ -694,7 +768,10 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
                   ),
                   Text(
                     '${(remainingMs / 1000).ceil()}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -702,12 +779,28 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
             const SizedBox(width: 16),
             Expanded(
               child: OutlinedButton.icon(
+                onPressed: _pauseSession,
+                icon: const Icon(Icons.pause),
+                label: const Text('DURDUR'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
                 onPressed: _finishSession,
                 icon: const Icon(Icons.stop),
                 label: const Text('BİTİR'),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
@@ -749,7 +842,10 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
       children: [
         const Icon(Icons.emoji_events, size: 64, color: Colors.amber),
         const SizedBox(height: 16),
-        const Text('Harika iş! 🎉', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        const Text(
+          'Harika iş! 🎉',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 6),
         Text(
           '${widget.readingLevel.title} tamamlandı',
@@ -767,11 +863,18 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
             children: [
               Text(
                 '$calculatedWpm',
-                style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                style: const TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
+                ),
               ),
               const Text('Ortalama WPM', style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 12),
-              Text('Toplam $readCount kelime okundu', style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                'Toplam $readCount kelime okundu',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ],
           ),
         ),
@@ -821,7 +924,9 @@ class _ActiveReadingSessionState extends State<ActiveReadingSession> {
             Expanded(
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context, true),
-                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
                 child: const Text('Seviyelere Dön'),
               ),
             ),

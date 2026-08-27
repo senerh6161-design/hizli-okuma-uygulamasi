@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 enum CircularMode { numbers12, numbers20, days, months }
 
@@ -29,12 +30,28 @@ extension on CircularMode {
         return List.generate(20, (i) => '${i + 1}');
       case CircularMode.days:
         return const [
-          'PAZARTESİ', 'SALI', 'ÇARŞAMBA', 'PERŞEMBE', 'CUMA', 'CUMARTESİ', 'PAZAR',
+          'PAZARTESİ',
+          'SALI',
+          'ÇARŞAMBA',
+          'PERŞEMBE',
+          'CUMA',
+          'CUMARTESİ',
+          'PAZAR',
         ];
       case CircularMode.months:
         return const [
-          'OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN',
-          'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK',
+          'OCAK',
+          'ŞUBAT',
+          'MART',
+          'NİSAN',
+          'MAYIS',
+          'HAZİRAN',
+          'TEMMUZ',
+          'AĞUSTOS',
+          'EYLÜL',
+          'EKİM',
+          'KASIM',
+          'ARALIK',
         ];
     }
   }
@@ -73,6 +90,7 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
   int _demoIndex = 0;
   Timer? _demoTimer;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
 
   bool _isPlaying = false;
   int _targetIndex = 0;
@@ -171,6 +189,26 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
     });
   }
 
+  void _pauseGame() {
+    _demoTimer?.cancel();
+    _tickTimer?.cancel();
+    _stopwatch?.stop();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    setState(() => _isPaused = false);
+    if (_isDemoing) {
+      _scheduleDemoStep();
+    } else if (_isPlaying) {
+      _stopwatch?.start();
+      _tickTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+        if (!mounted) return;
+        setState(() => _elapsed = _stopwatch!.elapsed);
+      });
+    }
+  }
+
   void _onTapSlot(int index) {
     if (!_isPlaying) return;
     final expected = _mode.sequence[_targetIndex];
@@ -229,20 +267,30 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
             Text('Puan: $score'),
             if (_bestMs == ms) ...[
               const SizedBox(height: 8),
-              const Text('🏆 YENİ REKOR!',
-                  style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+              const Text(
+                '🏆 YENİ REKOR!',
+                style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
-              const Text('🎉 Yeni Başarım Kazandın!',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const Text(
+                '🎉 Yeni Başarım Kazandın!',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: unlocked.map((a) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.amber.shade50,
                       borderRadius: BorderRadius.circular(10),
@@ -253,11 +301,14 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
                       children: [
                         Icon(a.icon, size: 14, color: Colors.amber.shade800),
                         const SizedBox(width: 4),
-                        Text(a.title,
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.amber.shade900)),
+                        Text(
+                          a.title,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber.shade900,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -270,7 +321,10 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context); // dialogu kapat
-              Navigator.pop(context, true); // Klasör 1'e dön, tamamlandı olarak işaretle
+              Navigator.pop(
+                context,
+                true,
+              ); // Klasör 1'e dön, tamamlandı olarak işaretle
             },
             child: const Text('Bitir'),
           ),
@@ -293,260 +347,357 @@ class _CircularSequencePageState extends State<CircularSequencePage> {
   @override
   Widget build(BuildContext context) {
     final n = _positions.length;
-    final activeIndex = _isDemoing ? _positions.indexOf(_mode.sequence[_demoIndex]) : -1;
+    final activeIndex = _isDemoing
+        ? _positions.indexOf(_mode.sequence[_demoIndex])
+        : -1;
 
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-      appBar: AppBar(title: Text(widget.appBarTitle)),
-      body: Column(
-        children: [
-          if (widget.availableModes.length > 1)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: Colors.white,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: widget.availableModes.map((m) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(m.label),
-                        selected: _mode == m,
-                        onSelected: (selected) {
-                          if (selected) _changeMode(m);
-                        },
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          if (_isDemoing)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.visibility_rounded, color: Color(0xFF2563EB), size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Sırayı izle — 3 tur sürecek, her turda biraz daha hızlanacak!',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          // Yönerge OYUN BAŞLADIKTAN SONRA üstte gösterilirse öğrencinin
-          // dikkati zaten daire üzerindeyken kaçırılabiliyordu — bu yüzden
-          // etkinliğe girer girmez, henüz İZLE/BAŞLA'ya basmadan ÖNCE
-          // gösteriliyor.
-          if (!_isDemoing && !_isPlaying)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.info_outline_rounded, color: Color(0xFF2563EB), size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'İstersen önce İZLE\'ye basıp sırayı öğren, sonra BAŞLA\'ya bas — bu sayıları '
-                      'sıraya dizme sırası sende olacak, hızlı olmayı unutma!',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            color: Colors.grey.shade100,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        appBar: AppBar(title: Text(widget.appBarTitle)),
+        body: Stack(
+          children: [
+            Column(
               children: [
-                Row(
-                  children: [
-                    Text(
-                      _isPlaying
-                          ? 'Sırada: ${_mode.sequence[_targetIndex]}'
-                          : (_isDemoing ? 'İzle: ${_demoLap + 1}/3. tur' : 'Hazır mısın?'),
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                if (widget.availableModes.length > 1)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
                     ),
-                    if (_isDemoing) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0D9488).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '⚡ ${_demoLapLabels[_demoLap.clamp(0, _demoLapLabels.length - 1)]}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488), fontSize: 12),
-                        ),
+                    color: Colors.white,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: widget.availableModes.map((m) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text(m.label),
+                              selected: _mode == m,
+                              onSelected: (selected) {
+                                if (selected) _changeMode(m);
+                              },
+                            ),
+                          );
+                        }).toList(),
                       ),
-                    ],
-                  ],
-                ),
-                Text(
-                  'Süre: ${(_elapsed.inMilliseconds / 1000).toStringAsFixed(1)} sn',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange),
-                ),
-                if (_bestMs != null)
-                  Text(
-                    '🏆 ${(_bestMs! / 1000).toStringAsFixed(1)} sn',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                    ),
                   ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final size = min(constraints.maxWidth, constraints.maxHeight);
-                  final center = Offset(constraints.maxWidth / 2, size / 2 + 10);
-                  final radius = size / 2 - 40;
-                  final nodeSize = n > 14 ? 48.0 : 68.0;
-
-                  return Stack(
-                    children: [
-                      Positioned(
-                        left: center.dx - 34,
-                        top: center.dy - 20,
-                        child: SizedBox(
-                          width: 68,
+                if (_isDemoing)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.visibility_rounded,
+                          color: Color(0xFF2563EB),
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
                           child: Text(
-                            _isPlaying ? '${_targetIndex + 1}/$n' : (_isDemoing ? '👀' : 'Başla ↓'),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 13, color: Colors.grey),
+                            'Sırayı izle — 3 tur sürecek, her turda biraz daha hızlanacak!',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF1E3A8A),
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                      for (int i = 0; i < n; i++)
-                        Builder(builder: (_) {
-                          final angle = (2 * pi * i / n) - (pi / 2);
-                          final dx = center.dx + radius * cos(angle) - nodeSize / 2;
-                          final dy = center.dy + radius * sin(angle) - nodeSize / 2;
-
-                          final isDemoActive = _isDemoing && i == activeIndex;
-                          final isWrong = _wrongTapIndex == i;
-                          final passedInPlay = _isPlaying &&
-                              _mode.sequence.indexOf(_positions[i]) < _targetIndex;
-
-                          Color bg = const Color(0xFFEFF6FF);
-                          Color border = const Color(0xFF93C5FD);
-                          Color textColor = const Color(0xFF0F172A);
-                          if (isDemoActive) {
-                            bg = const Color(0xFF2563EB);
-                            textColor = Colors.white;
-                          } else if (isWrong) {
-                            bg = Colors.red.shade400;
-                            textColor = Colors.white;
-                          } else if (passedInPlay) {
-                            bg = Colors.green.shade500;
-                            textColor = Colors.white;
-                          }
-
-                          return Positioned(
-                            left: dx,
-                            top: dy,
-                            child: GestureDetector(
-                              onTap: () => _onTapSlot(i),
-                              // Bilerek animasyonsuz (Container, AnimatedContainer
-                              // DEĞİL): en hızlı turda yuvalar 350ms'de bir
-                              // değişiyor, herhangi bir geçiş süresi bir
-                              // öncekinin vurgusunun tam sönmeden yenisiyle
-                              // üst üste binmesine ("gölge kalması") yol
-                              // açıyordu. Anlık geçiş bunu kökten çözer.
-                              child: Container(
-                                width: nodeSize,
-                                height: nodeSize,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: bg,
-                                  border: Border.all(color: border, width: 2),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.06),
-                                      blurRadius: 4,
-                                    ),
-                                  ],
+                      ],
+                    ),
+                  ),
+                // Yönerge OYUN BAŞLADIKTAN SONRA üstte gösterilirse öğrencinin
+                // dikkati zaten daire üzerindeyken kaçırılabiliyordu — bu yüzden
+                // etkinliğe girer girmez, henüz İZLE/BAŞLA'ya basmadan ÖNCE
+                // gösteriliyor.
+                if (!_isDemoing && !_isPlaying)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          color: Color(0xFF2563EB),
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'İstersen önce İZLE\'ye basıp sırayı öğren, sonra BAŞLA\'ya bas — bu sayıları '
+                            'sıraya dizme sırası sende olacak, hızlı olmayı unutma!',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF1E3A8A),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  color: Colors.grey.shade100,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            _isPlaying
+                                ? 'Sırada: ${_mode.sequence[_targetIndex]}'
+                                : (_isDemoing
+                                      ? 'İzle: ${_demoLap + 1}/3. tur'
+                                      : 'Hazır mısın?'),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2563EB),
+                            ),
+                          ),
+                          if (_isDemoing) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF0D9488,
+                                ).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '⚡ ${_demoLapLabels[_demoLap.clamp(0, _demoLapLabels.length - 1)]}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0D9488),
+                                  fontSize: 12,
                                 ),
-                                alignment: Alignment.center,
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4),
-                                    child: Text(
-                                      _positions[i],
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: n > 14 ? 12 : 16,
-                                        color: textColor,
-                                      ),
-                                    ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      Text(
+                        'Süre: ${(_elapsed.inMilliseconds / 1000).toStringAsFixed(1)} sn',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      if (_bestMs != null)
+                        Text(
+                          '🏆 ${(_bestMs! / 1000).toStringAsFixed(1)} sn',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      if (_isDemoing || _isPlaying)
+                        buildPauseButton(
+                          color: const Color(0xFF2563EB),
+                          onPressed: _pauseGame,
+                        ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final size = min(
+                          constraints.maxWidth,
+                          constraints.maxHeight,
+                        );
+                        final center = Offset(
+                          constraints.maxWidth / 2,
+                          size / 2 + 10,
+                        );
+                        final radius = size / 2 - 40;
+                        final nodeSize = n > 14 ? 48.0 : 68.0;
+
+                        return Stack(
+                          children: [
+                            Positioned(
+                              left: center.dx - 34,
+                              top: center.dy - 20,
+                              child: SizedBox(
+                                width: 68,
+                                child: Text(
+                                  _isPlaying
+                                      ? '${_targetIndex + 1}/$n'
+                                      : (_isDemoing ? '👀' : 'Başla ↓'),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Colors.grey,
                                   ),
                                 ),
                               ),
                             ),
-                          );
-                        }),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isPlaying ? null : _startDemo,
-                    icon: const Icon(Icons.visibility),
-                    label: const Text('İZLE'),
-                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                            for (int i = 0; i < n; i++)
+                              Builder(
+                                builder: (_) {
+                                  final angle = (2 * pi * i / n) - (pi / 2);
+                                  final dx =
+                                      center.dx +
+                                      radius * cos(angle) -
+                                      nodeSize / 2;
+                                  final dy =
+                                      center.dy +
+                                      radius * sin(angle) -
+                                      nodeSize / 2;
+
+                                  final isDemoActive =
+                                      _isDemoing && i == activeIndex;
+                                  final isWrong = _wrongTapIndex == i;
+                                  final passedInPlay =
+                                      _isPlaying &&
+                                      _mode.sequence.indexOf(_positions[i]) <
+                                          _targetIndex;
+
+                                  Color bg = const Color(0xFFEFF6FF);
+                                  Color border = const Color(0xFF93C5FD);
+                                  Color textColor = const Color(0xFF0F172A);
+                                  if (isDemoActive) {
+                                    bg = const Color(0xFF2563EB);
+                                    textColor = Colors.white;
+                                  } else if (isWrong) {
+                                    bg = Colors.red.shade400;
+                                    textColor = Colors.white;
+                                  } else if (passedInPlay) {
+                                    bg = Colors.green.shade500;
+                                    textColor = Colors.white;
+                                  }
+
+                                  return Positioned(
+                                    left: dx,
+                                    top: dy,
+                                    child: GestureDetector(
+                                      onTap: () => _onTapSlot(i),
+                                      // Bilerek animasyonsuz (Container, AnimatedContainer
+                                      // DEĞİL): en hızlı turda yuvalar 350ms'de bir
+                                      // değişiyor, herhangi bir geçiş süresi bir
+                                      // öncekinin vurgusunun tam sönmeden yenisiyle
+                                      // üst üste binmesine ("gölge kalması") yol
+                                      // açıyordu. Anlık geçiş bunu kökten çözer.
+                                      child: Container(
+                                        width: nodeSize,
+                                        height: nodeSize,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: bg,
+                                          border: Border.all(
+                                            color: border,
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.06,
+                                              ),
+                                              blurRadius: 4,
+                                            ),
+                                          ],
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(4),
+                                            child: Text(
+                                              _positions[i],
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: n > 14 ? 12 : 16,
+                                                color: textColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton.icon(
-                    onPressed: _isPlaying ? null : _startPlay,
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text('BAŞLA', style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _isPlaying ? null : _startDemo,
+                          icon: const Icon(Icons.visibility),
+                          label: const Text('İZLE'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton.icon(
+                          onPressed: _isPlaying ? null : _startPlay,
+                          icon: const Icon(Icons.play_arrow),
+                          label: const Text(
+                            'BAŞLA',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2563EB),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
+            if (_isPaused)
+              buildPauseOverlay(
+                color: const Color(0xFF2563EB),
+                onResume: _resumeGame,
+              ),
+          ],
+        ),
       ),
     );
   }

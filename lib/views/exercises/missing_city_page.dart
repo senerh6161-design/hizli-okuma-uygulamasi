@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 enum _Phase { intro, playing }
 
@@ -44,6 +46,7 @@ class _MissingCityPageState extends State<MissingCityPage> {
   final Random _random = Random();
   _Phase _phase = _Phase.intro;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
   int _speedLevel = 1;
 
   int _roundIndex = 0;
@@ -58,9 +61,24 @@ class _MissingCityPageState extends State<MissingCityPage> {
   int _lastPoints = 0;
 
   @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
+
+  @override
   void dispose() {
     _roundTimer?.cancel();
     _tickTimer?.cancel();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 
@@ -100,6 +118,28 @@ class _MissingCityPageState extends State<MissingCityPage> {
       );
     });
     _roundTimer = Timer(Duration(milliseconds: totalMs), () {
+      if (!mounted) return;
+      _handleAnswer(null);
+    });
+  }
+
+  void _pauseGame() {
+    _roundTimer?.cancel();
+    _tickTimer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    final totalMs = _roundTimeMsBySpeed[_speedLevel];
+    final remainingMs = (totalMs - _roundElapsedMs).clamp(0, totalMs);
+    setState(() => _isPaused = false);
+    _tickTimer = Timer.periodic(const Duration(milliseconds: 80), (_) {
+      if (!mounted) return;
+      setState(
+        () => _roundElapsedMs = (_roundElapsedMs + 80).clamp(0, totalMs),
+      );
+    });
+    _roundTimer = Timer(Duration(milliseconds: remainingMs), () {
       if (!mounted) return;
       _handleAnswer(null);
     });
@@ -240,11 +280,17 @@ class _MissingCityPageState extends State<MissingCityPage> {
         appBar: AppBar(title: const Text('🗺️ Eksik Şehri Bul')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: _phase == _Phase.intro
-                ? _buildIntro()
-                : _buildPlaying(key: ValueKey('round-$_roundIndex')),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _phase == _Phase.intro
+                    ? _buildIntro()
+                    : _buildPlaying(key: ValueKey('round-$_roundIndex')),
+              ),
+              if (_isPaused)
+                buildPauseOverlay(color: _color, onResume: _resumeGame),
+            ],
           ),
         ),
       ),
@@ -472,13 +518,20 @@ class _MissingCityPageState extends State<MissingCityPage> {
                   ),
                 ),
               ),
-              Text(
-                'Puan: $_totalScore',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: _color,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Puan: $_totalScore',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: _color,
+                    ),
+                  ),
+                  if (!_answered)
+                    buildPauseButton(color: _color, onPressed: _pauseGame),
+                ],
               ),
             ],
           ),

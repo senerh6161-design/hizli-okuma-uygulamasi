@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 enum _Phase { intro, playing }
 
@@ -64,6 +65,7 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
 
   _Phase _phase = _Phase.intro;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
 
   int _roundIndex = 0;
   int _totalScore = 0;
@@ -133,6 +135,20 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
       _hintsRequested = 0;
       _controller.clear();
     });
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedSec++);
+      if (_elapsedSec >= _timeoutSec) _timeoutRound();
+    });
+  }
+
+  void _pauseGame() {
+    _timer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    setState(() => _isPaused = false);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _elapsedSec++);
@@ -279,11 +295,17 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
         appBar: AppBar(title: const Text('🙈 Kelimelerle Saklambaç Oynuyorum')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: _phase == _Phase.intro
-                ? _buildIntro()
-                : _buildRound(key: ValueKey('round-$_roundIndex')),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _phase == _Phase.intro
+                    ? _buildIntro()
+                    : _buildRound(key: ValueKey('round-$_roundIndex')),
+              ),
+              if (_isPaused)
+                buildPauseOverlay(color: _color, onResume: _resumeGame),
+            ],
           ),
         ),
       ),
@@ -484,13 +506,20 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
                   ),
                 ),
               ),
-              Text(
-                'Puan: $_totalScore',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: _color,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Puan: $_totalScore',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: _color,
+                    ),
+                  ),
+                  if (!_answered)
+                    buildPauseButton(color: _color, onPressed: _pauseGame),
+                ],
               ),
             ],
           ),

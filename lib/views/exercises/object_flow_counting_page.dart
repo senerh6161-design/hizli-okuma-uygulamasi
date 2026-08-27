@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 class _ObjectItem {
   final String name;
@@ -152,6 +153,7 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
 
   final Random _random = Random();
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
 
   // 1. BÖLÜM (en başta çalışır, ısınma turu): nesneler TEK SATIRDA durur,
   // aktif olan KENDİLİĞİNDEN sırayla döner — süresi yok, öğrenci hazır
@@ -376,6 +378,21 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
       }
       _scheduleStage1ItemReveal();
     });
+  }
+
+  void _pauseGame() {
+    _warmupTimer?.cancel();
+    _stage1Timer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    setState(() => _isPaused = false);
+    if (_warmupRunning) {
+      _scheduleWarmupStep();
+    } else if (_stage1FlowRunning) {
+      _scheduleStage1ItemReveal();
+    }
   }
 
   void _answerStage1Question(int chosen) {
@@ -616,9 +633,18 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
         appBar: AppBar(title: const Text('📦 Nesne Akışı')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: _buildBody(),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _buildBody(),
+              ),
+              if (_isPaused)
+                buildPauseOverlay(
+                  color: const Color(0xFF2563EB),
+                  onResume: _resumeGame,
+                ),
+            ],
           ),
         ),
       ),
@@ -772,6 +798,10 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                 Text(
                   '${round.target.emoji} say',
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
+                buildPauseButton(
+                  color: const Color(0xFF2563EB),
+                  onPressed: _pauseGame,
                 ),
               ],
             ),
@@ -1172,19 +1202,28 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     final n = _warmupObjects.length;
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Text(
-            '1. Bölüm · Odaklanma',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2563EB),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                '1. Bölüm · Odaklanma',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
+                ),
+              ),
             ),
-          ),
+            buildPauseButton(
+              color: const Color(0xFF2563EB),
+              onPressed: _pauseGame,
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Expanded(

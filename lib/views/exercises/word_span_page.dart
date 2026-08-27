@@ -4,15 +4,9 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 enum _Phase { streamIntro, stream, scatterIntro, scatter, quizIntro, quiz }
-
-class _StreamItem {
-  final int id;
-  final String word;
-  final int lane;
-  const _StreamItem(this.id, this.word, this.lane);
-}
 
 class _SpanWord {
   final int id;
@@ -41,8 +35,9 @@ class _WordSpanPageState extends State<WordSpanPage> {
   static const Color _color = Color(0xFFE11D48);
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
 
-  static const List<int> _streamSpawnMsBySpeed = [700, 500, 320];
-  static const List<int> _streamTravelMsBySpeed = [2200, 1600, 1100];
+  // 2. etkinlikteki gibi "satırda beliren kelime" akışı — burada 1
+  // saniyede yaklaşık 6-7 kelime belirsin diye Orta seviye ~150 ms.
+  static const List<int> _streamSpawnMsBySpeed = [320, 220, 150];
   static const List<int> _flashMsBySpeed = [1500, 1000, 650];
 
   static const int _spanWordCount = 6;
@@ -59,18 +54,19 @@ class _WordSpanPageState extends State<WordSpanPage> {
   final Random _random = Random();
   _Phase _phase = _Phase.streamIntro;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
   int _speedLevel = 1;
 
   int _elapsedSec = 0;
   Timer? _countdownTimer;
 
-  // 1. Bölüm: Satır Akışı.
-  // Kelimeler tek çizgide üst üste binmesin diye birkaç dikey "şerit"
-  // arasında dönüşümlü olarak beliriyor.
-  static const int _streamLaneCount = 3;
-  int _nextStreamId = 0;
-  int _lastStreamLane = -1;
-  final List<_StreamItem> _streamItems = [];
+  // 1. Bölüm: Satır Akışı — Klasör 1'deki "Nesne Akışı" ile aynı mantık:
+  // kelimeler soldan sağa TEK TEK belirip sabit bir satırda yan yana durur
+  // (uçuşup kaymaz), satır dolunca hepsi birden kaybolup yeniden başlar.
+  static const int _itemsPerLine = 4;
+  static const int _rowPauseMs = 700;
+  List<String> _currentLine = const [];
+  int _lineItemIndex = 0;
   final List<String> _streamBag = [];
   String? _lastStreamWord;
   Timer? _streamSpawnTimer;
@@ -110,33 +106,52 @@ class _WordSpanPageState extends State<WordSpanPage> {
     setState(() {
       _phase = _Phase.stream;
       _elapsedSec = 0;
-      _streamItems.clear();
+      _currentLine = _generateLine();
+      _lineItemIndex = 1; // ilk kelime hemen belirsin
     });
+    _startCountdownTimer(_finishStream);
+    _scheduleStreamReveal();
+  }
+
+  void _startCountdownTimer(VoidCallback onExpire) {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _elapsedSec++);
-      if (_elapsedSec >= _stageDurationSec) _finishStream();
+      if (_elapsedSec >= _stageDurationSec) onExpire();
     });
-    _streamSpawnTimer = Timer.periodic(
-      Duration(milliseconds: _streamSpawnMsBySpeed[_speedLevel]),
-      (_) {
-        if (!mounted) return;
-        final id = _nextStreamId++;
-        final word = _nextStreamWord();
-        int lane = _random.nextInt(_streamLaneCount);
-        if (_streamLaneCount > 1) {
-          while (lane == _lastStreamLane) {
-            lane = _random.nextInt(_streamLaneCount);
-          }
-        }
-        _lastStreamLane = lane;
-        setState(() => _streamItems.add(_StreamItem(id, word, lane)));
-        Timer(Duration(milliseconds: _streamTravelMsBySpeed[_speedLevel]), () {
-          if (!mounted) return;
-          setState(() => _streamItems.removeWhere((s) => s.id == id));
+  }
+
+  // Aynı satırda aynı kelimenin iki kez görünmesini istemiyoruz.
+  List<String> _generateLine() {
+    final line = <String>[];
+    while (line.length < _itemsPerLine) {
+      final candidate = _nextStreamWord();
+      if (!line.contains(candidate)) line.add(candidate);
+    }
+    return line;
+  }
+
+  // Aktif satırdaki kelimeler TEK TEK belirir; satır tamamen dolunca kısa
+  // bir süre öylece durup öğrenciye bakma fırsatı verir, sonra hepsi
+  // birden kaybolup yeni satır aynı şekilde tek tek belirmeye başlar.
+  void _scheduleStreamReveal() {
+    if (!mounted || _phase != _Phase.stream) return;
+    final rowComplete = _lineItemIndex >= _currentLine.length;
+    final delay = rowComplete
+        ? _rowPauseMs
+        : _streamSpawnMsBySpeed[_speedLevel];
+    _streamSpawnTimer = Timer(Duration(milliseconds: delay), () {
+      if (!mounted || _phase != _Phase.stream) return;
+      if (rowComplete) {
+        setState(() {
+          _currentLine = _generateLine();
+          _lineItemIndex = 1;
         });
-      },
-    );
+      } else {
+        setState(() => _lineItemIndex++);
+      }
+      _scheduleStreamReveal();
+    });
   }
 
   // "Shuffle bag": havuzun karışık bir kopyasını tüketip bitince yeniden
@@ -163,7 +178,6 @@ class _WordSpanPageState extends State<WordSpanPage> {
     _countdownTimer?.cancel();
     _streamSpawnTimer?.cancel();
     setState(() {
-      _streamItems.clear();
       _phase = _Phase.scatterIntro;
     });
   }
@@ -178,11 +192,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
       _elapsedSec = 0;
       _scatterWords = [];
     });
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() => _elapsedSec++);
-      if (_elapsedSec >= _stageDurationSec) _finishScatter();
-    });
+    _startCountdownTimer(_finishScatter);
     _scheduleScatterFlash();
   }
 
@@ -404,6 +414,38 @@ class _WordSpanPageState extends State<WordSpanPage> {
     );
   }
 
+  void _pauseGame() {
+    _countdownTimer?.cancel();
+    _streamSpawnTimer?.cancel();
+    _scatterTimer?.cancel();
+    _quizFlashTimer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    setState(() => _isPaused = false);
+    switch (_phase) {
+      case _Phase.stream:
+        _startCountdownTimer(_finishStream);
+        _scheduleStreamReveal();
+      case _Phase.scatter:
+        _startCountdownTimer(_finishScatter);
+        _scheduleScatterFlash();
+      case _Phase.quiz:
+        if (_quizShowingWords) {
+          _quizFlashTimer = Timer(
+            Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+            () {
+              if (!mounted) return;
+              setState(() => _quizShowingWords = false);
+            },
+          );
+        }
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CompletionPopScope(
@@ -412,9 +454,15 @@ class _WordSpanPageState extends State<WordSpanPage> {
         appBar: AppBar(title: const Text('📝 Görsel Genişlik · Kelime')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: _buildBody(),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _buildBody(),
+              ),
+              if (_isPaused)
+                buildPauseOverlay(color: _color, onResume: _resumeGame),
+            ],
           ),
         ),
       ),
@@ -655,7 +703,11 @@ class _WordSpanPageState extends State<WordSpanPage> {
     );
   }
 
-  Widget _stageHeader(String badge, {bool showTimer = true}) {
+  Widget _stageHeader(
+    String badge, {
+    bool showTimer = true,
+    bool showPause = true,
+  }) {
     final remaining = _stageDurationSec - _elapsedSec;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -671,15 +723,22 @@ class _WordSpanPageState extends State<WordSpanPage> {
             style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
           ),
         ),
-        if (showTimer)
-          Text(
-            'Süre: $remaining sn',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: remaining <= 10 ? Colors.red : Colors.orange,
-            ),
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showTimer)
+              Text(
+                'Süre: $remaining sn',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: remaining <= 10 ? Colors.red : Colors.orange,
+                ),
+              ),
+            if (showPause)
+              buildPauseButton(color: _color, onPressed: _pauseGame),
+          ],
+        ),
       ],
     );
   }
@@ -699,60 +758,55 @@ class _WordSpanPageState extends State<WordSpanPage> {
               constraints: const BoxConstraints(maxHeight: 460),
               child: Container(
                 width: double.infinity,
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.grey.shade300),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                    ),
+                  ],
                 ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Stack(
-                      children: [
-                        Center(
-                          child: Container(
-                            width: double.infinity,
-                            height: 2,
-                            color: _color.withValues(alpha: 0.2),
+                // Klasör 1'deki Nesne Akışı gibi: kelimeler soldan sağa TEK
+                // TEK belirip sabit bir satırda yan yana durur, uçuşmaz.
+                // Bilerek Center DEĞİL, sola yaslı: ortalanmış olsaydı her
+                // yeni kelime eklendiğinde satırın tamamı yeniden ortalanıp
+                // kelimeler "ortadan çıkıyormuş" gibi kayardı.
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    alignment: WrapAlignment.start,
+                    runSpacing: 12,
+                    children: [
+                      for (int i = 0; i < _lineItemIndex; i++)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: TweenAnimationBuilder<double>(
+                            key: ValueKey('stream-$i-${_currentLine[i]}'),
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            duration: const Duration(milliseconds: 220),
+                            builder: (context, value, child) => Opacity(
+                              opacity: value,
+                              child: Transform.scale(
+                                scale: 0.8 + 0.2 * value,
+                                child: child,
+                              ),
+                            ),
+                            child: Text(
+                              _currentLine[i],
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: _color,
+                              ),
+                            ),
                           ),
                         ),
-                        for (final item in _streamItems)
-                          TweenAnimationBuilder<double>(
-                            key: ValueKey(item.id),
-                            // Kitap okuma mantığıyla: yeni kelime sağdan
-                            // girip sola doğru akıyor.
-                            tween: Tween(begin: 1.0, end: -1.0),
-                            duration: Duration(
-                              milliseconds: _streamTravelMsBySpeed[_speedLevel],
-                            ),
-                            curve: Curves.linear,
-                            builder: (context, t, _) {
-                              // Şeritler arası sabit piksel mesafe
-                              // kullanılıyor (kutunun yüksekliğine göre
-                              // ORANLI değil) — büyük tabletlerde kutu çok
-                              // uzadığında şeritler birbirinden uzaklaşıp
-                              // ekrana dağılmasın diye.
-                              final laneOffset =
-                                  (item.lane - (_streamLaneCount - 1) / 2) *
-                                  44.0;
-                              return Align(
-                                alignment: Alignment(t, 0),
-                                child: Transform.translate(
-                                  offset: Offset(0, laneOffset),
-                                  child: Text(
-                                    item.word,
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: _color,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                      ],
-                    );
-                  },
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -853,6 +907,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
         _stageHeader(
           '3. Bölüm · Soru ${_quizRoundIndex + 1}/$_quizRoundCount',
           showTimer: false,
+          showPause: _quizShowingWords && _quizSelected == null,
         ),
         const SizedBox(height: 10),
         _speedChipRow(),

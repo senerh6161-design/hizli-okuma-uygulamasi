@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/achievement.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 // "Farklı versiyonlar" — hoca hangi ikonla göstermek isterse seçilebilsin
 // diye birkaç tema tanımlı. emoji null olan tema (Nokta) orijinal
@@ -54,21 +55,39 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
   // butonuyla aralarında geçiş yapılabilir.
   static const List<List<Offset>> _pathTemplates = [
     [
-      Offset(0.15, 0.10), Offset(0.42, 0.10), Offset(0.20, 0.32),
-      Offset(0.20, 0.82), Offset(0.40, 0.82), Offset(0.40, 0.45),
-      Offset(0.58, 0.65), Offset(0.66, 0.15), Offset(0.85, 0.10),
+      Offset(0.15, 0.10),
+      Offset(0.42, 0.10),
+      Offset(0.20, 0.32),
+      Offset(0.20, 0.82),
+      Offset(0.40, 0.82),
+      Offset(0.40, 0.45),
+      Offset(0.58, 0.65),
+      Offset(0.66, 0.15),
+      Offset(0.85, 0.10),
       Offset(0.85, 0.82),
     ],
     [
-      Offset(0.85, 0.12), Offset(0.55, 0.12), Offset(0.78, 0.35),
-      Offset(0.78, 0.85), Offset(0.55, 0.85), Offset(0.55, 0.48),
-      Offset(0.35, 0.68), Offset(0.28, 0.18), Offset(0.10, 0.12),
+      Offset(0.85, 0.12),
+      Offset(0.55, 0.12),
+      Offset(0.78, 0.35),
+      Offset(0.78, 0.85),
+      Offset(0.55, 0.85),
+      Offset(0.55, 0.48),
+      Offset(0.35, 0.68),
+      Offset(0.28, 0.18),
+      Offset(0.10, 0.12),
       Offset(0.10, 0.85),
     ],
     [
-      Offset(0.50, 0.08), Offset(0.85, 0.25), Offset(0.68, 0.50),
-      Offset(0.88, 0.80), Offset(0.50, 0.65), Offset(0.32, 0.88),
-      Offset(0.12, 0.62), Offset(0.30, 0.38), Offset(0.12, 0.15),
+      Offset(0.50, 0.08),
+      Offset(0.85, 0.25),
+      Offset(0.68, 0.50),
+      Offset(0.88, 0.80),
+      Offset(0.50, 0.65),
+      Offset(0.32, 0.88),
+      Offset(0.12, 0.62),
+      Offset(0.30, 0.38),
+      Offset(0.12, 0.15),
       Offset(0.50, 0.32),
     ],
   ];
@@ -91,6 +110,7 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
   int _lapsCompleted = 0;
   Timer? _timer;
   bool _isRunning = false;
+  bool _isPaused = false;
   bool _hasCompletedOnce = false;
 
   @override
@@ -163,6 +183,16 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
     setState(() => _isRunning = false);
   }
 
+  void _pauseRun() {
+    _timer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeRun() {
+    setState(() => _isPaused = false);
+    _scheduleTick();
+  }
+
   // Koşu SIRASINDA rota değiştirmek, egzersizi en baştan sıfırlayıp
   // öğrencinin o ana kadarki turunu boşa çıkarıyordu — bu yüzden buton
   // sadece BOŞTAYKEN (henüz başlamamışken) önizleme rotasını değiştirir;
@@ -193,232 +223,324 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
         appBar: AppBar(title: const Text('👁️ Göz Koordinasyonu')),
-        body: Column(
+        body: Stack(
           children: [
-            // Yönerge şeridi
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.remove_red_eye_rounded, color: Color(0xFF2563EB), size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Başını oynatmadan, sadece gözlerinle aktif noktayı takip et.',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
+            Column(
+              children: [
+                // Yönerge şeridi
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.remove_red_eye_rounded,
+                        color: Color(0xFF2563EB),
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Başını oynatmadan, sadece gözlerinle aktif noktayı takip et.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF1E3A8A),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                if (_isRunning)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Tur: ${_lapsCompleted + 1}/$_totalLaps',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF0D9488,
+                            ).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '⚡ ${_lapLabels[_lapsCompleted.clamp(0, _lapLabels.length - 1)]}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0D9488),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        buildPauseButton(
+                          color: const Color(0xFF2563EB),
+                          onPressed: _pauseRun,
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
 
-            if (_isRunning)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Tur: ${_lapsCompleted + 1}/$_totalLaps',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Container(
+                      width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0D9488).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF2563EB,
+                            ).withValues(alpha: 0.08),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        '⚡ ${_lapLabels[_lapsCompleted.clamp(0, _lapLabels.length - 1)]}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488), fontSize: 12),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final size = Size(
+                              constraints.maxWidth,
+                              constraints.maxHeight,
+                            );
+                            return Stack(
+                              children: [
+                                CustomPaint(
+                                  size: size,
+                                  painter: _PathPainter(points: _points),
+                                ),
+                                ..._points.asMap().entries.map((entry) {
+                                  final index = entry.key;
+                                  final point = entry.value;
+                                  final isActive =
+                                      _isRunning && index == _currentIndex;
+                                  final nodeSize = isActive ? 56.0 : 44.0;
+                                  return Positioned(
+                                    left: point.dx * size.width - nodeSize / 2,
+                                    top: point.dy * size.height - nodeSize / 2,
+                                    // Bilerek animasyonsuz (Container, AnimatedContainer
+                                    // DEĞİL): büyüyüp küçülme geçişi bir öncekinin
+                                    // hâlâ küçülmekte olduğu bir anda yeni noktanın
+                                    // büyümeye başlamasına, yani iki noktanın bir an
+                                    // üst üste binmiş gibi görünmesine yol açıyordu.
+                                    // Anlık geçiş bunu kökten çözer.
+                                    child: Container(
+                                      width: nodeSize,
+                                      height: nodeSize,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: isActive
+                                            ? const Color(0xFF2563EB)
+                                            : const Color(0xFFEFF6FF),
+                                        border: Border.all(
+                                          color: isActive
+                                              ? const Color(0xFF2563EB)
+                                              : const Color(0xFF93C5FD),
+                                          width: isActive ? 0 : 2,
+                                        ),
+                                        boxShadow: isActive
+                                            ? [
+                                                BoxShadow(
+                                                  color: const Color(
+                                                    0xFF2563EB,
+                                                  ).withValues(alpha: 0.4),
+                                                  blurRadius: 14,
+                                                  spreadRadius: 2,
+                                                ),
+                                              ]
+                                            : [],
+                                      ),
+                                      child: Center(
+                                        child: _theme.emoji != null
+                                            ? Text(
+                                                _theme.emoji!,
+                                                style: TextStyle(
+                                                  fontSize: isActive ? 26 : 18,
+                                                ),
+                                              )
+                                            : Container(
+                                                width: isActive ? 16 : 10,
+                                                height: isActive ? 16 : 10,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: isActive
+                                                      ? Colors.white
+                                                      : const Color(0xFF2563EB),
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
 
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Container(
+                // Alt kontrol paneli: ikon teması + aksiyon butonları bir arada
+                Container(
                   width: double.infinity,
-                  decoration: BoxDecoration(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+                  decoration: const BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+                        color: Color(0x14000000),
+                        blurRadius: 12,
+                        offset: Offset(0, -4),
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final size = Size(constraints.maxWidth, constraints.maxHeight);
-                        return Stack(
-                          children: [
-                            CustomPaint(
-                              size: size,
-                              painter: _PathPainter(points: _points),
-                            ),
-                            ..._points.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final point = entry.value;
-                              final isActive = _isRunning && index == _currentIndex;
-                              final nodeSize = isActive ? 56.0 : 44.0;
-                              return Positioned(
-                                left: point.dx * size.width - nodeSize / 2,
-                                top: point.dy * size.height - nodeSize / 2,
-                                // Bilerek animasyonsuz (Container, AnimatedContainer
-                                // DEĞİL): büyüyüp küçülme geçişi bir öncekinin
-                                // hâlâ küçülmekte olduğu bir anda yeni noktanın
-                                // büyümeye başlamasına, yani iki noktanın bir an
-                                // üst üste binmiş gibi görünmesine yol açıyordu.
-                                // Anlık geçiş bunu kökten çözer.
-                                child: Container(
-                                  width: nodeSize,
-                                  height: nodeSize,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: isActive ? const Color(0xFF2563EB) : const Color(0xFFEFF6FF),
-                                    border: Border.all(
-                                      color: isActive ? const Color(0xFF2563EB) : const Color(0xFF93C5FD),
-                                      width: isActive ? 0 : 2,
-                                    ),
-                                    boxShadow: isActive
-                                        ? [
-                                            BoxShadow(
-                                              color: const Color(0xFF2563EB).withValues(alpha: 0.4),
-                                              blurRadius: 14,
-                                              spreadRadius: 2,
-                                            ),
-                                          ]
-                                        : [],
-                                  ),
-                                  child: Center(
-                                    child: _theme.emoji != null
-                                        ? Text(
-                                            _theme.emoji!,
-                                            style: TextStyle(fontSize: isActive ? 26 : 18),
-                                          )
-                                        : Container(
-                                            width: isActive ? 16 : 10,
-                                            height: isActive ? 16 : 10,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: isActive ? Colors.white : const Color(0xFF2563EB),
-                                            ),
-                                          ),
-                                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Görsel Teması',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _IconTheme.values.map((t) {
+                            final selected = _theme == t;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(
+                                  t.emoji != null
+                                      ? '${t.emoji} ${t.label}'
+                                      : t.label,
                                 ),
-                              );
-                            }),
-                          ],
-                        );
-                      },
-                    ),
+                                selected: selected,
+                                onSelected: (sel) {
+                                  if (sel) setState(() => _theme = t);
+                                },
+                                selectedColor: const Color(
+                                  0xFF2563EB,
+                                ).withValues(alpha: 0.15),
+                                labelStyle: TextStyle(
+                                  color: selected
+                                      ? const Color(0xFF2563EB)
+                                      : const Color(0xFF475569),
+                                  fontWeight: selected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                                side: BorderSide(
+                                  color: selected
+                                      ? const Color(0xFF2563EB)
+                                      : const Color(0xFFE2E8F0),
+                                ),
+                                backgroundColor: const Color(0xFFF8FAFC),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _isRunning ? null : _shufflePath,
+                              icon: const Icon(Icons.shuffle),
+                              label: const Text('Farklı Rota'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF2563EB),
+                                side: const BorderSide(
+                                  color: Color(0xFF2563EB),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton.icon(
+                              onPressed: _isRunning ? _stop : _start,
+                              icon: Icon(
+                                _isRunning ? Icons.stop : Icons.play_arrow,
+                              ),
+                              label: Text(
+                                _isRunning ? 'DURDUR' : 'BAŞLAT',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                elevation: 4,
+                                shadowColor: const Color(
+                                  0xFF2563EB,
+                                ).withValues(alpha: 0.4),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ),
+              ],
             ),
-
-            // Alt kontrol paneli: ikon teması + aksiyon butonları bir arada
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(color: Color(0x14000000), blurRadius: 12, offset: Offset(0, -4)),
-                ],
+            if (_isPaused)
+              buildPauseOverlay(
+                color: const Color(0xFF2563EB),
+                onResume: _resumeRun,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Görsel Teması',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
-                  ),
-                  const SizedBox(height: 8),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _IconTheme.values.map((t) {
-                        final selected = _theme == t;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: Text(t.emoji != null ? '${t.emoji} ${t.label}' : t.label),
-                            selected: selected,
-                            onSelected: (sel) {
-                              if (sel) setState(() => _theme = t);
-                            },
-                            selectedColor: const Color(0xFF2563EB).withValues(alpha: 0.15),
-                            labelStyle: TextStyle(
-                              color: selected ? const Color(0xFF2563EB) : const Color(0xFF475569),
-                              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                            ),
-                            side: BorderSide(color: selected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0)),
-                            backgroundColor: const Color(0xFFF8FAFC),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _isRunning ? null : _shufflePath,
-                          icon: const Icon(Icons.shuffle),
-                          label: const Text('Farklı Rota'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF2563EB),
-                            side: const BorderSide(color: Color(0xFF2563EB)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton.icon(
-                          onPressed: _isRunning ? _stop : _start,
-                          icon: Icon(_isRunning ? Icons.stop : Icons.play_arrow),
-                          label: Text(
-                            _isRunning ? 'DURDUR' : 'BAŞLAT',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            elevation: 4,
-                            shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.4),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
@@ -440,11 +562,15 @@ class _PathPainter extends CustomPainter {
 
     for (int i = 0; i < points.length - 1; i++) {
       final p1 = Offset(points[i].dx * size.width, points[i].dy * size.height);
-      final p2 = Offset(points[i + 1].dx * size.width, points[i + 1].dy * size.height);
+      final p2 = Offset(
+        points[i + 1].dx * size.width,
+        points[i + 1].dy * size.height,
+      );
       canvas.drawLine(p1, p2, paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _PathPainter oldDelegate) => oldDelegate.points != points;
+  bool shouldRepaint(covariant _PathPainter oldDelegate) =>
+      oldDelegate.points != points;
 }

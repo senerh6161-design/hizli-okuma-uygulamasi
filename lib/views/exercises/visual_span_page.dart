@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 enum _Phase { streamIntro, stream, scatterIntro, scatter, quizIntro, quiz }
 
@@ -44,12 +46,26 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
   static const List<int> _flashMsBySpeed = [1500, 1000, 650];
 
   static const int _spanObjectCount = 6;
-  static const List<String> _objectEmojis = ['😊', '🎾', '⭐', '❤️', '⚽', '🍎'];
+  static const List<String> _objectEmojis = [
+    '😊',
+    '🎾',
+    '⭐',
+    '❤️',
+    '⚽',
+    '🍎',
+    '🍌',
+    '🏀',
+    '🚗',
+    '🎈',
+    '🌈',
+    '🐶',
+  ];
   static const int _quizRoundCount = 5;
 
   final Random _random = Random();
   _Phase _phase = _Phase.streamIntro;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
   int _speedLevel = 1;
 
   int _elapsedSec = 0;
@@ -58,7 +74,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
   // 1. Bölüm: Satır Akışı — Klasör 1'deki "Nesne Akışı" ile aynı mantık:
   // nesneler soldan sağa TEK TEK belirip sabit bir satırda yan yana durur
   // (uçuşup kaymaz), satır dolunca hepsi birden kaybolup yeniden başlar.
-  static const int _itemsPerLine = 6;
+  static const int _itemsPerLine = 5;
   static const int _rowPauseMs = 700;
   List<String> _currentLine = const [];
   int _lineItemIndex = 0;
@@ -79,8 +95,27 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
   String _quizAskedEmoji = _objectEmojis.first;
   List<int> _quizOptions = const [];
   int? _quizSelected;
+  // Önce hangi nesneyi sayacağı duyurulur, sonra dağınık gösterim yapılır,
+  // en son soru sorulur — öğrenci neyi sayacağını bilmeden gösterime
+  // başlamıyor.
+  bool _quizAnnouncing = true;
   bool _quizShowingObjects = true;
   Timer? _quizFlashTimer;
+  static const int _quizAnnounceMs = 1400;
+
+  @override
+  void initState() {
+    super.initState();
+    // Bu etkinlikte yan (yatay) çevirme ZORUNLU değil, sadece isteğe
+    // bağlı serbest bırakılıyor — öğrenci telefonu yan çevirirse ekran da
+    // buna uyum sağlar, çevirmezse dikey kalmaya devam eder.
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
 
   @override
   void dispose() {
@@ -88,6 +123,10 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
     _streamTimer?.cancel();
     _scatterTimer?.cancel();
     _quizFlashTimer?.cancel();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 
@@ -104,16 +143,28 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
       _currentLine = _generateLine();
       _lineItemIndex = 1; // ilk nesne hemen belirsin
     });
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() => _elapsedSec++);
-      if (_elapsedSec >= _stageDurationSec) _finishStream();
-    });
+    _startCountdownTimer(_finishStream);
     _scheduleStreamReveal();
   }
 
+  void _startCountdownTimer(VoidCallback onExpire) {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedSec++);
+      if (_elapsedSec >= _stageDurationSec) onExpire();
+    });
+  }
+
+  // Aynı satırda aynı nesnenin iki kez görünmesini istemiyoruz — bag'den
+  // gelen aday satırda zaten varsa atlanıp bir sonraki çekilir (havuz
+  // 12 öğe, satır 5 öğe olduğu için bu neredeyse hiç tekrar gerektirmez).
   List<String> _generateLine() {
-    return List.generate(_itemsPerLine, (_) => _nextStreamEmoji());
+    final line = <String>[];
+    while (line.length < _itemsPerLine) {
+      final candidate = _nextStreamEmoji();
+      if (!line.contains(candidate)) line.add(candidate);
+    }
+    return line;
   }
 
   // Aktif satırdaki nesneler TEK TEK belirir; satır tamamen dolunca kısa
@@ -177,11 +228,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
       _elapsedSec = 0;
       _scatterObjects = [];
     });
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() => _elapsedSec++);
-      if (_elapsedSec >= _stageDurationSec) _finishScatter();
-    });
+    _startCountdownTimer(_finishScatter);
     _scheduleScatterFlash();
   }
 
@@ -275,16 +322,24 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
       _quizAskedEmoji = asked;
       _quizOptions = options;
       _quizSelected = null;
-      _quizShowingObjects = true;
+      _quizAnnouncing = true;
+      _quizShowingObjects = false;
     });
 
-    _quizFlashTimer = Timer(
-      Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
-      () {
-        if (!mounted) return;
-        setState(() => _quizShowingObjects = false);
-      },
-    );
+    _quizFlashTimer = Timer(const Duration(milliseconds: _quizAnnounceMs), () {
+      if (!mounted) return;
+      setState(() {
+        _quizAnnouncing = false;
+        _quizShowingObjects = true;
+      });
+      _quizFlashTimer = Timer(
+        Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+        () {
+          if (!mounted) return;
+          setState(() => _quizShowingObjects = false);
+        },
+      );
+    });
   }
 
   void _answerQuiz(int selected) {
@@ -403,6 +458,56 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
     );
   }
 
+  void _pauseGame() {
+    _countdownTimer?.cancel();
+    _streamTimer?.cancel();
+    _scatterTimer?.cancel();
+    _quizFlashTimer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    setState(() => _isPaused = false);
+    switch (_phase) {
+      case _Phase.stream:
+        _startCountdownTimer(_finishStream);
+        _scheduleStreamReveal();
+      case _Phase.scatter:
+        _startCountdownTimer(_finishScatter);
+        _scheduleScatterFlash();
+      case _Phase.quiz:
+        if (_quizAnnouncing) {
+          _quizFlashTimer = Timer(
+            const Duration(milliseconds: _quizAnnounceMs),
+            () {
+              if (!mounted) return;
+              setState(() {
+                _quizAnnouncing = false;
+                _quizShowingObjects = true;
+              });
+              _quizFlashTimer = Timer(
+                Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+                () {
+                  if (!mounted) return;
+                  setState(() => _quizShowingObjects = false);
+                },
+              );
+            },
+          );
+        } else if (_quizShowingObjects) {
+          _quizFlashTimer = Timer(
+            Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+            () {
+              if (!mounted) return;
+              setState(() => _quizShowingObjects = false);
+            },
+          );
+        }
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CompletionPopScope(
@@ -411,9 +516,15 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
         appBar: AppBar(title: const Text('👁️ Görsel Genişlik')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: _buildBody(),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _buildBody(),
+              ),
+              if (_isPaused)
+                buildPauseOverlay(color: _color, onResume: _resumeGame),
+            ],
           ),
         ),
       ),
@@ -657,7 +768,11 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
     );
   }
 
-  Widget _stageHeader(String badge, {bool showTimer = true}) {
+  Widget _stageHeader(
+    String badge, {
+    bool showTimer = true,
+    bool showPause = true,
+  }) {
     final remaining = _stageDurationSec - _elapsedSec;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -673,15 +788,22 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
             style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
           ),
         ),
-        if (showTimer)
-          Text(
-            'Süre: $remaining sn',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: remaining <= 10 ? Colors.red : Colors.orange,
-            ),
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showTimer)
+              Text(
+                'Süre: $remaining sn',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: remaining <= 10 ? Colors.red : Colors.orange,
+                ),
+              ),
+            if (showPause)
+              buildPauseButton(color: _color, onPressed: _pauseGame),
+          ],
+        ),
       ],
     );
   }
@@ -715,9 +837,13 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
                 ),
                 // Klasör 1'deki Nesne Akışı gibi: nesneler soldan sağa TEK
                 // TEK belirip sabit bir satırda yan yana durur, uçuşmaz.
-                child: Center(
+                // Bilerek Center DEĞİL, sola yaslı: ortalanmış olsaydı her
+                // yeni nesne eklendiğinde satırın tamamı yeniden ortalanıp
+                // nesneler "ortadan çıkıyormuş" gibi kayıyordu.
+                child: Align(
+                  alignment: Alignment.centerLeft,
                   child: Wrap(
-                    alignment: WrapAlignment.center,
+                    alignment: WrapAlignment.start,
                     runSpacing: 12,
                     children: [
                       for (int i = 0; i < _lineItemIndex; i++)
@@ -829,6 +955,8 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
         _stageHeader(
           '3. Bölüm · Soru ${_quizRoundIndex + 1}/$_quizRoundCount',
           showTimer: false,
+          showPause:
+              !_quizAnnouncing && _quizShowingObjects && _quizSelected == null,
         ),
         const SizedBox(height: 10),
         _speedChipRow(),
@@ -841,17 +969,35 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: _quizShowingObjects
-                ? Stack(
-                    children: [
-                      _centerFocusDot(),
-                      _spanObjectsLayer(_quizObjects),
-                    ],
-                  )
-                : _buildQuizQuestion(),
+            child: _quizAnnouncing
+                ? _buildQuizAnnounce()
+                : (_quizShowingObjects
+                      ? Stack(
+                          children: [
+                            _centerFocusDot(),
+                            _spanObjectsLayer(_quizObjects),
+                          ],
+                        )
+                      : _buildQuizQuestion()),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildQuizAnnounce() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Şimdi bunu sayacaksın:',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          Text(_quizAskedEmoji, style: const TextStyle(fontSize: 72)),
+        ],
+      ),
     );
   }
 

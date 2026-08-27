@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 enum _Phase { intro, showing, answering }
 
@@ -35,11 +36,13 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
   static const int _roundCount = 5;
   static const int _gridCellCount = 30;
 
+  // Not: "domates-domates" ve "fasulye-bezelye" gibi çok uzun çiftler
+  // havuzdan bilerek çıkarıldı — grid hücresinde alt satıra kayıp çirkin
+  // görünüyorlardı; kalanların hepsi tek satıra sığıyor.
   static const List<String> _pairPool = [
     'elma-armut',
     'kiraz-çilek',
     'patates-soğan',
-    'domates-domates',
     'karpuz-kavun',
     'havuç-turp',
     'muz-ananas',
@@ -47,12 +50,12 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
     'üzüm-erik',
     'incir-dut',
     'marul-lahana',
-    'fasulye-bezelye',
   ];
 
   final Random _random = Random();
   _Phase _phase = _Phase.intro;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
   int _speedLevel = 1;
 
   int _roundIndex = 0;
@@ -135,6 +138,26 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
       setState(() => _elapsedMs = (_elapsedMs + 80).clamp(0, totalMs));
     });
     _roundTimer = Timer(Duration(milliseconds: totalMs), () {
+      if (!mounted) return;
+      _goToAnswerStep();
+    });
+  }
+
+  void _pauseGame() {
+    _roundTimer?.cancel();
+    _tickTimer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    final totalMs = _roundTimeMsBySpeed[_speedLevel];
+    final remainingMs = (totalMs - _elapsedMs).clamp(0, totalMs);
+    setState(() => _isPaused = false);
+    _tickTimer = Timer.periodic(const Duration(milliseconds: 80), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedMs = (_elapsedMs + 80).clamp(0, totalMs));
+    });
+    _roundTimer = Timer(Duration(milliseconds: remainingMs), () {
       if (!mounted) return;
       _goToAnswerStep();
     });
@@ -275,11 +298,17 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
         appBar: AppBar(title: const Text('🔎 İkili Kelime Grubu Say')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: _phase == _Phase.intro
-                ? _buildIntro()
-                : _buildRound(key: ValueKey('round-$_roundIndex-$_phase')),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _phase == _Phase.intro
+                    ? _buildIntro()
+                    : _buildRound(key: ValueKey('round-$_roundIndex-$_phase')),
+              ),
+              if (_isPaused)
+                buildPauseOverlay(color: _color, onResume: _resumeGame),
+            ],
           ),
         ),
       ),
@@ -508,13 +537,20 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
                   ),
                 ),
               ),
-              Text(
-                'Puan: $_totalScore',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: _color,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Puan: $_totalScore',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: _color,
+                    ),
+                  ),
+                  if (_phase == _Phase.showing)
+                    buildPauseButton(color: _color, onPressed: _pauseGame),
+                ],
               ),
             ],
           ),

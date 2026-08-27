@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 enum _Phase { intro, playing }
 
@@ -61,6 +62,7 @@ class _AttentionQuestionPageState extends State<AttentionQuestionPage> {
 
   _Phase _phase = _Phase.intro;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
   int _speedLevel = 1;
 
   int _roundIndex = 0;
@@ -110,6 +112,26 @@ class _AttentionQuestionPageState extends State<AttentionQuestionPage> {
       setState(() => _elapsedMs = (_elapsedMs + 80).clamp(0, totalMs));
     });
     _roundTimer = Timer(Duration(milliseconds: totalMs), () {
+      if (!mounted) return;
+      _answer(null);
+    });
+  }
+
+  void _pauseGame() {
+    _roundTimer?.cancel();
+    _tickTimer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    final totalMs = _roundTimeMsBySpeed[_speedLevel];
+    final remainingMs = (totalMs - _elapsedMs).clamp(0, totalMs);
+    setState(() => _isPaused = false);
+    _tickTimer = Timer.periodic(const Duration(milliseconds: 80), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedMs = (_elapsedMs + 80).clamp(0, totalMs));
+    });
+    _roundTimer = Timer(Duration(milliseconds: remainingMs), () {
       if (!mounted) return;
       _answer(null);
     });
@@ -265,11 +287,17 @@ class _AttentionQuestionPageState extends State<AttentionQuestionPage> {
         appBar: AppBar(title: const Text('🧠 Dikkat Sorusu')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: _phase == _Phase.intro
-                ? _buildIntro()
-                : _buildRound(key: ValueKey('round-$_roundIndex')),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _phase == _Phase.intro
+                    ? _buildIntro()
+                    : _buildRound(key: ValueKey('round-$_roundIndex')),
+              ),
+              if (_isPaused)
+                buildPauseOverlay(color: _color, onResume: _resumeGame),
+            ],
           ),
         ),
       ),
@@ -450,13 +478,20 @@ class _AttentionQuestionPageState extends State<AttentionQuestionPage> {
                   ),
                 ),
               ),
-              Text(
-                'Puan: $_totalScore',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: _color,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Puan: $_totalScore',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: _color,
+                    ),
+                  ),
+                  if (!_answered)
+                    buildPauseButton(color: _color, onPressed: _pauseGame),
+                ],
               ),
             ],
           ),

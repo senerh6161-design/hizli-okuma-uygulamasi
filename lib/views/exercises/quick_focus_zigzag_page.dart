@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
 enum _Phase {
   reactionIntro,
@@ -17,8 +18,10 @@ enum _Phase {
 
 /// Klasör 2'nin ilk etkinliği: "Hızlı Top / Gülümseyen Yüz". Öğretmen
 /// dokümanındaki alt bölümlerin uyarlaması:
-/// 1) Ekranın her tarafında AYNI ANDA beliren gülen yüzleri anında yakalama
-/// (60 sn),
+/// 1) "Hızlı Görüş" — puansız, dokunma gerektirmeyen bir görsel algı
+/// egzersizi: tek bir nesne sırayla satır başı/ortası/sonu, çapraz (X),
+/// aşağıdan yukarı ve yukarıdan aşağı noktalarda çeyrek saniyeliğine
+/// belirip kayboluyor, öğrenci sadece izliyor,
 /// 2) "Zikzak Takip" — kitaptaki dağınık nokta ağı deseninde cümleler
 /// sırayla gösterilir (Etkinlik 6 tarzı), aktif nokta kendiliğinden sırayla
 /// vurgulanır, öğrenci gözleriyle takip eder (her cümle 60 sn),
@@ -31,34 +34,66 @@ class QuickFocusZigzagPage extends StatefulWidget {
   State<QuickFocusZigzagPage> createState() => _QuickFocusZigzagPageState();
 }
 
-class _ReactionTarget {
-  final int id;
-  final double x;
-  final double y;
-  const _ReactionTarget(this.id, this.x, this.y);
-}
-
-// Yakalanınca beliren kısa "+1" efekti — yukarı doğru yükselip solar.
-class _CatchEffect {
-  final int id;
-  final double x;
-  final double y;
-  const _CatchEffect(this.id, this.x, this.y);
-}
-
 class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
   static const int _stageDurationSec = 60;
-  // Ekranda AYNI ANDA birden fazla yüz duruyor ama SADECE biri "aktif"
-  // (yanıp sönen) — öğrenci hepsine değil, sadece o anki hedefe basmaya
-  // çalışıyor. Hepsine aynı anda basmak zaten mümkün değildi.
-  static const int _reactionTargetCount = 8;
 
-  // Hızı öğrenci kendi seçer — her iki mekanik de bu ortak seviyeden
-  // besleniyor, değişiklik bir sonraki tetiklemede devreye girer.
-  static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
-  static const List<int> _reactionLifespanMsBySpeed = [1800, 1300, 900];
-  static const List<int> _zigzagStepMsBySpeed = [1300, 900, 600];
+  // Hızı öğrenci kendi seçer — her 3 bölüm de bu ortak seviyeden besleniyor,
+  // değişiklik bir sonraki tetiklemede devreye girer.
+  static const List<String> _speedLabels = [
+    'Yavaş',
+    'Orta',
+    'Hızlı',
+    'Çok Hızlı',
+  ];
+  static const List<int> _zigzagStepMsBySpeed = [1300, 900, 600, 400];
   int _speedLevel = 1;
+
+  // 1. Bölüm: Hızlı Görüş — tek bir nesne çok kısa süreliğine belirip
+  // kayboluyor. Puansız, dokunma gerektirmeyen bir görsel algı egzersizi.
+  // Aşamalar sırayla işleniyor: satır başı → ortası → sonu → çapraz (X) →
+  // aşağıdan yukarı → yukarıdan aşağı. Koordinatlar 0..1 aralığında,
+  // kutunun genişlik/yüksekliğine oranlı. Gösterim süresi de hız
+  // seviyesine göre değişir.
+  static const List<int> _flashVisibleMsBySpeed = [400, 300, 250, 150];
+  static const List<int> _flashGapMsBySpeed = [400, 300, 250, 150];
+  static const List<List<Offset>> _flashStagePoints = [
+    // Sabit konumlu aşamalarda (satır başı/ortası/sonu) nesne tek bir kez
+    // belirip kayboluyor — aynı noktada tekrar tekrar gösterilirse "yanıp
+    // sönme" gibi göründüğü için bilerek tek noktalı liste kullanılıyor.
+    [Offset(0.15, 0.5)],
+    [Offset(0.5, 0.5)],
+    [Offset(0.85, 0.5)],
+    [
+      Offset(0.15, 0.15),
+      Offset(0.5, 0.5),
+      Offset(0.85, 0.85),
+      Offset(0.85, 0.15),
+      Offset(0.5, 0.5),
+      Offset(0.15, 0.85),
+    ],
+    [
+      Offset(0.5, 0.85),
+      Offset(0.5, 0.65),
+      Offset(0.5, 0.5),
+      Offset(0.5, 0.35),
+      Offset(0.5, 0.15),
+    ],
+    [
+      Offset(0.5, 0.15),
+      Offset(0.5, 0.35),
+      Offset(0.5, 0.5),
+      Offset(0.5, 0.65),
+      Offset(0.5, 0.85),
+    ],
+  ];
+  static const List<String> _flashStageLabels = [
+    'Satır Başı',
+    'Satır Ortası',
+    'Satır Sonu',
+    'Çapraz',
+    'Aşağıdan Yukarı',
+    'Yukarıdan Aşağı',
+  ];
 
   // "Zikzak Takip" cümleleri sırayla işler, her biri kendi turu (60 sn).
   static const List<List<String>> _zigzagSentences = [
@@ -140,25 +175,19 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
   // Zikzak bölümleri uygulamanın kendi ana marka rengini (indigo) kullanır.
   static const Color _zigzagColor = Color(0xFF4F46E5);
 
-  final Random _random = Random();
   _Phase _phase = _Phase.reactionIntro;
   bool _hasCompletedOnce = false;
+  bool _isPaused = false;
 
   // Ortak: her bölümün 60 sn'lik geri sayımı.
   int _elapsedSec = 0;
   Timer? _countdownTimer;
 
-  // 1. Bölüm: Hızlı Yakalama.
-  int _nextTargetId = 0;
-  List<_ReactionTarget> _targets = [];
-  int? _activeTargetId;
-  Timer? _activeTargetTimer;
-  Timer? _blinkTimer;
-  bool _blinkOn = true;
-  int _caughtCount = 0;
-  int _missedCount = 0;
-  int _nextEffectId = 0;
-  final List<_CatchEffect> _catchEffects = [];
+  // 1. Bölüm: Hızlı Görüş.
+  int _flashStageIndex = 0;
+  int _flashPointIndex = 0;
+  Offset? _flashPosition; // null: aradaki boşluk (nesne görünmüyor)
+  Timer? _flashTimer;
 
   // 2. Bölüm: Zikzak Takip — cümleler sırayla.
   static const int _zigzagWordsPerRow = 5;
@@ -182,8 +211,7 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
-    _activeTargetTimer?.cancel();
-    _blinkTimer?.cancel();
+    _flashTimer?.cancel();
     _zigzagTimer?.cancel();
     _zigzagScrollController.dispose();
     SystemChrome.setPreferredOrientations([
@@ -209,111 +237,58 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
     );
   }
 
-  // ---------------- 1. BÖLÜM: Hızlı Yakalama ----------------
+  // ---------------- 1. BÖLÜM: Hızlı Görüş ----------------
+  // Puansız, dokunma gerektirmeyen bir görsel algı egzersizi: tek bir
+  // nesne sırasıyla farklı aşamalarda (satır başı/ortası/sonu, çapraz,
+  // aşağıdan yukarı, yukarıdan aşağı) çeyrek saniyeliğine belirip
+  // kayboluyor. Öğrenci sadece izliyor, gözünü o noktaya götürüyor.
 
-  void _startReaction() {
+  void _startFlashSequence() {
     _countdownTimer?.cancel();
-    _activeTargetTimer?.cancel();
-    _blinkTimer?.cancel();
+    _flashTimer?.cancel();
     setState(() {
       _phase = _Phase.reaction;
-      _elapsedSec = 0;
-      _caughtCount = 0;
-      _missedCount = 0;
-      _targets = _generateTargetLayout();
+      _flashStageIndex = 0;
+      _flashPointIndex = 0;
+      _flashPosition = null;
     });
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() => _elapsedSec++);
-      if (_elapsedSec >= _stageDurationSec) _finishReaction();
-    });
-    // Aktif hedef yanıp sönsün diye şeffaflık düzenli aralıklarla
-    // değiştiriliyor — tüm ekranı tek bir Timer güncelliyor.
-    _blinkTimer = Timer.periodic(const Duration(milliseconds: 320), (_) {
-      if (!mounted) return;
-      setState(() => _blinkOn = !_blinkOn);
-    });
-    _pickNewActiveTarget();
+    _scheduleNextFlash();
   }
 
-  // Ekranda birkaç yüz birden duruyor ama üst üste binmesinler diye
-  // konumlar arasında minimum mesafe bırakılıyor.
-  List<_ReactionTarget> _generateTargetLayout() {
-    // 8 nesneyi az deneme hakkıyla yerleştirmeye çalışmak çoğu zaman
-    // başarısız oluyordu — sonraki nesneler boş yer bulamayınca öncekinin
-    // neredeyse üstüne biniyor, ekranda sadece 2-3 taneymiş gibi
-    // görünüyordu. Bu yüzden hem deneme sayısı arttırıldı hem de minimum
-    // mesafe, nesne sayısına göre otomatik daralıyor.
-    final minDist = min(0.16, 0.6 / _reactionTargetCount);
-    final list = <_ReactionTarget>[];
-    for (int i = 0; i < _reactionTargetCount; i++) {
-      double x = 0.5, y = 0.5;
-      for (int attempt = 0; attempt < 40; attempt++) {
-        x = 0.08 + _random.nextDouble() * 0.8;
-        y = 0.08 + _random.nextDouble() * 0.75;
-        final tooClose = list.any((t) {
-          final dx = t.x - x;
-          final dy = t.y - y;
-          return dx * dx + dy * dy < minDist * minDist;
-        });
-        if (!tooClose) break;
-      }
-      list.add(_ReactionTarget(_nextTargetId++, x, y));
+  void _scheduleNextFlash() {
+    if (!mounted || _phase != _Phase.reaction) return;
+    if (_flashStageIndex >= _flashStagePoints.length) {
+      _finishFlashSequence();
+      return;
     }
-    return list;
-  }
-
-  // Ekrandaki nesnelerden rastgele biri "aktif" (yanıp sönen) hedef
-  // oluyor — öğrenci SADECE onu yakalamaya çalışıyor. Süresi dolarsa
-  // kaçmış sayılır ve yeni bir tur (yeni konumlar + yeni hedef) başlar.
-  void _pickNewActiveTarget() {
-    _activeTargetTimer?.cancel();
-    if (_targets.isEmpty) return;
-    final next = _targets[_random.nextInt(_targets.length)].id;
-    setState(() {
-      _activeTargetId = next;
-      _blinkOn = true;
-    });
-    _activeTargetTimer = Timer(
-      Duration(milliseconds: _reactionLifespanMsBySpeed[_speedLevel]),
+    final points = _flashStagePoints[_flashStageIndex];
+    setState(() => _flashPosition = points[_flashPointIndex]);
+    _flashTimer = Timer(
+      Duration(milliseconds: _flashVisibleMsBySpeed[_speedLevel]),
       () {
-        if (!mounted) return;
-        setState(() {
-          _missedCount++;
-          _targets = _generateTargetLayout();
-        });
-        _pickNewActiveTarget();
+        if (!mounted || _phase != _Phase.reaction) return;
+        setState(() => _flashPosition = null);
+        _flashTimer = Timer(
+          Duration(milliseconds: _flashGapMsBySpeed[_speedLevel]),
+          () {
+            if (!mounted || _phase != _Phase.reaction) return;
+            _flashPointIndex++;
+            if (_flashPointIndex >= points.length) {
+              _flashPointIndex = 0;
+              _flashStageIndex++;
+            }
+            _scheduleNextFlash();
+          },
+        );
       },
     );
   }
 
-  void _catchTarget(int id) {
-    if (id != _activeTargetId) return; // sadece yanıp sönen hedef sayılır
-    _activeTargetTimer?.cancel();
-    final matches = _targets.where((t) => t.id == id);
-    if (matches.isEmpty) return;
-    final caught = matches.first;
-    SoundManager.playCorrect();
-    final effectId = _nextEffectId++;
-    setState(() {
-      _caughtCount++;
-      _targets = _generateTargetLayout();
-      _catchEffects.add(_CatchEffect(effectId, caught.x, caught.y));
-    });
-    Future.delayed(const Duration(milliseconds: 550), () {
-      if (!mounted) return;
-      setState(() => _catchEffects.removeWhere((e) => e.id == effectId));
-    });
-    _pickNewActiveTarget();
-  }
-
-  void _finishReaction() {
+  void _finishFlashSequence() {
     _countdownTimer?.cancel();
-    _activeTargetTimer?.cancel();
-    _blinkTimer?.cancel();
+    _flashTimer?.cancel();
     setState(() {
-      _targets = [];
-      _activeTargetId = null;
+      _flashPosition = null;
       _zigzagRoundIndex = 0;
       _phase = _Phase.zigzagIntro;
     });
@@ -437,17 +412,15 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
     _zigzagTimer?.cancel();
     _hasCompletedOnce = true;
 
-    final caughtTotal = _caughtCount + _missedCount;
-    final catchPercent = caughtTotal == 0
-        ? 100
-        : ((_caughtCount / caughtTotal) * 100).round();
-    ProgressManager.recordAttentionScore(catchPercent);
+    // 1. Bölüm artık puansız (izleme amaçlı) olduğu için dikkat puanı,
+    // tamamlanan zikzak cümle sayısına dayanıyor.
+    ProgressManager.recordAttentionScore(100);
 
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Hızlı Odaklanma',
       result:
-          '$_caughtCount/$caughtTotal yakalama (%$catchPercent) · ${_zigzagSentences.length} zikzak cümlesi tamamlandı',
+          'Hızlı Görüş tamamlandı · ${_zigzagSentences.length} zikzak cümlesi tamamlandı',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -460,9 +433,7 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Yakalanan yüz: $_caughtCount / $caughtTotal (%$catchPercent)',
-            ),
+            const Text('Hızlı Görüş bölümü tamamlandı.'),
             Text(
               'Zikzak Takip\'in ${_zigzagSentences.length} cümlesi de tamamlandı.',
             ),
@@ -524,8 +495,9 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
               Navigator.pop(context);
               setState(() {
                 _phase = _Phase.reactionIntro;
-                _caughtCount = 0;
-                _missedCount = 0;
+                _flashStageIndex = 0;
+                _flashPointIndex = 0;
+                _flashPosition = null;
                 _elapsedSec = 0;
                 _zigzagRoundIndex = 0;
                 _zigzagActiveIndex = 0;
@@ -538,6 +510,37 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
         ],
       ),
     );
+  }
+
+  void _pauseGame() {
+    _countdownTimer?.cancel();
+    _flashTimer?.cancel();
+    _zigzagTimer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    setState(() => _isPaused = false);
+    switch (_phase) {
+      case _Phase.reaction:
+        _scheduleNextFlash();
+      case _Phase.zigzag:
+        _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (!mounted) return;
+          setState(() => _elapsedSec++);
+          if (_elapsedSec >= _stageDurationSec) _finishZigzagRound();
+        });
+        _scheduleZigzagStep(_zigzagSentences[_zigzagRoundIndex].length);
+      case _Phase.crossZigzag:
+        _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (!mounted) return;
+          setState(() => _elapsedSec++);
+          if (_elapsedSec >= _stageDurationSec) _finishCrossZigzagRound();
+        });
+        _scheduleZigzagStep(_crossZigzagTop[_crossZigzagRoundIndex].length * 2);
+      default:
+        break;
+    }
   }
 
   @override
@@ -567,9 +570,18 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
               if (needsLandscape && orientation == Orientation.portrait) {
                 return _buildRotatePrompt();
               }
-              return AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: _buildBody(),
+              return Stack(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: _buildBody(),
+                  ),
+                  if (_isPaused)
+                    buildPauseOverlay(
+                      color: const Color(0xFF2563EB),
+                      onResume: _resumeGame,
+                    ),
+                ],
               );
             },
           ),
@@ -761,13 +773,14 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
 
   Widget _buildReactionIntro() {
     return _buildIntro(
-      badge: '1. Bölüm · Hızlı Yakalama',
+      badge: '1. Bölüm · Hızlı Görüş',
       color: const Color(0xFF2563EB),
       emoji: '😊',
       instruction:
-          'Ekranda birkaç gülen yüz duracak ama sadece BİRİ yanıp sönecek — hızlıca '
-          'ona dokun! 60 saniye sürecek!',
-      onStart: _startReaction,
+          'Ekranda bir nesne çok kısa süreliğine belirip kaybolacak. Dokunmana '
+          'gerek yok, sadece izle — gözünü nesnenin göründüğü noktaya götür!',
+      onStart: _startFlashSequence,
+      extra: _speedChipRow(const Color(0xFF2563EB)),
     );
   }
 
@@ -911,7 +924,10 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
 
   Widget _buildReactionFlow() {
     const color = Color(0xFF2563EB);
-    final remaining = _stageDurationSec - _elapsedSec;
+    final stageCount = _flashStagePoints.length;
+    final stageLabel = _flashStageIndex < _flashStageLabels.length
+        ? _flashStageLabels[_flashStageIndex]
+        : _flashStageLabels.last;
     return Column(
       children: [
         Row(
@@ -924,54 +940,47 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Text(
-                '1. Bölüm · Hızlı Yakalama',
+                '1. Bölüm · Hızlı Görüş',
                 style: TextStyle(fontWeight: FontWeight.bold, color: color),
               ),
             ),
-            Text(
-              'Süre: $remaining sn',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: remaining <= 10 ? Colors.red : Colors.orange,
-              ),
-            ),
+            buildPauseButton(color: color, onPressed: _pauseGame),
           ],
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            _statPill(
-              icon: Icons.check_circle_rounded,
-              color: const Color(0xFF16A34A),
-              label: 'Yakalanan: $_caughtCount',
-            ),
-            const SizedBox(width: 8),
-            _statPill(
-              icon: Icons.cancel_rounded,
-              color: const Color(0xFFE11D48),
-              label: 'Kaçan: $_missedCount',
-            ),
-          ],
+        const SizedBox(height: 6),
+        Text(
+          'Aşama ${(_flashStageIndex + 1).clamp(1, stageCount)}/$stageCount · $stageLabel',
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: Colors.orange,
+          ),
         ),
         const SizedBox(height: 10),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: LinearProgressIndicator(
-            value: (remaining / _stageDurationSec).clamp(0.0, 1.0),
+            value: (_flashStageIndex / stageCount).clamp(0.0, 1.0),
             minHeight: 6,
             backgroundColor: color.withValues(alpha: 0.1),
-            valueColor: AlwaysStoppedAnimation(
-              remaining <= 10 ? Colors.red : color,
-            ),
+            valueColor: AlwaysStoppedAnimation(color),
           ),
         ),
         const SizedBox(height: 10),
         _speedChipRow(color),
         const SizedBox(height: 12),
-        // Kutulu bir kart DEĞİL: gülen yüzler gerçekten ekranın her
-        // tarafında (tüm boş alanda) belirsin diye sınırsız, tam alanlı —
-        // sadece arka plana yumuşak bir gradyan verildi, sönük durmasın.
+        Text(
+          'Sadece izle, dokunmana gerek yok.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+        ),
+        const SizedBox(height: 12),
+        // Kutulu bir kart DEĞİL: nesne gerçekten ekranın her tarafında
+        // (tüm boş alanda) belirsin diye sınırsız, tam alanlı — sadece
+        // arka plana yumuşak bir gradyan verildi, sönük durmasın.
         Expanded(
           child: Container(
             width: double.infinity,
@@ -988,59 +997,14 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
+                final pos = _flashPosition;
                 return Stack(
                   children: [
-                    for (final target in _targets)
+                    if (pos != null)
                       Positioned(
-                        key: ValueKey(target.id),
-                        left: target.x * constraints.maxWidth - 32,
-                        top: target.y * constraints.maxHeight - 32,
-                        child: GestureDetector(
-                          onTap: () => _catchTarget(target.id),
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeOutBack,
-                            builder: (context, scale, child) =>
-                                Transform.scale(scale: scale, child: child),
-                            child: _reactionBubble(
-                              isActive: target.id == _activeTargetId,
-                            ),
-                          ),
-                        ),
-                      ),
-                    for (final effect in _catchEffects)
-                      Positioned(
-                        key: ValueKey('effect-${effect.id}'),
-                        left: effect.x * constraints.maxWidth - 20,
-                        top: effect.y * constraints.maxHeight - 20,
-                        child: IgnorePointer(
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            duration: const Duration(milliseconds: 550),
-                            curve: Curves.easeOut,
-                            builder: (context, t, child) {
-                              return Opacity(
-                                opacity: 1 - t,
-                                child: Transform.translate(
-                                  offset: Offset(0, -30 * t),
-                                  child: Transform.scale(
-                                    scale: 1 + t * 0.4,
-                                    child: child,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              '+1',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                color: Color(0xFF16A34A),
-                              ),
-                            ),
-                          ),
-                        ),
+                        left: pos.dx * constraints.maxWidth - 32,
+                        top: pos.dy * constraints.maxHeight - 32,
+                        child: IgnorePointer(child: _reactionBubble()),
                       ),
                   ],
                 );
@@ -1049,7 +1013,7 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
           ),
         ),
         const SizedBox(height: 12),
-        _skipButton(color, _finishReaction),
+        _skipButton(color, _finishFlashSequence),
       ],
     );
   }
@@ -1057,86 +1021,30 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
   // Aktif (yanıp sönen) hedef canlı ve büyük duruyor; diğerleri sadece
   // dikkat dağıtıcı olarak soluk ve sabit kalıyor — öğrenci ikisini
   // ayırt edip doğru olana basmaya çalışıyor.
-  Widget _reactionBubble({required bool isActive}) {
-    if (!isActive) {
-      // Sadece daire yarı saydam olursa arka planla karışıp "boş" bir
-      // daire gibi görünüyordu — bu yüzden daire tam opak ve belirgin,
-      // sadece içindeki emoji hafifçe soluk (dikkat dağıtıcı olduğu
-      // hissedilsin diye).
-      return Container(
-        width: 50,
-        height: 50,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-          border: Border.all(color: Colors.grey.shade300, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 6,
-            ),
-          ],
-        ),
-        child: Opacity(
-          opacity: 0.55,
-          child: const Text('😊', style: TextStyle(fontSize: 26)),
-        ),
-      );
-    }
-    return AnimatedOpacity(
-      opacity: _blinkOn ? 1.0 : 0.3,
-      duration: const Duration(milliseconds: 140),
-      child: Container(
-        width: 64,
-        height: 64,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFFFF3C4), Color(0xFFFFCA28)],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.amber.withValues(alpha: 0.55),
-              blurRadius: 14,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: const Text('😊', style: TextStyle(fontSize: 30)),
-      ),
-    );
-  }
-
-  Widget _statPill({
-    required IconData icon,
-    required Color color,
-    required String label,
-  }) {
+  // Flaş anında beliren tek nesne — sıçrayan/büyüyen bir animasyon YOK
+  // (hızlı turlarda "yanıp sönüyor" gibi göründüğü için kaldırıldı):
+  // nesne olduğu gibi belirip, olduğu gibi kayboluyor.
+  Widget _reactionBubble() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      width: 64,
+      height: 64,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-              color: color,
-            ),
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFF3C4), Color(0xFFFFCA28)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withValues(alpha: 0.55),
+            blurRadius: 14,
+            spreadRadius: 2,
           ),
         ],
       ),
+      child: const Text('😊', style: TextStyle(fontSize: 30)),
     );
   }
 
@@ -1162,15 +1070,21 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
                 style: TextStyle(fontWeight: FontWeight.bold, color: color),
               ),
             ),
-            Text(
-              'Süre: ${_stageDurationSec - _elapsedSec} sn',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: (_stageDurationSec - _elapsedSec) <= 10
-                    ? Colors.red
-                    : Colors.orange,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Süre: ${_stageDurationSec - _elapsedSec} sn',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: (_stageDurationSec - _elapsedSec) <= 10
+                        ? Colors.red
+                        : Colors.orange,
+                  ),
+                ),
+                buildPauseButton(color: color, onPressed: _pauseGame),
+              ],
             ),
           ],
         ),
@@ -1343,15 +1257,21 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
                 ),
               ),
             ),
-            Text(
-              'Süre: ${_stageDurationSec - _elapsedSec} sn',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: (_stageDurationSec - _elapsedSec) <= 10
-                    ? Colors.red
-                    : Colors.orange,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Süre: ${_stageDurationSec - _elapsedSec} sn',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: (_stageDurationSec - _elapsedSec) <= 10
+                        ? Colors.red
+                        : Colors.orange,
+                  ),
+                ),
+                buildPauseButton(color: color, onPressed: _pauseGame),
+              ],
             ),
           ],
         ),

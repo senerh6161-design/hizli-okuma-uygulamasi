@@ -4,16 +4,9 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/pause_overlay.dart';
 
-enum _Phase {
-  streamIntro,
-  stream,
-  quizIntro,
-  quiz,
-  memoryIntro,
-  memoryShow,
-  memoryRound,
-}
+enum _Phase { zigzagIntro, zigzag, memoryIntro, memoryShow, memoryRound }
 
 class _NamedObject {
   final String emoji;
@@ -21,16 +14,36 @@ class _NamedObject {
   const _NamedObject(this.emoji, this.name);
 }
 
-class _StreamItem {
-  final int id;
-  final _NamedObject obj;
-  final int lane;
-  const _StreamItem(this.id, this.obj, this.lane);
+// 1. Bölüm'deki zikzak okuma şeridinin sağı sivri, solu çentikli okçuk
+// (banner) şeklini çiziyor — kitaptaki dönüşümlü mavi/sarı şeritlerin
+// görünümünü taklit ediyor.
+class _ChevronBannerClipper extends CustomClipper<Path> {
+  const _ChevronBannerClipper();
+
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final notch = h / 2.2;
+    return Path()
+      ..moveTo(0, 0)
+      ..lineTo(w - notch, 0)
+      ..lineTo(w, h / 2)
+      ..lineTo(w - notch, h)
+      ..lineTo(0, h)
+      ..lineTo(notch, h / 2)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
 /// Klasör 2'nin yedinci etkinliği: "Sınıf Eşyaları". İki bölüm:
-/// 1) Satır Akışı — Etkinlik 2/3'teki mekanizmanın bir tık hızlandırılmış
-/// ve 30 sn uzatılmış (90 sn) hali, sonunda "kaç kez gösterildi?" quizi,
+/// 1) Zikzak Okuma — kitaptaki yatay göz hareketi metnini dönüşümlü
+/// mavi/sarı şeritler halinde gösterip öğrencinin kendi hızında, içten
+/// seslendirmeden en kısa sürede okumasını istiyor (Etkinlik 2'deki Satır
+/// Akışı ile aynı olduğu için o mekanizma kaldırıldı, yerine bu geldi),
 /// 2) Dikkat ve Hafıza — 5 nesne 10 sn gösterilir, sonra her saniye biri
 /// eksilerek gösterilir, öğrenci hangisinin eksildiğini bulmaya çalışır.
 class ClassroomObjectsPage extends StatefulWidget {
@@ -42,38 +55,30 @@ class ClassroomObjectsPage extends StatefulWidget {
 
 class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
   static const Color _color = Color(0xFF65A30D);
-  static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
 
-  // Klasör 2 · Etkinlik 2/3'teki Satır Akışı'ndan bir tık daha hızlı.
-  static const List<int> _streamSpawnMsBySpeed = [600, 420, 270];
-  static const List<int> _streamTravelMsBySpeed = [1900, 1350, 900];
-  static const int _streamDurationSec = 90; // 60 + 30 sn
-  // Yönergeden sonra sorulara geçmeden önceki kısa hatırlatma gösterimi.
-  static const int _replayDurationSec = 25;
-
-  static const List<_NamedObject> _streamPool = [
-    _NamedObject('✏️', 'Kalem'),
-    _NamedObject('📚', 'Kitap'),
-    _NamedObject('🎒', 'Çanta'),
-    _NamedObject('🧴', 'Suluk'),
-    _NamedObject('🎾', 'Tenis topu'),
-    _NamedObject('🏀', 'Basketbol topu'),
-    _NamedObject('⚽', 'Futbol topu'),
-    _NamedObject('📱', 'Cep telefonu'),
-    _NamedObject('📓', 'Defter'),
-    _NamedObject('🔖', 'Ayraç'),
-    _NamedObject('🥪', 'Tost'),
-    _NamedObject('📁', 'Dosya'),
-    _NamedObject('🌍', 'Küre (Dünya)'),
-    _NamedObject('🧯', 'Yangın tüpü'),
-    _NamedObject('🔬', 'Mikroskop'),
-    _NamedObject('🪑', 'Sıra'),
-    _NamedObject('📺', 'Akıllı tahta'),
-    _NamedObject('🍱', 'Beslenme çantası'),
-    _NamedObject('🖍️', 'Fosforlu kalem'),
+  // 1. Bölüm: Zikzak Okuma. Her satır 1 ya da 2 kısa cümle parçası
+  // içeriyor; şeritler sırayla mavi/sarı dönüşüyor.
+  static const Color _zigzagBlue = Color(0xFFB9E0F5);
+  static const Color _zigzagYellow = Color(0xFFF6E9A8);
+  static const List<List<String>> _zigzagLines = [
+    ['Çalışırsam'],
+    ['kazanırım,', 'azmedersem'],
+    ['başarırım.', 'Umudumu'],
+    ['kaybetmemeliyim.', 'Sürekli'],
+    ['çalışmalıyım.', 'Her zorluktan'],
+    ['sonra', 'kolaylık,'],
+    ['her yokuşun', 'ardından'],
+    ['bir iniş,', 'her zahmetten'],
+    ['sonra', 'bir rahmet,'],
+    ['olacağını', 'biliyorum.'],
+    ['O halde', 'pes etmemeli,'],
+    ['vazgeçmemeli,', 'sabrederek'],
+    ['devam etmeli,', 'başarana kadar'],
+    ['yılmamalı,', 'çalışmaya'],
+    ['devam etmeliyim'],
   ];
 
-  // 2. Bölüm'de kullanılan 5 nesne — 1. Bölüm'ün soru havuzundan farklı.
+  // 2. Bölüm'de kullanılan 5 nesne.
   static const List<_NamedObject> _memoryPool = [
     _NamedObject('🧸', 'Oyuncak ayı'),
     _NamedObject('🕰️', 'Duvar saati'),
@@ -82,36 +87,17 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     _NamedObject('🍋', 'Sarı limon'),
   ];
 
-  static const int _quizRoundCount = 3;
   static const int _memoryRoundCount = 4; // 5 nesne → 4 eksiltme adımı
 
   final Random _random = Random();
-  _Phase _phase = _Phase.streamIntro;
+  _Phase _phase = _Phase.zigzagIntro;
   bool _hasCompletedOnce = false;
-  bool _isReplay = false;
-  int _speedLevel = 1;
+  bool _isPaused = false;
 
-  // 1. Bölüm: Satır Akışı.
-  // Nesneler tek çizgide üst üste binmesin diye birkaç dikey "şerit"
-  // arasında dönüşümlü olarak beliriyor.
-  static const int _streamLaneCount = 3;
-  int _nextStreamId = 0;
-  int _lastStreamLane = -1;
-  final List<_StreamItem> _streamItems = [];
-  final List<_NamedObject> _streamBag = [];
-  _NamedObject? _lastStreamObj;
-  Timer? _streamSpawnTimer;
-  Timer? _streamCountdownTimer;
-  int _streamElapsedSec = 0;
-  final Map<String, int> _showCounts = {};
-
-  // 1. Bölüm · 2. Tur: Quiz.
-  int _quizRoundIndex = 0;
-  int _quizScore = 0;
-  late _NamedObject _quizAsked;
-  List<int> _quizOptions = const [];
-  int? _quizSelected;
-  bool _quizAnswered = false;
+  // 1. Bölüm: Zikzak Okuma.
+  Timer? _zigzagTimer;
+  int _zigzagElapsedSec = 0;
+  bool _zigzagFinished = false;
 
   // 2. Bölüm: Dikkat ve Hafıza.
   List<_NamedObject> _memoryRemovalOrder = [];
@@ -124,146 +110,33 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
 
   @override
   void dispose() {
-    _streamSpawnTimer?.cancel();
-    _streamCountdownTimer?.cancel();
+    _zigzagTimer?.cancel();
     _memoryTimer?.cancel();
     super.dispose();
   }
 
-  // ---------------- 1. BÖLÜM: Satır Akışı ----------------
+  // ---------------- 1. BÖLÜM: Zikzak Okuma ----------------
 
-  // Yönergeden sonra soru sormadan önce nesneler bir kez daha (daha kısa
-  // süreyle) gösteriliyor — öğrenci hatırlamadan direkt soruyla
-  // karşılaşmıyor.
-  void _startReplay() {
-    _startStream(isReplay: true);
-  }
-
-  void _startStream({bool isReplay = false}) {
-    _streamCountdownTimer?.cancel();
-    _streamSpawnTimer?.cancel();
-    if (!isReplay) _showCounts.clear();
-    _streamBag.clear();
-    _lastStreamObj = null;
+  void _startZigzag() {
     setState(() {
-      _phase = _Phase.stream;
-      _isReplay = isReplay;
-      _streamElapsedSec = 0;
-      _streamItems.clear();
+      _phase = _Phase.zigzag;
+      _zigzagElapsedSec = 0;
+      _zigzagFinished = false;
     });
-    final duration = isReplay ? _replayDurationSec : _streamDurationSec;
-    _streamCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _zigzagTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      setState(() => _streamElapsedSec++);
-      if (_streamElapsedSec >= duration) _finishStream();
-    });
-    _streamSpawnTimer = Timer.periodic(
-      Duration(milliseconds: _streamSpawnMsBySpeed[_speedLevel]),
-      (_) {
-        if (!mounted) return;
-        final id = _nextStreamId++;
-        final obj = _nextStreamObj();
-        _showCounts[obj.name] = (_showCounts[obj.name] ?? 0) + 1;
-        int lane = _random.nextInt(_streamLaneCount);
-        if (_streamLaneCount > 1) {
-          while (lane == _lastStreamLane) {
-            lane = _random.nextInt(_streamLaneCount);
-          }
-        }
-        _lastStreamLane = lane;
-        setState(() => _streamItems.add(_StreamItem(id, obj, lane)));
-        Timer(Duration(milliseconds: _streamTravelMsBySpeed[_speedLevel]), () {
-          if (!mounted) return;
-          setState(() => _streamItems.removeWhere((s) => s.id == id));
-        });
-      },
-    );
-  }
-
-  // "Shuffle bag": havuzun karışık bir kopyasını tüketip bitince yeniden
-  // dolduruyor — saf rastgelelik gibi bir nesnenin çok fazla tekrar
-  // etmesine izin vermiyor, her tur her nesne tam bir kez çıkıyor. Yeni
-  // turun ilk elemanı bir öncekiyle aynıysa yer değiştiriliyor ki aynı
-  // nesne art arda (yan yana) gelmesin.
-  _NamedObject _nextStreamObj() {
-    if (_streamBag.isEmpty) {
-      _streamBag.addAll(_streamPool);
-      _streamBag.shuffle(_random);
-      if (_streamBag.length > 1 && _streamBag.last == _lastStreamObj) {
-        final tmp = _streamBag.last;
-        _streamBag[_streamBag.length - 1] = _streamBag[0];
-        _streamBag[0] = tmp;
-      }
-    }
-    final next = _streamBag.removeLast();
-    _lastStreamObj = next;
-    return next;
-  }
-
-  void _finishStream() {
-    _streamCountdownTimer?.cancel();
-    _streamSpawnTimer?.cancel();
-    if (_isReplay) {
-      _streamItems.clear();
-      _startQuiz();
-      return;
-    }
-    setState(() {
-      _streamItems.clear();
-      _phase = _Phase.quizIntro;
+      setState(() => _zigzagElapsedSec++);
     });
   }
 
-  // ---------------- 1. BÖLÜM · 2. TUR: Quiz ----------------
-
-  void _startQuiz() {
-    setState(() {
-      _phase = _Phase.quiz;
-      _quizRoundIndex = 0;
-      _quizScore = 0;
-    });
-    _startQuizRound();
-  }
-
-  void _startQuizRound() {
-    final asked = _streamPool[_random.nextInt(_streamPool.length)];
-    final correctCount = _showCounts[asked.name] ?? 0;
-    // Doğru sayı 0'a veya üst sınıra çok yakınsa rastgele deneme sonsuz
-    // döngüye girebiliyordu (4 farklı sayı asla bulunamıyordu) — bu
-    // yüzden olası tüm değerlerden karışık örnekleme yapılıyor.
-    const maxOption = 30;
-    final otherValues = [
-      for (int i = 0; i <= maxOption; i++)
-        if (i != correctCount) i,
-    ]..shuffle(_random);
-    setState(() {
-      _quizAsked = asked;
-      _quizOptions = [correctCount, ...otherValues.take(3)]..shuffle(_random);
-      _quizSelected = null;
-      _quizAnswered = false;
-    });
-  }
-
-  void _answerQuiz(int selected) {
-    if (_quizAnswered) return;
-    final correctCount = _showCounts[_quizAsked.name] ?? 0;
-    final isCorrect = selected == correctCount;
-    setState(() => _quizSelected = selected);
-    if (isCorrect) {
-      SoundManager.playCorrect();
-      _quizScore++;
-    } else {
-      SoundManager.playGentleTap();
-    }
-    setState(() => _quizAnswered = true);
-    Future.delayed(const Duration(milliseconds: 1300), () {
+  void _finishZigzag() {
+    if (_zigzagFinished) return;
+    _zigzagTimer?.cancel();
+    setState(() => _zigzagFinished = true);
+    SoundManager.playCorrect();
+    Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) return;
-      if (_quizRoundIndex < _quizRoundCount - 1) {
-        setState(() => _quizRoundIndex++);
-        _startQuizRound();
-      } else {
-        setState(() => _phase = _Phase.memoryIntro);
-      }
+      setState(() => _phase = _Phase.memoryIntro);
     });
   }
 
@@ -326,21 +199,18 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
   }
 
   void _finishAll() {
-    _streamCountdownTimer?.cancel();
-    _streamSpawnTimer?.cancel();
+    _zigzagTimer?.cancel();
     _memoryTimer?.cancel();
     _hasCompletedOnce = true;
 
-    final totalCorrect = _quizScore + _memoryScore;
-    final totalRounds = _quizRoundCount + _memoryRoundCount;
-    final percent = ((totalCorrect / totalRounds) * 100).round();
+    final percent = ((_memoryScore / _memoryRoundCount) * 100).round();
     ProgressManager.recordAttentionScore(percent);
 
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Sınıf Eşyaları',
       result:
-          'Quiz: $_quizScore/$_quizRoundCount · Hafıza: $_memoryScore/$_memoryRoundCount',
+          'Zikzak okuma: $_zigzagElapsedSec sn · Hafıza: $_memoryScore/$_memoryRoundCount',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -353,7 +223,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Kaç Kez Sorusu: $_quizScore / $_quizRoundCount'),
+            Text('Zikzak Okuma Süresi: $_zigzagElapsedSec sn'),
             Text('Hafıza Sorusu: $_memoryScore / $_memoryRoundCount'),
             const SizedBox(height: 4),
             Text(
@@ -413,13 +283,46 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              setState(() => _phase = _Phase.streamIntro);
+              setState(() => _phase = _Phase.zigzagIntro);
             },
             child: const Text('Yeniden Başlat'),
           ),
         ],
       ),
     );
+  }
+
+  void _pauseGame() {
+    _zigzagTimer?.cancel();
+    _memoryTimer?.cancel();
+    setState(() => _isPaused = true);
+  }
+
+  void _resumeGame() {
+    setState(() => _isPaused = false);
+    switch (_phase) {
+      case _Phase.zigzag:
+        if (!_zigzagFinished) {
+          _zigzagTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+            if (!mounted) return;
+            setState(() => _zigzagElapsedSec++);
+          });
+        }
+      case _Phase.memoryShow:
+        _memoryTimer = Timer(const Duration(seconds: 10), () {
+          if (!mounted) return;
+          _startMemoryRound();
+        });
+      case _Phase.memoryRound:
+        if (_memoryShowingSet) {
+          _memoryTimer = Timer(const Duration(seconds: 1), () {
+            if (!mounted) return;
+            setState(() => _memoryShowingSet = false);
+          });
+        }
+      default:
+        break;
+    }
   }
 
   @override
@@ -430,9 +333,15 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
         appBar: AppBar(title: const Text('🎒 Sınıf Eşyaları')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: _buildBody(),
+          child: Stack(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _buildBody(),
+              ),
+              if (_isPaused)
+                buildPauseOverlay(color: _color, onResume: _resumeGame),
+            ],
           ),
         ),
       ),
@@ -441,25 +350,15 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
 
   Widget _buildBody() {
     switch (_phase) {
-      case _Phase.streamIntro:
+      case _Phase.zigzagIntro:
         return KeyedSubtree(
-          key: const ValueKey('stream-intro'),
-          child: _buildStreamIntro(),
+          key: const ValueKey('zigzag-intro'),
+          child: _buildZigzagIntro(),
         );
-      case _Phase.stream:
+      case _Phase.zigzag:
         return KeyedSubtree(
-          key: const ValueKey('stream-flow'),
-          child: _buildStreamFlow(),
-        );
-      case _Phase.quizIntro:
-        return KeyedSubtree(
-          key: const ValueKey('quiz-intro'),
-          child: _buildQuizIntro(),
-        );
-      case _Phase.quiz:
-        return KeyedSubtree(
-          key: ValueKey('quiz-flow-$_quizRoundIndex'),
-          child: _buildQuizFlow(),
+          key: const ValueKey('zigzag-flow'),
+          child: _buildZigzagFlow(),
         );
       case _Phase.memoryIntro:
         return KeyedSubtree(
@@ -484,7 +383,6 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     required String emoji,
     required String instruction,
     required VoidCallback onStart,
-    bool showSpeed = true,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -532,6 +430,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(
                             Icons.info_outline_rounded,
@@ -552,10 +451,6 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
                         ],
                       ),
                     ),
-                    if (showSpeed) ...[
-                      const SizedBox(height: 12),
-                      _speedChipRow(),
-                    ],
                   ],
                 ),
                 Padding(
@@ -591,27 +486,16 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     );
   }
 
-  Widget _buildStreamIntro() {
+  Widget _buildZigzagIntro() {
     return _buildIntro(
-      badge: '1. Bölüm · Satır Akışı',
-      emoji: '➡️',
+      badge: '1. Bölüm · Zikzak Okuma',
+      emoji: '👁️',
       instruction:
-          'Sınıf eşyaları satır üzerinde hızlıca akıp geçecek. Başını oynatmadan, '
-          'sadece gözlerinle takip et — 90 saniye sürecek. Bazı eşyalar birden '
-          'çok kez geçecek, dikkatli ol!',
-      onStart: _startStream,
-    );
-  }
-
-  Widget _buildQuizIntro() {
-    return _buildIntro(
-      badge: '1. Bölüm · 2. Tur · Kaç Kez?',
-      emoji: '❓',
-      instruction:
-          'Eşyalar kısa bir süre daha akacak, sonra az önce gördüğün eşyalardan '
-          'bazılarının kaç kez ekrandan geçtiğini soracağız. Doğru cevap puan kazandırır!',
-      onStart: _startReplay,
-      showSpeed: false,
+          'Amaç: Yatay göz hareketlerini hızlandırmak ve görüş açımızı '
+          'genişletmek.\n\nYöntem: Önce soldan sağa, sonra sayfanın '
+          'ortasından aşağı doğru bakarak ve içten seslendirmeden en kısa '
+          'sürede bitirmeye çalış (hedef: 5-7 saniye).',
+      onStart: _startZigzag,
     );
   }
 
@@ -624,68 +508,14 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
           'gösterilecek. Sonra her saniye bir eşya eksilerek gösterilecek — '
           'her seferinde hangisinin eksildiğini zihninden bulmaya çalış!',
       onStart: _startMemory,
-      showSpeed: false,
     );
   }
 
-  Widget _speedChipRow() {
-    return Row(
-      children: [
-        Text(
-          'Hız: ',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.grey.shade600,
-          ),
-        ),
-        const SizedBox(width: 6),
-        for (int i = 0; i < _speedLabels.length; i++) ...[
-          if (i > 0) const SizedBox(width: 6),
-          ChoiceChip(
-            label: Text(_speedLabels[i]),
-            selected: _speedLevel == i,
-            onSelected: (_) => setState(() => _speedLevel = i),
-            selectedColor: _color,
-            labelStyle: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: _speedLevel == i ? Colors.white : _color,
-            ),
-            backgroundColor: _color.withValues(alpha: 0.08),
-            side: BorderSide(
-              color: _color.withValues(alpha: _speedLevel == i ? 1 : 0.3),
-            ),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _skipButton(VoidCallback onSkip) {
-    return SizedBox(
-      width: double.infinity,
-      height: 44,
-      child: OutlinedButton.icon(
-        onPressed: onSkip,
-        icon: const Icon(Icons.skip_next_rounded),
-        label: const Text(
-          'SONRAKİ BÖLÜM',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: _color,
-          side: const BorderSide(color: _color),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _stageHeader(String badge, {String? timerText}) {
+  Widget _stageHeader(
+    String badge, {
+    String? timerText,
+    bool showPause = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -700,192 +530,131 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
             style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
           ),
         ),
-        if (timerText != null)
-          Text(
-            timerText,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Colors.orange,
-            ),
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (timerText != null)
+              Text(
+                timerText,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.orange,
+                ),
+              ),
+            if (showPause)
+              buildPauseButton(color: _color, onPressed: _pauseGame),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _buildStreamFlow() {
-    final duration = _isReplay ? _replayDurationSec : _streamDurationSec;
-    final remaining = duration - _streamElapsedSec;
+  Widget _buildZigzagFlow() {
     return Column(
       children: [
         _stageHeader(
-          _isReplay ? '1. Bölüm · Hatırlatma' : '1. Bölüm · Satır Akışı',
-          timerText: 'Süre: $remaining sn',
+          '1. Bölüm · Zikzak Okuma',
+          timerText: 'Süre: $_zigzagElapsedSec sn',
+          showPause: true,
         ),
-        const SizedBox(height: 10),
-        _speedChipRow(),
         const SizedBox(height: 12),
         Expanded(
-          child: Center(
-            // Tabletlerde bu alan çok uzayabiliyor — üst sınır koyup
-            // ortalayarak kutunun ekrana orantısız yayılmasını önlüyoruz.
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 460),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Stack(
-                      children: [
-                        Center(
-                          child: Container(
-                            width: double.infinity,
-                            height: 2,
-                            color: _color.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        for (final item in _streamItems)
-                          TweenAnimationBuilder<double>(
-                            key: ValueKey(item.id),
-                            // Kitap okuma mantığıyla: yeni nesne sağdan
-                            // girip sola doğru akıyor.
-                            tween: Tween(begin: 1.0, end: -1.0),
-                            duration: Duration(
-                              milliseconds: _streamTravelMsBySpeed[_speedLevel],
-                            ),
-                            curve: Curves.linear,
-                            builder: (context, t, _) {
-                              // Şeritler arası sabit piksel mesafe
-                              // kullanılıyor (kutunun yüksekliğine göre
-                              // ORANLI değil) — büyük tabletlerde kutu çok
-                              // uzadığında şeritler birbirinden uzaklaşıp
-                              // ekrana dağılmasın diye.
-                              final laneOffset =
-                                  (item.lane - (_streamLaneCount - 1) / 2) *
-                                  44.0;
-                              return Align(
-                                alignment: Alignment(t, 0),
-                                child: Transform.translate(
-                                  offset: Offset(0, laneOffset),
-                                  child: Text(
-                                    item.obj.emoji,
-                                    style: const TextStyle(fontSize: 38),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                      ],
-                    );
-                  },
-                ),
-              ),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                for (int i = 0; i < _zigzagLines.length; i++) ...[
+                  _zigzagLineBanner(i),
+                  if (i < _zigzagLines.length - 1) _zigzagArrowMarker(i),
+                ],
+              ],
             ),
           ),
         ),
         const SizedBox(height: 12),
-        _skipButton(_finishStream),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _zigzagFinished ? null : _finishZigzag,
+            icon: Icon(
+              _zigzagFinished ? Icons.check_circle : Icons.check_circle_outline,
+            ),
+            label: Text(
+              _zigzagFinished
+                  ? 'Tamamlandı! ($_zigzagElapsedSec sn)'
+                  : 'BİTİRDİM',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _color,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: _color,
+              disabledForegroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildQuizFlow() {
-    return Column(
-      children: [
-        _stageHeader('Soru ${_quizRoundIndex + 1}/$_quizRoundCount'),
-        Expanded(
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+  Widget _zigzagLineBanner(int index) {
+    final phrases = _zigzagLines[index];
+    final color = index.isEven ? _zigzagBlue : _zigzagYellow;
+    return ClipPath(
+      clipper: const _ChevronBannerClipper(),
+      child: Container(
+        width: double.infinity,
+        height: 46,
+        color: color,
+        padding: const EdgeInsets.symmetric(horizontal: 34),
+        alignment: Alignment.center,
+        child: phrases.length == 1
+            ? Text(
+                phrases[0],
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(_quizAsked.emoji, style: const TextStyle(fontSize: 56)),
-                  const SizedBox(height: 8),
                   Text(
-                    '"${_quizAsked.name}"',
+                    phrases[0],
                     style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: _color,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'kaç kez gösterildi?',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 24),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      for (final option in _quizOptions)
-                        _numberButton(
-                          option,
-                          _showCounts[_quizAsked.name] ?? 0,
-                          isSelected: _quizSelected == option,
-                          answered: _quizAnswered,
-                          onTap: () => _answerQuiz(option),
-                        ),
-                    ],
+                  Text(
+                    phrases[1],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
                   ),
                 ],
               ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _numberButton(
-    int option,
-    int correct, {
-    required bool isSelected,
-    required bool answered,
-    required VoidCallback onTap,
-  }) {
-    final isCorrectOption = option == correct;
-    Color bg = _color.withValues(alpha: 0.08);
-    Color border = _color.withValues(alpha: 0.3);
-    Color fg = _color;
-    if (answered && isCorrectOption) {
-      bg = const Color(0xFF16A34A).withValues(alpha: 0.12);
-      border = const Color(0xFF16A34A);
-      fg = const Color(0xFF16A34A);
-    } else if (answered && isSelected && !isCorrectOption) {
-      bg = const Color(0xFFE11D48).withValues(alpha: 0.12);
-      border = const Color(0xFFE11D48);
-      fg = const Color(0xFFE11D48);
-    }
-    return SizedBox(
-      width: 64,
-      height: 64,
-      child: OutlinedButton(
-        onPressed: answered ? null : onTap,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: bg,
-          side: BorderSide(color: border, width: 2),
-          padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
+  // Satır aralarındaki küçük üçgen işaretler, kitaptaki gibi göz akışının
+  // dönüşümlü olarak sola-sağa kaydığını gösteriyor.
+  Widget _zigzagArrowMarker(int index) {
+    return Align(
+      alignment: index.isEven
+          ? const Alignment(-0.5, 0)
+          : const Alignment(0.5, 0),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
         child: Text(
-          '$option',
-          maxLines: 1,
-          softWrap: false,
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: fg,
-          ),
+          '▲',
+          style: TextStyle(fontSize: 12, color: _color.withValues(alpha: 0.7)),
         ),
       ),
     );
@@ -894,7 +663,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
   Widget _buildMemoryShow() {
     return Column(
       children: [
-        _stageHeader('2. Bölüm · İlk Gösterim (10 sn)'),
+        _stageHeader('2. Bölüm · İlk Gösterim (10 sn)', showPause: true),
         Expanded(
           child: Center(
             child: Wrap(
@@ -929,6 +698,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
       children: [
         _stageHeader(
           '2. Bölüm · Tur ${_memoryRoundIndex + 1}/$_memoryRoundCount',
+          showPause: _memoryShowingSet && !_memoryAnswered,
         ),
         const SizedBox(height: 10),
         Expanded(
