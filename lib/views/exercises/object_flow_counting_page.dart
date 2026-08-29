@@ -164,6 +164,10 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   late List<_ObjectItem> _warmupObjects;
   int _warmupActiveIndex = 0;
   Timer? _warmupTimer;
+  // Süresi yok ama öğrenci ne kadar zaman geçirdiğini görsün diye ayrı bir
+  // saniye sayacı.
+  int _warmupElapsedSeconds = 0;
+  Timer? _warmupElapsedTimer;
 
   // 2. BÖLÜM: 3 AYRI tur — her turda tek bir hedef nesne önceden duyurulur,
   // aktif satırdaki nesneler TEK TEK belirir, satır dolunca hepsi birden
@@ -177,6 +181,9 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   int _stage1ItemIndex =
       0; // aktif satırda kaç nesne belirdi (0 = henüz hiçbiri)
   Timer? _stage1Timer;
+  // Akış boyunca geçen süreyi gösteren ayrı bir saniye sayacı.
+  int _stage1ElapsedSeconds = 0;
+  Timer? _stage1ElapsedTimer;
 
   _Stage1Round get _stage1Round => _stage1Rounds[_stage1RoundIndex];
 
@@ -201,7 +208,9 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   @override
   void dispose() {
     _stage1Timer?.cancel();
+    _stage1ElapsedTimer?.cancel();
     _warmupTimer?.cancel();
+    _warmupElapsedTimer?.cancel();
     super.dispose();
   }
 
@@ -223,16 +232,29 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
 
   void _startWarmup() {
     _warmupTimer?.cancel();
+    _warmupElapsedTimer?.cancel();
     setState(() {
       _warmupRunning = true;
       _warmupActiveIndex = 0;
+      _warmupElapsedSeconds = 0;
     });
     _scheduleWarmupStep();
+    _warmupElapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _warmupElapsedSeconds++);
+    });
+  }
+
+  // Öğrenci baştan izlemek isterse sayacı ve döngüyü sıfırdan başlatır —
+  // "DEVAM ET"e basmadan istediği kadar tekrar izleyebilir.
+  void _replayWarmup() {
+    _startWarmup();
   }
 
   // Süresi yok — öğrenci "DEVAM ET"e basana kadar sürekli döner.
   void _finishWarmup() {
     _warmupTimer?.cancel();
+    _warmupElapsedTimer?.cancel();
     setState(() {
       _warmupRunning = false;
       _warmupDone = true;
@@ -243,7 +265,16 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     _warmupTimer = Timer(const Duration(milliseconds: _warmupStepMs), () {
       if (!mounted) return;
       setState(() {
-        _warmupActiveIndex = (_warmupActiveIndex + 1) % _warmupObjects.length;
+        final next = _warmupActiveIndex + 1;
+        if (next >= _warmupObjects.length) {
+          // Bir tur tamamlandı — hep aynı nesneler dönmesin diye yeni
+          // rastgele bir set seçiliyor.
+          final pool = List<_ObjectItem>.from(_objectPool)..shuffle(_random);
+          _warmupObjects = pool.take(_warmupObjectCount).toList();
+          _warmupActiveIndex = 0;
+        } else {
+          _warmupActiveIndex = next;
+        }
       });
       _scheduleWarmupStep();
     });
@@ -331,12 +362,18 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
 
   void _startStage1Flow() {
     _stage1Timer?.cancel();
+    _stage1ElapsedTimer?.cancel();
     setState(() {
       _stage1FlowRunning = true;
       _stage1LineIndex = 0;
       _stage1ItemIndex = 1; // ilk nesne hemen belirsin
+      _stage1ElapsedSeconds = 0;
     });
     _scheduleStage1ItemReveal();
+    _stage1ElapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _stage1ElapsedSeconds++);
+    });
   }
 
   // Akış ilerledikçe (satırdan satıra) nesnelerin belirme hızı _startItemMs'
@@ -363,6 +400,7 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
       if (!mounted) return;
       if (rowComplete) {
         if (_stage1LineIndex >= lines.length - 1) {
+          _stage1ElapsedTimer?.cancel();
           setState(() {
             _stage1FlowRunning = false;
             _stage1ShowQuestion = true;
@@ -382,7 +420,9 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
 
   void _pauseGame() {
     _warmupTimer?.cancel();
+    _warmupElapsedTimer?.cancel();
     _stage1Timer?.cancel();
+    _stage1ElapsedTimer?.cancel();
     setState(() => _isPaused = true);
   }
 
@@ -390,8 +430,16 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     setState(() => _isPaused = false);
     if (_warmupRunning) {
       _scheduleWarmupStep();
+      _warmupElapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _warmupElapsedSeconds++);
+      });
     } else if (_stage1FlowRunning) {
       _scheduleStage1ItemReveal();
+      _stage1ElapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _stage1ElapsedSeconds++);
+      });
     }
   }
 
@@ -775,35 +823,61 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     final round = _stage1Round;
     return Column(
       children: [
+        // Etiket uzun ("2. Bölüm · Hedef X/Y · Satır A/B") + sağdaki grup
+        // (say + süre + duraklat) tek satırda taşıyordu — iki satıra bölündü.
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '2. Bölüm · Hedef ${_stage1RoundIndex + 1}/${_stage1Rounds.length} · '
-                'Satır ${_stage1LineIndex + 1}/${round.lines.length}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2563EB),
+            Flexible(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '2. Bölüm · Hedef ${_stage1RoundIndex + 1}/${_stage1Rounds.length} · '
+                  'Satır ${_stage1LineIndex + 1}/${round.lines.length}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2563EB),
+                  ),
                 ),
               ),
             ),
-            Row(
-              children: [
-                Text(
-                  '${round.target.emoji} say',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            buildPauseButton(
+              color: const Color(0xFF2563EB),
+              onPressed: _pauseGame,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Text(
+              '${round.target.emoji} say',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '⏱ $_stage1ElapsedSeconds sn',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber.shade900,
+                  fontSize: 12,
                 ),
-                buildPauseButton(
-                  color: const Color(0xFF2563EB),
-                  onPressed: _pauseGame,
-                ),
-              ],
+              ),
             ),
           ],
         ),
@@ -825,10 +899,14 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
             ),
             // Row (Wrap DEĞİL): satır TEK satır kalmalı, alt satıra kaymamalı
             // — kaç nesne olursa olsun (en fazla _itemsPerLine kadar) yan
-            // yana sığar, dolunca hepsi birden kaybolur.
-            child: Center(
+            // yana sığar, dolunca hepsi birden kaybolur. Bilerek Center
+            // DEĞİL, sola yaslı: ortalanmış olsaydı her yeni nesne
+            // eklendiğinde satırın tamamı yeniden ortalanıp nesneler
+            // "ortadan çıkıyormuş" gibi kayardı.
+            child: Align(
+              alignment: Alignment.centerLeft,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   for (
                     int i = 0;
@@ -1219,9 +1297,32 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                 ),
               ),
             ),
-            buildPauseButton(
-              color: const Color(0xFF2563EB),
-              onPressed: _pauseGame,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '⏱ $_warmupElapsedSeconds sn',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber.shade900,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                buildPauseButton(
+                  color: const Color(0xFF2563EB),
+                  onPressed: _pauseGame,
+                ),
+              ],
             ),
           ],
         ),
@@ -1230,75 +1331,107 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           child: Center(
             // Dairesel DEĞİL, Wrap DEĞİL: nesneler TEK satırda kalmalı,
             // alt satıra kaymamalı — aktif olan kendiliğinden soldan sağa
-            // sırayla döner, süresi yoktur.
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (int i = 0; i < n; i++)
-                  Builder(
-                    builder: (_) {
-                      final isActive = i == _warmupActiveIndex;
-                      final nodeSize = isActive ? 64.0 : 48.0;
-                      // Bilerek animasyonsuz (Container, AnimatedContainer
-                      // DEĞİL) — anlık geçiş, "gölge kalması" sorununu
-                      // kökten çözen köklü desen.
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: Container(
-                          width: nodeSize,
-                          height: nodeSize,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isActive
-                                ? const Color(0xFF2563EB)
-                                : Colors.white,
-                            border: Border.all(
-                              color: const Color(0xFF2563EB),
-                              width: isActive ? 3 : 2,
+            // sırayla döner, süresi yoktur. Dar ekranlarda satır genişliği
+            // taşabildiği için (sağdan overflow hatası) yatay kaydırılabilir
+            // yapıldı.
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (int i = 0; i < n; i++)
+                    Builder(
+                      builder: (_) {
+                        final isActive = i == _warmupActiveIndex;
+                        final nodeSize = isActive ? 64.0 : 48.0;
+                        // Bilerek animasyonsuz (Container, AnimatedContainer
+                        // DEĞİL) — anlık geçiş, "gölge kalması" sorununu
+                        // kökten çözen köklü desen.
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Container(
+                            width: nodeSize,
+                            height: nodeSize,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isActive
+                                  ? const Color(0xFF2563EB)
+                                  : Colors.white,
+                              border: Border.all(
+                                color: const Color(0xFF2563EB),
+                                width: isActive ? 3 : 2,
+                              ),
+                              boxShadow: isActive
+                                  ? [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF2563EB,
+                                        ).withValues(alpha: 0.4),
+                                        blurRadius: 14,
+                                        spreadRadius: 2,
+                                      ),
+                                    ]
+                                  : [],
                             ),
-                            boxShadow: isActive
-                                ? [
-                                    BoxShadow(
-                                      color: const Color(
-                                        0xFF2563EB,
-                                      ).withValues(alpha: 0.4),
-                                      blurRadius: 14,
-                                      spreadRadius: 2,
-                                    ),
-                                  ]
-                                : [],
+                            child: Text(
+                              _warmupObjects[i].emoji,
+                              style: TextStyle(fontSize: isActive ? 32 : 22),
+                            ),
                           ),
-                          child: Text(
-                            _warmupObjects[i].emoji,
-                            style: TextStyle(fontSize: isActive ? 32 : 22),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ),
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: _finishWarmup,
-            icon: const Icon(Icons.arrow_forward_rounded),
-            label: const Text(
-              'DEVAM ET',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                        );
+                      },
+                    ),
+                ],
               ),
             ),
           ),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: _replayWarmup,
+                  icon: const Icon(Icons.replay_rounded),
+                  label: const Text(
+                    'TEKRAR İZLE',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFF2563EB)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: _finishWarmup,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text(
+                    'DEVAM ET',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

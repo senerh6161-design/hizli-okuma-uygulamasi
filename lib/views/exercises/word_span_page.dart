@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
@@ -63,7 +64,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
   // 1. Bölüm: Satır Akışı — Klasör 1'deki "Nesne Akışı" ile aynı mantık:
   // kelimeler soldan sağa TEK TEK belirip sabit bir satırda yan yana durur
   // (uçuşup kaymaz), satır dolunca hepsi birden kaybolup yeniden başlar.
-  static const int _itemsPerLine = 4;
+  static const int _itemsPerLine = 5;
   static const int _rowPauseMs = 700;
   List<String> _currentLine = const [];
   int _lineItemIndex = 0;
@@ -84,8 +85,21 @@ class _WordSpanPageState extends State<WordSpanPage> {
   String _quizAskedWord = _words.first;
   List<int> _quizOptions = const [];
   int? _quizSelected;
+  bool _quizAnnouncing = true;
   bool _quizShowingWords = true;
   Timer? _quizFlashTimer;
+  static const int _quizAnnounceMs = 1400;
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
 
   @override
   void dispose() {
@@ -93,6 +107,10 @@ class _WordSpanPageState extends State<WordSpanPage> {
     _streamSpawnTimer?.cancel();
     _scatterTimer?.cancel();
     _quizFlashTimer?.cancel();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 
@@ -217,22 +235,23 @@ class _WordSpanPageState extends State<WordSpanPage> {
 
   // Kelimeler ekranın her yerine dağılıyor ama merkez odak noktasının
   // üstüne binmiyor, birbirlerine de çok yakın düşmüyor (kelime kutuları
-  // emojiden daha geniş olduğu için minimum mesafe biraz daha büyük).
+  // emojiden daha geniş olduğu için minimum mesafe biraz daha büyük). Çok
+  // zor olmasın diye kelimeler odak noktasından FAZLA uzağa gitmiyor.
   List<_SpanWord> _generateSpanWords() {
     final list = <_SpanWord>[];
     for (int i = 0; i < _spanWordCount; i++) {
       double x = 0.5, y = 0.5;
       for (int attempt = 0; attempt < 30; attempt++) {
-        x = 0.14 + _random.nextDouble() * 0.72;
-        y = 0.12 + _random.nextDouble() * 0.76;
+        x = 0.22 + _random.nextDouble() * 0.56;
+        y = 0.24 + _random.nextDouble() * 0.52;
         final dxCenter = x - 0.5;
         final dyCenter = y - 0.5;
         final tooCloseToCenter =
-            dxCenter * dxCenter + dyCenter * dyCenter < 0.17 * 0.17;
+            dxCenter * dxCenter + dyCenter * dyCenter < 0.14 * 0.14;
         final tooCloseToOther = list.any((o) {
           final dx = o.x - x;
           final dy = o.y - y;
-          return dx * dx + dy * dy < 0.22 * 0.22;
+          return dx * dx + dy * dy < 0.18 * 0.18;
         });
         if (!tooCloseToCenter && !tooCloseToOther) break;
       }
@@ -286,16 +305,24 @@ class _WordSpanPageState extends State<WordSpanPage> {
       _quizAskedWord = asked;
       _quizOptions = options;
       _quizSelected = null;
-      _quizShowingWords = true;
+      _quizAnnouncing = true;
+      _quizShowingWords = false;
     });
 
-    _quizFlashTimer = Timer(
-      Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
-      () {
-        if (!mounted) return;
-        setState(() => _quizShowingWords = false);
-      },
-    );
+    _quizFlashTimer = Timer(const Duration(milliseconds: _quizAnnounceMs), () {
+      if (!mounted) return;
+      setState(() {
+        _quizAnnouncing = false;
+        _quizShowingWords = true;
+      });
+      _quizFlashTimer = Timer(
+        Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+        () {
+          if (!mounted) return;
+          setState(() => _quizShowingWords = false);
+        },
+      );
+    });
   }
 
   void _answerQuiz(int selected) {
@@ -432,7 +459,25 @@ class _WordSpanPageState extends State<WordSpanPage> {
         _startCountdownTimer(_finishScatter);
         _scheduleScatterFlash();
       case _Phase.quiz:
-        if (_quizShowingWords) {
+        if (_quizAnnouncing) {
+          _quizFlashTimer = Timer(
+            const Duration(milliseconds: _quizAnnounceMs),
+            () {
+              if (!mounted) return;
+              setState(() {
+                _quizAnnouncing = false;
+                _quizShowingWords = true;
+              });
+              _quizFlashTimer = Timer(
+                Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+                () {
+                  if (!mounted) return;
+                  setState(() => _quizShowingWords = false);
+                },
+              );
+            },
+          );
+        } else if (_quizShowingWords) {
           _quizFlashTimer = Timer(
             Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
             () {
@@ -774,38 +819,41 @@ class _WordSpanPageState extends State<WordSpanPage> {
                 // TEK belirip sabit bir satırda yan yana durur, uçuşmaz.
                 // Bilerek Center DEĞİL, sola yaslı: ortalanmış olsaydı her
                 // yeni kelime eklendiğinde satırın tamamı yeniden ortalanıp
-                // kelimeler "ortadan çıkıyormuş" gibi kayardı.
+                // kelimeler "ortadan çıkıyormuş" gibi kayardı. Wrap DEĞİL,
+                // yatay kaydırılabilir Row: dar (dikey) ekranlarda 5 kelime
+                // sığmayınca alt satıra kaymasın, bunun yerine kaydırılsın.
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    alignment: WrapAlignment.start,
-                    runSpacing: 12,
-                    children: [
-                      for (int i = 0; i < _lineItemIndex; i++)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          child: TweenAnimationBuilder<double>(
-                            key: ValueKey('stream-$i-${_currentLine[i]}'),
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            duration: const Duration(milliseconds: 220),
-                            builder: (context, value, child) => Opacity(
-                              opacity: value,
-                              child: Transform.scale(
-                                scale: 0.8 + 0.2 * value,
-                                child: child,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (int i = 0; i < _lineItemIndex; i++)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: TweenAnimationBuilder<double>(
+                              key: ValueKey('stream-$i-${_currentLine[i]}'),
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 220),
+                              builder: (context, value, child) => Opacity(
+                                opacity: value,
+                                child: Transform.scale(
+                                  scale: 0.8 + 0.2 * value,
+                                  child: child,
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              _currentLine[i],
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: _color,
+                              child: Text(
+                                _currentLine[i],
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: _color,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -907,7 +955,8 @@ class _WordSpanPageState extends State<WordSpanPage> {
         _stageHeader(
           '3. Bölüm · Soru ${_quizRoundIndex + 1}/$_quizRoundCount',
           showTimer: false,
-          showPause: _quizShowingWords && _quizSelected == null,
+          showPause:
+              !_quizAnnouncing && _quizShowingWords && _quizSelected == null,
         ),
         const SizedBox(height: 10),
         _speedChipRow(),
@@ -920,14 +969,48 @@ class _WordSpanPageState extends State<WordSpanPage> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: _quizShowingWords
-                ? Stack(
-                    children: [_centerFocusDot(), _spanWordsLayer(_quizWords)],
-                  )
-                : _buildQuizQuestion(),
+            child: _quizAnnouncing
+                ? _buildQuizAnnounce()
+                : (_quizShowingWords
+                      ? Stack(
+                          children: [
+                            _centerFocusDot(),
+                            _spanWordsLayer(_quizWords),
+                          ],
+                        )
+                      : _buildQuizQuestion()),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildQuizAnnounce() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'Şimdi bunu sayacaksın:',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '"$_quizAskedWord"',
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: _color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

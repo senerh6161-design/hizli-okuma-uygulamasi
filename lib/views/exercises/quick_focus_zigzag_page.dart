@@ -54,8 +54,9 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
   // aşağıdan yukarı → yukarıdan aşağı. Koordinatlar 0..1 aralığında,
   // kutunun genişlik/yüksekliğine oranlı. Gösterim süresi de hız
   // seviyesine göre değişir.
-  static const List<int> _flashVisibleMsBySpeed = [400, 300, 250, 150];
-  static const List<int> _flashGapMsBySpeed = [400, 300, 250, 150];
+  // Çok Hızlı: 250ms görünür + 0ms boşluk = tam 1 saniyede 4 nesne.
+  static const List<int> _flashVisibleMsBySpeed = [400, 300, 250, 250];
+  static const List<int> _flashGapMsBySpeed = [400, 300, 250, 0];
   static const List<List<Offset>> _flashStagePoints = [
     // Sabit konumlu aşamalarda (satır başı/ortası/sonu) nesne tek bir kez
     // belirip kayboluyor — aynı noktada tekrar tekrar gösterilirse "yanıp

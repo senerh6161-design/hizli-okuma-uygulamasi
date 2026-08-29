@@ -337,7 +337,10 @@ class _AttentionQuestionPageState extends State<AttentionQuestionPage> {
                   children: [
                     const SizedBox(height: 16),
                     const Center(
-                      child: Text('🧠', style: TextStyle(fontSize: 64)),
+                      child: Image(
+                        image: AssetImage('assets/images/eye_character.png'),
+                        height: 140,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Container(

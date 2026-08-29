@@ -245,6 +245,11 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
     'Spor': 9,
     'Yıldız': 8,
     'Türkiye': 18,
+    'Kültür': 14,
+    'Nehir': 10,
+    'Tarih': 17,
+    'Atom': 11,
+    'Vitamin': 19,
   };
 
   static const int _totalPasses = 3;
@@ -866,7 +871,7 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'TEK bir kelimeye odaklan — "${round.target}"! Akış boyunca kaç kez '
+                  '"${round.target}" kelimesini akış boyunca kaç kez '
                   'göreceğini dikkatlice say.',
                   style: const TextStyle(
                     fontSize: 13,
@@ -954,34 +959,40 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
                 ),
               ],
             ),
-            child: SingleChildScrollView(
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 14,
-                runSpacing: 12,
-                children: [
-                  for (int i = 0; i <= _stage1FlowIndex; i++)
-                    TweenAnimationBuilder<double>(
-                      key: ValueKey('s1-$_stage1RoundIndex-$i'),
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 220),
-                      builder: (context, value, child) => Opacity(
-                        opacity: value,
-                        child: Transform.scale(
-                          scale: 0.8 + 0.2 * value,
-                          child: child,
+            // Bilerek Center DEĞİL, sola yaslı: ortalanmış olsaydı her yeni
+            // kelime eklendiğinde satırın tamamı yeniden ortalanıp
+            // kelimeler "ortadan çıkıyormuş" gibi kayardı.
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SingleChildScrollView(
+                child: Wrap(
+                  alignment: WrapAlignment.start,
+                  spacing: 14,
+                  runSpacing: 12,
+                  children: [
+                    for (int i = 0; i <= _stage1FlowIndex; i++)
+                      TweenAnimationBuilder<double>(
+                        key: ValueKey('s1-$_stage1RoundIndex-$i'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 220),
+                        builder: (context, value, child) => Opacity(
+                          opacity: value,
+                          child: Transform.scale(
+                            scale: 0.8 + 0.2 * value,
+                            child: child,
+                          ),
+                        ),
+                        child: Text(
+                          round.sequence[i],
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
                         ),
                       ),
-                      child: Text(
-                        round.sequence[i],
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -1240,34 +1251,40 @@ class _WordFlowCountingPageState extends State<WordFlowCountingPage> {
                   ).animate(animation),
                   child: FadeTransition(opacity: animation, child: child),
                 ),
-                child: Wrap(
+                // Bilerek Center DEĞİL, sola yaslı: satır uzunluğu her
+                // gösterimde değiştiği için ortalanmış Wrap satırı bazen
+                // başa bazen sona kaymış gibi tutarsız görünüyordu.
+                child: Align(
                   key: ValueKey('$_pass-$_lineIndex-$_isRunning'),
-                  alignment: WrapAlignment.center,
-                  spacing: 14,
-                  runSpacing: 10,
-                  children: _isRunning
-                      ? round.lines[_lineIndex]
-                            .map(
-                              (w) => Text(
-                                w,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    alignment: WrapAlignment.start,
+                    spacing: 14,
+                    runSpacing: 10,
+                    children: _isRunning
+                        ? round.lines[_lineIndex]
+                              .map(
+                                (w) => Text(
+                                  w,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0F172A),
+                                  ),
                                 ),
+                              )
+                              .toList()
+                        : [
+                            const Text(
+                              'BAŞLAT\'a bas',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
                               ),
-                            )
-                            .toList()
-                      : [
-                          const Text(
-                            'BAŞLAT\'a bas',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
                             ),
-                          ),
-                        ],
+                          ],
+                  ),
                 ),
               ),
             ),

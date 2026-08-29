@@ -26,18 +26,18 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
   static const List<int> _flashMsBySpeed = [1500, 1000, 600];
   static const List<int> _answerTimeMsBySpeed = [7000, 5000, 3500];
 
-  // 1. Bölüm'ün sabit 3x3 karesi — hoca 3. ve 4. Bölüm için farklı kelime
+  // 1. Bölüm'ün sabit karesi — hoca 3. ve 4. Bölüm için farklı kelime
   // setleri paylaştıkça buraya eklenecek.
   static const List<String> _words = [
-    'gülüyor',
-    'hüzün',
-    'özlem',
-    'sentez',
-    'ikilem',
-    'simge',
-    'güllü',
-    'gülümse',
-    'hicret',
+    'şiir',
+    'haber',
+    'kültür',
+    'bilim',
+    'kitap',
+    'kardeş',
+    'huzur',
+    'okul',
+    'kalem',
   ];
 
   // 2. Bölüm: aynı mekanik, kelimeler yerine sayılar.
@@ -640,20 +640,26 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
             onTap: _answered ? null : () => _answerRound(index),
             child: Container(
               alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: border, width: 2),
               ),
-              child: Text(
-                _gridWords[index],
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: fg,
+              // Sayılar (2 hane) ve kelimeler (uzunluğu değişken) aynı hücreye
+              // sığmalı — FittedBox büyük bir hedef punto ile başlayıp
+              // gerekirse otomatik küçülterek her zaman kutuya sığdırıyor.
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  _gridWords[index],
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: fg,
+                  ),
                 ),
               ),
             ),

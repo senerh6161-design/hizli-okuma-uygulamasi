@@ -33,8 +33,11 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
   static const List<int> _roundTimeMsBySpeed = [15000, 10000, 6000];
   // Hızlı ayar daha zor olduğu için doğru cevap daha çok puan kazandırıyor.
   static const List<int> _pointsBySpeed = [50, 75, 100];
-  static const int _roundCount = 5;
-  static const int _gridCellCount = 30;
+  // Eskiden 30 hücre + 5 tur vardı; 30 hücre ekrana sığmayıp kaydırma
+  // gerektiriyordu. İkiye bölündü: 15 hücre (kaydırmadan sığıyor), tur
+  // sayısı 10'a çıkarıldı — öğrenci toplamda daha fazla soru görüyor.
+  static const int _roundCount = 10;
+  static const int _gridCellCount = 15;
 
   // Not: "domates-domates" ve "fasulye-bezelye" gibi çok uzun çiftler
   // havuzdan bilerek çıkarıldı — grid hücresinde alt satıra kayıp çirkin

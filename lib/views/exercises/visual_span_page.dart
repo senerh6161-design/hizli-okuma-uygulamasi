@@ -57,7 +57,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
     '🏀',
     '🚗',
     '🎈',
-    '🌈',
+    '📏',
     '🐶',
   ];
   static const int _quizRoundCount = 5;
@@ -253,22 +253,24 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
   }
 
   // Nesneler ekranın her yerine dağılıyor ama merkez odak noktasının
-  // üstüne binmiyor, birbirlerine de çok yakın düşmüyor.
+  // üstüne binmiyor, birbirlerine de çok yakın düşmüyor. 2. Bölüm çok zor
+  // olmasın diye nesneler odak noktasından FAZLA uzağa gitmiyor (eskiden
+  // ekranın kenarlarına kadar dağılıyordu).
   List<_SpanObject> _generateSpanObjects() {
     final list = <_SpanObject>[];
     for (int i = 0; i < _spanObjectCount; i++) {
       double x = 0.5, y = 0.5;
       for (int attempt = 0; attempt < 30; attempt++) {
-        x = 0.1 + _random.nextDouble() * 0.8;
-        y = 0.12 + _random.nextDouble() * 0.76;
+        x = 0.2 + _random.nextDouble() * 0.6;
+        y = 0.22 + _random.nextDouble() * 0.56;
         final dxCenter = x - 0.5;
         final dyCenter = y - 0.5;
         final tooCloseToCenter =
-            dxCenter * dxCenter + dyCenter * dyCenter < 0.15 * 0.15;
+            dxCenter * dxCenter + dyCenter * dyCenter < 0.13 * 0.13;
         final tooCloseToOther = list.any((o) {
           final dx = o.x - x;
           final dy = o.y - y;
-          return dx * dx + dy * dy < 0.16 * 0.16;
+          return dx * dx + dy * dy < 0.13 * 0.13;
         });
         if (!tooCloseToCenter && !tooCloseToOther) break;
       }

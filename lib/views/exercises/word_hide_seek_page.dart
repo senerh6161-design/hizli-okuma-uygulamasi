@@ -63,13 +63,23 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
     ),
   ];
 
+  // Zorunlu 3 soru bitince "eğlenceliydi, devam etmek isterim" diyen
+  // öğrenciye ekstra sorular sunulacak — hoca soru verince buraya eklenecek.
+  // Şimdilik boş: buton yine de gösterilir, tıklanınca "yakında" mesajı
+  // verip normal bitişe döner.
+  static const List<_HidePuzzle> _bonusPuzzles = [];
+
   static const int _stageSeconds = 30;
 
   bool _showIntro = true;
   bool _hasCompletedOnce = false;
   bool _isPaused = false;
+  bool _extraRequested = false;
   int _index = 0;
   int _totalScore = 0;
+
+  List<_HidePuzzle> get _activePuzzles =>
+      _extraRequested ? [..._puzzles, ..._bonusPuzzles] : _puzzles;
   int _stage = 0;
   int _elapsedSeconds = 0;
   Timer? _timer;
@@ -151,7 +161,7 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
   }
 
   void _submit({bool force = false}) {
-    final puzzle = _puzzles[_index];
+    final puzzle = _activePuzzles[_index];
     final userAnswer = _normalize(_controller.text);
     final isSameAsGiven = userAnswer == _normalize(puzzle.given);
     final isCorrect = userAnswer == _normalize(puzzle.answer);
@@ -183,17 +193,72 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
 
   void _nextPuzzle() {
     if (!mounted) return;
-    if (_index < _puzzles.length - 1) {
+    if (_index < _activePuzzles.length - 1) {
       setState(() => _index++);
       _startTimerForCurrent();
+    } else if (!_extraRequested) {
+      _offerExtraPuzzles();
     } else {
       _finish();
     }
   }
 
+  // Zorunlu 3 soru bitince gösterilir: öğrenci isterse ekstra soru çözmeye
+  // devam edebilir. Bonus havuzu henüz boşsa (hoca soru eklemeden önce)
+  // "yakında" mesajı verip normal bitişe döner — buton yine de hazır durur.
+  void _offerExtraPuzzles() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('🎉 3 Soruyu Bitirdin!'),
+        content: const Text(
+          'Eğlenceli buldunsa birkaç soru daha çözebilirsin. Devam etmek ister misin?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _finish();
+            },
+            child: const Text('Bitir'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (_bonusPuzzles.isEmpty) {
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Çok yakında yeni sorular eklenecek! Şimdilik bu kadar 🎉',
+                    ),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                _finish();
+                return;
+              }
+              setState(() {
+                _extraRequested = true;
+                _index++;
+              });
+              _startTimerForCurrent();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.pink,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Devam Et'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _finish() {
     _hasCompletedOnce = true;
-    final maxScore = _puzzles.length * 100;
+    final maxScore = _activePuzzles.length * 100;
     ProgressManager.recordAttentionScore(
       (_totalScore / maxScore * 100).round(),
     );
@@ -277,6 +342,7 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
               setState(() {
                 _index = 0;
                 _totalScore = 0;
+                _extraRequested = false;
               });
               _startTimerForCurrent();
             },
@@ -404,7 +470,8 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
               Expanded(
                 child: Text(
                   '30 saniye içinde cevap veremezsen ipucu kendiliğinden gelir. Beklemek '
-                  'istemiyorsan "İPUCU AL" butonuna basıp hemen bir ipucu alabilirsin!',
+                  'istemiyorsan "İPUCU AL" butonuna basıp hemen bir ipucu alabilirsin — '
+                  'ama her ipucu 10 puan düşürür, dikkatli kullan!',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.amber.shade900,
@@ -440,7 +507,7 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
   }
 
   Widget _buildPuzzle() {
-    final puzzle = _puzzles[_index];
+    final puzzle = _activePuzzles[_index];
     final remaining =
         (_stageSeconds - (_elapsedSeconds % _stageSeconds)) % _stageSeconds;
 
@@ -457,7 +524,7 @@ class _WordHideSeekPageState extends State<WordHideSeekPage> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                'Soru ${_index + 1}/${_puzzles.length}',
+                'Soru ${_index + 1}/${_activePuzzles.length}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF2563EB),

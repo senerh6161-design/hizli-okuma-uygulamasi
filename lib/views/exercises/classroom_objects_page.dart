@@ -1,18 +1,11 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
 
-enum _Phase { zigzagIntro, zigzag, memoryIntro, memoryShow, memoryRound }
-
-class _NamedObject {
-  final String emoji;
-  final String name;
-  const _NamedObject(this.emoji, this.name);
-}
+enum _Phase { zigzagIntro, zigzag, wordBoxIntro, wordBox }
 
 // 1. Bölüm'deki zikzak okuma şeridinin sağı sivri, solu çentikli okçuk
 // (banner) şeklini çiziyor — kitaptaki dönüşümlü mavi/sarı şeritlerin
@@ -39,13 +32,29 @@ class _ChevronBannerClipper extends CustomClipper<Path> {
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
-/// Klasör 2'nin yedinci etkinliği: "Sınıf Eşyaları". İki bölüm:
-/// 1) Zikzak Okuma — kitaptaki yatay göz hareketi metnini dönüşümlü
-/// mavi/sarı şeritler halinde gösterip öğrencinin kendi hızında, içten
-/// seslendirmeden en kısa sürede okumasını istiyor (Etkinlik 2'deki Satır
-/// Akışı ile aynı olduğu için o mekanizma kaldırıldı, yerine bu geldi),
-/// 2) Dikkat ve Hafıza — 5 nesne 10 sn gösterilir, sonra her saniye biri
-/// eksilerek gösterilir, öğrenci hangisinin eksildiğini bulmaya çalışır.
+// 2. Bölüm'de kullanılan bir sayfa: eşleşen kelime/ifade kutucukları,
+// kendi amaç/yöntem yönergesiyle birlikte (kitaptaki Etkinlik 2/3'ün
+// karşılığı).
+class _WordBoxPage {
+  final String amac;
+  final String yontem;
+  final String note;
+  final List<List<String>> pairs;
+  const _WordBoxPage({
+    required this.amac,
+    required this.yontem,
+    required this.note,
+    required this.pairs,
+  });
+}
+
+/// Klasör 2'nin yedinci etkinliği: "Göz Hızı" (eskiden "Sınıf Eşyaları" —
+/// nesne temalı içerik kaldırılınca isim de güncellendi). İkisi de
+/// kitaptaki görüş açısı/göz hızı alıştırmaları — quiz yok, öğrenci kendi
+/// hızında okuyup "Bitirdim" diyor, süresi kaydediliyor:
+/// 1) Zikzak Okuma — dönüşümlü mavi/sarı şeritler halinde bir metin,
+/// 2) Kelime Kutucukları — iki sütun halinde eşleşen kelime/ifade
+/// kutucukları, iki ayrı sayfa, hedef: sayfa başına 10 saniye.
 class ClassroomObjectsPage extends StatefulWidget {
   const ClassroomObjectsPage({super.key});
 
@@ -78,18 +87,62 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     ['devam etmeliyim'],
   ];
 
-  // 2. Bölüm'de kullanılan 5 nesne.
-  static const List<_NamedObject> _memoryPool = [
-    _NamedObject('🧸', 'Oyuncak ayı'),
-    _NamedObject('🕰️', 'Duvar saati'),
-    _NamedObject('🇹🇷', 'Ay yıldız bayrak'),
-    _NamedObject('🍏', 'Yeşil elma'),
-    _NamedObject('🍋', 'Sarı limon'),
+  // 2. Bölüm: Kelime Kutucukları — kitaptaki Etkinlik 2 ve Etkinlik 3.
+  static const List<_WordBoxPage> _wordBoxPages = [
+    _WordBoxPage(
+      amac:
+          'Yatay göz hareketlerini hızlandırmak ve görüş açımızı genişletmek.',
+      yontem:
+          'Kutucuklardaki kelimelerin altına bakarak sayfayı 10 saniyede bitiriniz.',
+      note:
+          'Bu etkinliği günde üç defa yapmalısınız. Her seferinde, bir saniye '
+          'dahi olsa daha hızlı olmalısınız.',
+      pairs: [
+        ['Oku, düşün', 'Planla ve uygula'],
+        ['Değer verdiğin', 'Kadar değerlisin'],
+        ['Bugünü düşün', 'Zaman hayattır'],
+        ['İncinsenden de', 'İncitme'],
+        ['Örnek birisin', 'Aferin, harikasın'],
+        ['Sen bir kartalsın', 'Hedefin yüce'],
+        ['Hızlı oku', 'Hızlı öğren'],
+        ['Okul hayatı', 'Hayatın okulu'],
+        ['Her şeye rağmen', 'Başaracağım'],
+        ['İnsan demek', 'Dikkat demek'],
+        ['Bugünü düşün', 'Yarını planla'],
+        ['Umudunu kaybetme', 'Zafer yakındır'],
+        ['İyi ki varsın', 'Sen özelsin'],
+        ['Mutluluğun sırrı', 'Sende saklı'],
+        ['Sabret şükret', 'Sabahı bekle'],
+        ['Başarmak cesaret', 'Tembellik esaret'],
+      ],
+    ),
+    _WordBoxPage(
+      amac: 'Görüş açımızı genişleterek gözümüze ritim kazandırmak.',
+      yontem:
+          'Kutucuklardaki kelimelerin altına bakarak sayfayı 10 saniyede bitiriniz.',
+      note:
+          'Kelimeleri tek tek değil, gruplar halinde okumaya dikkat edelim lütfen!',
+      pairs: [
+        ['halı kilim', 'uzun köprü'],
+        ['orman gülü', 'komşu ülke'],
+        ['yakacak kömür', 'canlı balık'],
+        ['sevgi yolu', 'yeşil orman'],
+        ['bundan böyle', 'yol yapımı'],
+        ['bayram geldi', 'yönetim kurulu'],
+        ['bilge insan', 'tel örgü'],
+        ['çalışkan insan', 'kitap kurdu'],
+        ['terbiyeli çocuk', 'nereden nereye'],
+        ['güzel ülke', 'taze simit'],
+        ['çok ciddi', 'elden ele'],
+        ['açık alın', 'hesap devri'],
+        ['bahar geldi', 'günden güne'],
+        ['gece gündüz', 'beyaz dişler'],
+        ['karlı dağlar', 'pazar yeri'],
+        ['bilgi gücü', 'diş hekimi'],
+      ],
+    ),
   ];
 
-  static const int _memoryRoundCount = 4; // 5 nesne → 4 eksiltme adımı
-
-  final Random _random = Random();
   _Phase _phase = _Phase.zigzagIntro;
   bool _hasCompletedOnce = false;
   bool _isPaused = false;
@@ -99,19 +152,17 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
   int _zigzagElapsedSec = 0;
   bool _zigzagFinished = false;
 
-  // 2. Bölüm: Dikkat ve Hafıza.
-  List<_NamedObject> _memoryRemovalOrder = [];
-  int _memoryRoundIndex = 0;
-  int _memoryScore = 0;
-  bool _memoryShowingSet = true;
-  int? _memorySelectedIndex;
-  bool _memoryAnswered = false;
-  Timer? _memoryTimer;
+  // 2. Bölüm: Kelime Kutucukları.
+  int _wordBoxPageIndex = 0;
+  final List<int> _wordBoxTimes = [];
+  Timer? _wordBoxTimer;
+  int _wordBoxElapsedSec = 0;
+  bool _wordBoxFinished = false;
 
   @override
   void dispose() {
     _zigzagTimer?.cancel();
-    _memoryTimer?.cancel();
+    _wordBoxTimer?.cancel();
     super.dispose();
   }
 
@@ -136,62 +187,37 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     SoundManager.playCorrect();
     Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) return;
-      setState(() => _phase = _Phase.memoryIntro);
+      setState(() => _phase = _Phase.wordBoxIntro);
     });
   }
 
-  // ---------------- 2. BÖLÜM: Dikkat ve Hafıza ----------------
+  // ---------------- 2. BÖLÜM: Kelime Kutucukları ----------------
 
-  void _startMemory() {
-    _memoryRemovalOrder = [..._memoryPool]..shuffle(_random);
+  void _startWordBoxPage() {
     setState(() {
-      _phase = _Phase.memoryShow;
-      _memoryRoundIndex = 0;
-      _memoryScore = 0;
+      _phase = _Phase.wordBox;
+      _wordBoxElapsedSec = 0;
+      _wordBoxFinished = false;
     });
-    _memoryTimer = Timer(const Duration(seconds: 10), () {
+    _wordBoxTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      _startMemoryRound();
+      setState(() => _wordBoxElapsedSec++);
     });
   }
 
-  List<_NamedObject> get _memoryCurrentSet {
-    final removedSoFar = _memoryRemovalOrder.take(_memoryRoundIndex).toSet();
-    return _memoryPool.where((o) => !removedSoFar.contains(o)).toList();
-  }
-
-  void _startMemoryRound() {
-    _memoryTimer?.cancel();
-    setState(() {
-      _phase = _Phase.memoryRound;
-      _memoryShowingSet = true;
-      _memorySelectedIndex = null;
-      _memoryAnswered = false;
-    });
-    _memoryTimer = Timer(const Duration(seconds: 1), () {
+  void _finishWordBoxPage() {
+    if (_wordBoxFinished) return;
+    _wordBoxTimer?.cancel();
+    setState(() => _wordBoxFinished = true);
+    _wordBoxTimes.add(_wordBoxElapsedSec);
+    SoundManager.playCorrect();
+    Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) return;
-      setState(() => _memoryShowingSet = false);
-    });
-  }
-
-  void _answerMemory(int index) {
-    if (_memoryAnswered) return;
-    final correct = _memoryRemovalOrder[_memoryRoundIndex];
-    final selected = _memoryPool[index];
-    final isCorrect = selected == correct;
-    setState(() => _memorySelectedIndex = index);
-    if (isCorrect) {
-      SoundManager.playCorrect();
-      _memoryScore++;
-    } else {
-      SoundManager.playGentleTap();
-    }
-    setState(() => _memoryAnswered = true);
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      if (!mounted) return;
-      if (_memoryRoundIndex < _memoryRoundCount - 1) {
-        setState(() => _memoryRoundIndex++);
-        _startMemoryRound();
+      if (_wordBoxPageIndex < _wordBoxPages.length - 1) {
+        setState(() {
+          _wordBoxPageIndex++;
+          _phase = _Phase.wordBoxIntro;
+        });
       } else {
         _finishAll();
       }
@@ -200,17 +226,17 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
 
   void _finishAll() {
     _zigzagTimer?.cancel();
-    _memoryTimer?.cancel();
+    _wordBoxTimer?.cancel();
     _hasCompletedOnce = true;
 
-    final percent = ((_memoryScore / _memoryRoundCount) * 100).round();
+    const percent = 100;
     ProgressManager.recordAttentionScore(percent);
 
     SoundManager.playSuccess();
+    final wordBoxSummary = _wordBoxTimes.map((t) => '$t sn').join(' · ');
     final unlocked = ProgressManager.addCompletedExercise(
-      type: 'Sınıf Eşyaları',
-      result:
-          'Zikzak okuma: $_zigzagElapsedSec sn · Hafıza: $_memoryScore/$_memoryRoundCount',
+      type: 'Göz Hızı',
+      result: 'Zikzak: $_zigzagElapsedSec sn · Kutucuklar: $wordBoxSummary',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -224,11 +250,14 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Zikzak Okuma Süresi: $_zigzagElapsedSec sn'),
-            Text('Hafıza Sorusu: $_memoryScore / $_memoryRoundCount'),
-            const SizedBox(height: 4),
-            Text(
-              'Toplam: %$percent',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            for (int i = 0; i < _wordBoxTimes.length; i++)
+              Text(
+                'Kutucuklar · Sayfa ${i + 1} Süresi: ${_wordBoxTimes[i]} sn',
+              ),
+            const SizedBox(height: 8),
+            const Text(
+              'Tebrikler, etkinliği tamamladın!',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
@@ -283,7 +312,11 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              setState(() => _phase = _Phase.zigzagIntro);
+              setState(() {
+                _phase = _Phase.zigzagIntro;
+                _wordBoxPageIndex = 0;
+                _wordBoxTimes.clear();
+              });
             },
             child: const Text('Yeniden Başlat'),
           ),
@@ -294,7 +327,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
 
   void _pauseGame() {
     _zigzagTimer?.cancel();
-    _memoryTimer?.cancel();
+    _wordBoxTimer?.cancel();
     setState(() => _isPaused = true);
   }
 
@@ -308,16 +341,11 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
             setState(() => _zigzagElapsedSec++);
           });
         }
-      case _Phase.memoryShow:
-        _memoryTimer = Timer(const Duration(seconds: 10), () {
-          if (!mounted) return;
-          _startMemoryRound();
-        });
-      case _Phase.memoryRound:
-        if (_memoryShowingSet) {
-          _memoryTimer = Timer(const Duration(seconds: 1), () {
+      case _Phase.wordBox:
+        if (!_wordBoxFinished) {
+          _wordBoxTimer = Timer.periodic(const Duration(seconds: 1), (_) {
             if (!mounted) return;
-            setState(() => _memoryShowingSet = false);
+            setState(() => _wordBoxElapsedSec++);
           });
         }
       default:
@@ -330,7 +358,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🎒 Sınıf Eşyaları')),
+        appBar: AppBar(title: const Text('👀 Göz Hızı')),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -360,20 +388,15 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
           key: const ValueKey('zigzag-flow'),
           child: _buildZigzagFlow(),
         );
-      case _Phase.memoryIntro:
+      case _Phase.wordBoxIntro:
         return KeyedSubtree(
-          key: const ValueKey('memory-intro'),
-          child: _buildMemoryIntro(),
+          key: ValueKey('wordbox-intro-$_wordBoxPageIndex'),
+          child: _buildWordBoxIntro(),
         );
-      case _Phase.memoryShow:
+      case _Phase.wordBox:
         return KeyedSubtree(
-          key: const ValueKey('memory-show'),
-          child: _buildMemoryShow(),
-        );
-      case _Phase.memoryRound:
-        return KeyedSubtree(
-          key: ValueKey('memory-round-$_memoryRoundIndex'),
-          child: _buildMemoryRound(),
+          key: ValueKey('wordbox-flow-$_wordBoxPageIndex'),
+          child: _buildWordBoxFlow(),
         );
     }
   }
@@ -499,15 +522,15 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     );
   }
 
-  Widget _buildMemoryIntro() {
+  Widget _buildWordBoxIntro() {
+    final page = _wordBoxPages[_wordBoxPageIndex];
     return _buildIntro(
-      badge: '2. Bölüm · Dikkat ve Hafıza',
-      emoji: '🧠',
+      badge:
+          '2. Bölüm · Sayfa ${_wordBoxPageIndex + 1}/${_wordBoxPages.length}',
+      emoji: '🟩',
       instruction:
-          'Amaç: Dikkat ve odaklanmayı geliştirmek. Önce 5 eşya 10 saniye '
-          'gösterilecek. Sonra her saniye bir eşya eksilerek gösterilecek — '
-          'her seferinde hangisinin eksildiğini zihninden bulmaya çalış!',
-      onStart: _startMemory,
+          'Amaç: ${page.amac}\n\nYöntem: ${page.yontem}\n\n${page.note}',
+      onStart: _startWordBoxPage,
     );
   }
 
@@ -660,139 +683,121 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     );
   }
 
-  Widget _buildMemoryShow() {
-    return Column(
-      children: [
-        _stageHeader('2. Bölüm · İlk Gösterim (10 sn)', showPause: true),
-        Expanded(
-          child: Center(
-            child: Wrap(
-              spacing: 20,
-              runSpacing: 20,
-              alignment: WrapAlignment.center,
-              children: [for (final obj in _memoryPool) _memoryObjectTile(obj)],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _memoryObjectTile(_NamedObject obj) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(obj.emoji, style: const TextStyle(fontSize: 48)),
-        const SizedBox(height: 4),
-        Text(
-          obj.name,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMemoryRound() {
+  Widget _buildWordBoxFlow() {
+    final page = _wordBoxPages[_wordBoxPageIndex];
     return Column(
       children: [
         _stageHeader(
-          '2. Bölüm · Tur ${_memoryRoundIndex + 1}/$_memoryRoundCount',
-          showPause: _memoryShowingSet && !_memoryAnswered,
+          '2. Bölüm · Sayfa ${_wordBoxPageIndex + 1}/${_wordBoxPages.length}',
+          timerText: 'Süre: $_wordBoxElapsedSec sn',
+          showPause: true,
         ),
         const SizedBox(height: 10),
         Expanded(
-          child: Center(
-            child: _memoryShowingSet
-                ? Wrap(
-                    spacing: 20,
-                    runSpacing: 20,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      for (final obj in _memoryCurrentSet)
-                        _memoryObjectTile(obj),
-                    ],
-                  )
-                : SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Az önce hangi nesne kayboldu?',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          alignment: WrapAlignment.center,
-                          children: [
-                            for (int i = 0; i < _memoryPool.length; i++)
-                              _memoryAnswerButton(i),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _wordBoxDirectionHint(),
+                for (final pair in page.pairs) _wordBoxRow(pair),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _wordBoxFinished ? null : _finishWordBoxPage,
+            icon: Icon(
+              _wordBoxFinished
+                  ? Icons.check_circle
+                  : Icons.check_circle_outline,
+            ),
+            label: Text(
+              _wordBoxFinished
+                  ? 'Tamamlandı! ($_wordBoxElapsedSec sn)'
+                  : 'BİTİRDİM',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _color,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: _color,
+              disabledForegroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _memoryAnswerButton(int index) {
-    final obj = _memoryPool[index];
-    final correct = _memoryRemovalOrder[_memoryRoundIndex];
-    final isCorrectOption = obj == correct;
-    final isSelected = _memorySelectedIndex == index;
-    Color bg = _color.withValues(alpha: 0.08);
-    Color border = _color.withValues(alpha: 0.3);
-    Color fg = _color;
-    if (_memoryAnswered) {
-      if (isCorrectOption) {
-        bg = const Color(0xFF16A34A).withValues(alpha: 0.12);
-        border = const Color(0xFF16A34A);
-        fg = const Color(0xFF16A34A);
-      } else if (isSelected) {
-        bg = const Color(0xFFE11D48).withValues(alpha: 0.12);
-        border = const Color(0xFFE11D48);
-        fg = const Color(0xFFE11D48);
-      }
-    }
-    return SizedBox(
-      width: 130,
-      height: 76,
-      child: OutlinedButton(
-        onPressed: _memoryAnswered ? null : () => _answerMemory(index),
-        style: OutlinedButton.styleFrom(
-          backgroundColor: bg,
-          side: BorderSide(color: border, width: 2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+  // İlk satırın üstünde, okuma yönünü gösteren mavi nokta → ok → mavi nokta.
+  Widget _wordBoxDirectionHint() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          const Expanded(child: Center(child: _WordBoxDot())),
+          const Icon(
+            Icons.arrow_forward_rounded,
+            size: 18,
+            color: Color(0xFF38BDF8),
           ),
+          const Expanded(child: Center(child: _WordBoxDot())),
+        ],
+      ),
+    );
+  }
+
+  Widget _wordBoxRow(List<String> pair) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Expanded(child: _wordBoxCell(pair[0])),
+          const SizedBox(width: 10),
+          Expanded(child: _wordBoxCell(pair[1])),
+        ],
+      ),
+    );
+  }
+
+  Widget _wordBoxCell(String text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF7CB342),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+          color: Color(0xFF0F3D1E),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(obj.emoji, style: const TextStyle(fontSize: 24)),
-            const SizedBox(height: 2),
-            Text(
-              obj.name,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: fg,
-              ),
-            ),
-          ],
-        ),
+      ),
+    );
+  }
+}
+
+class _WordBoxDot extends StatelessWidget {
+  const _WordBoxDot();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: const BoxDecoration(
+        color: Color(0xFF38BDF8),
+        shape: BoxShape.circle,
       ),
     );
   }

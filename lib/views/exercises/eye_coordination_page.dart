@@ -109,6 +109,10 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
   int _currentIndex = 0;
   int _lapsCompleted = 0;
   Timer? _timer;
+  // Turlar hızlansa da öğrencinin toplamda ne kadar sürede bitirdiğini
+  // görmesi için ayrı, sabit 1 saniyelik bir sayaç.
+  int _elapsedSeconds = 0;
+  Timer? _elapsedTimer;
   bool _isRunning = false;
   bool _isPaused = false;
   bool _hasCompletedOnce = false;
@@ -122,11 +126,13 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _elapsedTimer?.cancel();
     super.dispose();
   }
 
   void _start() {
     _timer?.cancel();
+    _elapsedTimer?.cancel();
     // 3 turun her biri kendi rotasını alsın diye şablonlar karıştırılıp
     // sıraya konur (3 şablon, 3 tur — hiçbiri tekrar etmez).
     _lapRoutes = List<List<Offset>>.from(_pathTemplates)..shuffle(_random);
@@ -134,9 +140,14 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
       _isRunning = true;
       _currentIndex = 0;
       _lapsCompleted = 0;
+      _elapsedSeconds = 0;
       _points = _lapRoutes[0];
     });
     _scheduleTick();
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedSeconds++);
+    });
   }
 
   void _scheduleTick() {
@@ -163,6 +174,7 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
 
   void _finish() {
     _timer?.cancel();
+    _elapsedTimer?.cancel();
     setState(() {
       _isRunning = false;
       _lapsCompleted = _totalLaps;
@@ -171,7 +183,7 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
 
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Göz Koordinasyonu (${_theme.label})',
-      result: '$_totalLaps tur tamamlandı',
+      result: '$_totalLaps tur tamamlandı · $_elapsedSeconds sn',
     );
     if (unlocked.isNotEmpty && mounted) {
       _showAchievementSnackBar(unlocked);
@@ -180,17 +192,23 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
 
   void _stop() {
     _timer?.cancel();
+    _elapsedTimer?.cancel();
     setState(() => _isRunning = false);
   }
 
   void _pauseRun() {
     _timer?.cancel();
+    _elapsedTimer?.cancel();
     setState(() => _isPaused = true);
   }
 
   void _resumeRun() {
     setState(() => _isPaused = false);
     _scheduleTick();
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedSeconds++);
+    });
   }
 
   // Koşu SIRASINDA rota değiştirmek, egzersizi en baştan sıfırlayıp
@@ -291,6 +309,25 @@ class _EyeCoordinationPageState extends State<EyeCoordinationPage> {
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF0D9488),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade100,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '⏱ $_elapsedSeconds sn',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.amber.shade900,
                               fontSize: 12,
                             ),
                           ),
