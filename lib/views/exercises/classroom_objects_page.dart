@@ -65,6 +65,38 @@ class ClassroomObjectsPage extends StatefulWidget {
 class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
   static const Color _color = Color(0xFF65A30D);
 
+  // Öğrenci takip edebilsin diye her iki bölümde de aktif satır/kutu
+  // otomatik ilerliyor (altında zıplayan bir nokta ve hafif büyüyen bir
+  // vurguyla) — hızı öğrenci kendi seçiyor.
+  static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
+  static const List<int> _stepMsBySpeed = [1600, 1100, 700];
+  int _speedLevel = 1;
+
+  // Bir satırda/kutuda birden fazla kelime öbeği olabildiği için nokta
+  // satır satır değil, tek tek kelime öbeği bazında ilerliyor. Bu iki
+  // yardımcı, her grubun düz adım listesindeki başlangıç indeksini ve
+  // toplam adım sayısını hesaplıyor.
+  static List<int> _groupStarts(List<List<String>> groups) {
+    final starts = <int>[];
+    int cursor = 0;
+    for (final g in groups) {
+      starts.add(cursor);
+      cursor += g.length;
+    }
+    return starts;
+  }
+
+  static int _groupTotalSteps(List<List<String>> groups) =>
+      groups.fold(0, (sum, g) => sum + g.length);
+
+  static int _lineIndexForStep(List<int> starts, int step) {
+    int line = 0;
+    for (int i = 0; i < starts.length; i++) {
+      if (starts[i] <= step) line = i;
+    }
+    return line;
+  }
+
   // 1. Bölüm: Zikzak Okuma. Her satır 1 ya da 2 kısa cümle parçası
   // içeriyor; şeritler sırayla mavi/sarı dönüşüyor.
   static const Color _zigzagBlue = Color(0xFFB9E0F5);
@@ -151,38 +183,79 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
   Timer? _zigzagTimer;
   int _zigzagElapsedSec = 0;
   bool _zigzagFinished = false;
+  int _zigzagActiveStep = 0; // satır değil, kelime/kelime grubu adımı
+  Timer? _zigzagStepTimer;
 
-  // 2. Bölüm: Kelime Kutucukları.
+  // 2. Bölüm: Kelime Kutucukları. Her sayfa üst üste 3 kez tekrarlanıyor
+  // (notta söz verildiği gibi) — her denemenin süresi ayrı kaydediliyor.
   int _wordBoxPageIndex = 0;
-  final List<int> _wordBoxTimes = [];
+  static const int _wordBoxAttemptsPerPage = 3;
+  int _wordBoxAttemptIndex = 0;
+  final List<List<int>> _wordBoxAttemptTimes = List.generate(
+    _wordBoxPages.length,
+    (_) => [],
+  );
   Timer? _wordBoxTimer;
   int _wordBoxElapsedSec = 0;
   bool _wordBoxFinished = false;
+  int _wordBoxActiveStep = 0; // kutu değil, tek kelime adımı
+  Timer? _wordBoxStepTimer;
+  // Nokta ilk kutunun altında bir kere zıplayıp yönü gösterdikten sonra
+  // kayboluyor (her satırda yeniden belirmesi listeyi "kaydırıyormuş" gibi
+  // görünmesine sebep oluyordu) — ondan sonra aktif kutu bunun yerine
+  // yanıp sönerek kendini belli ediyor.
+  bool _wordBoxBlinkOn = true;
+  Timer? _wordBoxBlinkTimer;
 
   @override
   void dispose() {
     _zigzagTimer?.cancel();
+    _zigzagStepTimer?.cancel();
     _wordBoxTimer?.cancel();
+    _wordBoxStepTimer?.cancel();
+    _wordBoxBlinkTimer?.cancel();
     super.dispose();
   }
 
   // ---------------- 1. BÖLÜM: Zikzak Okuma ----------------
 
   void _startZigzag() {
+    _zigzagStepTimer?.cancel();
     setState(() {
       _phase = _Phase.zigzag;
       _zigzagElapsedSec = 0;
       _zigzagFinished = false;
+      _zigzagActiveStep = 0;
     });
     _zigzagTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _zigzagElapsedSec++);
     });
+    _scheduleZigzagStep();
+  }
+
+  // Öğrenci takip edebilsin diye altındaki nokta hızını kendisinin seçtiği
+  // hızda otomatik olarak bir sonraki kelime/kelime öbeğinin altına
+  // zıplıyor (satırda 2 öbek varsa önce soldaki, sonra sağdaki, sonra
+  // bir sonraki satır). Son adıma ulaşınca durur — öğrenci yine de
+  // kendi "BİTİRDİM"e basar.
+  void _scheduleZigzagStep() {
+    final totalSteps = _groupTotalSteps(_zigzagLines);
+    if (_zigzagActiveStep >= totalSteps - 1) return;
+    _zigzagStepTimer = Timer(
+      Duration(milliseconds: _stepMsBySpeed[_speedLevel]),
+      () {
+        if (!mounted || _phase != _Phase.zigzag) return;
+        setState(() => _zigzagActiveStep++);
+        _scheduleZigzagStep();
+      },
+    );
   }
 
   void _finishZigzag() {
     if (_zigzagFinished) return;
     _zigzagTimer?.cancel();
+    _zigzagStepTimer?.cancel();
     setState(() => _zigzagFinished = true);
     SoundManager.playCorrect();
     Future.delayed(const Duration(milliseconds: 900), () {
@@ -194,28 +267,61 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
   // ---------------- 2. BÖLÜM: Kelime Kutucukları ----------------
 
   void _startWordBoxPage() {
+    _wordBoxStepTimer?.cancel();
+    _wordBoxBlinkTimer?.cancel();
     setState(() {
       _phase = _Phase.wordBox;
       _wordBoxElapsedSec = 0;
       _wordBoxFinished = false;
+      _wordBoxActiveStep = 0;
+      _wordBoxBlinkOn = true;
     });
     _wordBoxTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _wordBoxElapsedSec++);
     });
+    _wordBoxBlinkTimer = Timer.periodic(const Duration(milliseconds: 450), (_) {
+      if (!mounted) return;
+      setState(() => _wordBoxBlinkOn = !_wordBoxBlinkOn);
+    });
+    _scheduleWordBoxStep();
+  }
+
+  // Nokta önce kutudaki soldaki kelimenin, sonra sağdaki kelimenin altına
+  // zıplıyor, ardından bir sonraki kutuya geçiyor.
+  void _scheduleWordBoxStep() {
+    final totalSteps = _wordBoxPages[_wordBoxPageIndex].pairs.length * 2;
+    if (_wordBoxActiveStep >= totalSteps - 1) return;
+    _wordBoxStepTimer = Timer(
+      Duration(milliseconds: _stepMsBySpeed[_speedLevel]),
+      () {
+        if (!mounted || _phase != _Phase.wordBox) return;
+        setState(() => _wordBoxActiveStep++);
+        _scheduleWordBoxStep();
+      },
+    );
   }
 
   void _finishWordBoxPage() {
     if (_wordBoxFinished) return;
     _wordBoxTimer?.cancel();
+    _wordBoxStepTimer?.cancel();
+    _wordBoxBlinkTimer?.cancel();
     setState(() => _wordBoxFinished = true);
-    _wordBoxTimes.add(_wordBoxElapsedSec);
+    _wordBoxAttemptTimes[_wordBoxPageIndex].add(_wordBoxElapsedSec);
     SoundManager.playCorrect();
     Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) return;
-      if (_wordBoxPageIndex < _wordBoxPages.length - 1) {
+      if (_wordBoxAttemptIndex < _wordBoxAttemptsPerPage - 1) {
+        // Bu sayfanın son denemesi değil — aynı sayfayı tekrar deneyeceğiz.
+        setState(() {
+          _wordBoxAttemptIndex++;
+          _phase = _Phase.wordBoxIntro;
+        });
+      } else if (_wordBoxPageIndex < _wordBoxPages.length - 1) {
         setState(() {
           _wordBoxPageIndex++;
+          _wordBoxAttemptIndex = 0;
           _phase = _Phase.wordBoxIntro;
         });
       } else {
@@ -226,14 +332,19 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
 
   void _finishAll() {
     _zigzagTimer?.cancel();
+    _zigzagStepTimer?.cancel();
     _wordBoxTimer?.cancel();
+    _wordBoxStepTimer?.cancel();
+    _wordBoxBlinkTimer?.cancel();
     _hasCompletedOnce = true;
 
     const percent = 100;
     ProgressManager.recordAttentionScore(percent);
 
     SoundManager.playSuccess();
-    final wordBoxSummary = _wordBoxTimes.map((t) => '$t sn').join(' · ');
+    final wordBoxSummary = _wordBoxAttemptTimes
+        .map((times) => times.map((t) => '$t sn').join(', '))
+        .join(' · ');
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Göz Hızı',
       result: 'Zikzak: $_zigzagElapsedSec sn · Kutucuklar: $wordBoxSummary',
@@ -250,9 +361,10 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Zikzak Okuma Süresi: $_zigzagElapsedSec sn'),
-            for (int i = 0; i < _wordBoxTimes.length; i++)
+            for (int i = 0; i < _wordBoxAttemptTimes.length; i++)
               Text(
-                'Kutucuklar · Sayfa ${i + 1} Süresi: ${_wordBoxTimes[i]} sn',
+                'Kutucuklar · Sayfa ${i + 1} Denemeleri: '
+                '${_wordBoxAttemptTimes[i].map((t) => "$t sn").join(", ")}',
               ),
             const SizedBox(height: 8),
             const Text(
@@ -315,7 +427,10 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
               setState(() {
                 _phase = _Phase.zigzagIntro;
                 _wordBoxPageIndex = 0;
-                _wordBoxTimes.clear();
+                _wordBoxAttemptIndex = 0;
+                for (final times in _wordBoxAttemptTimes) {
+                  times.clear();
+                }
               });
             },
             child: const Text('Yeniden Başlat'),
@@ -327,7 +442,10 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
 
   void _pauseGame() {
     _zigzagTimer?.cancel();
+    _zigzagStepTimer?.cancel();
     _wordBoxTimer?.cancel();
+    _wordBoxStepTimer?.cancel();
+    _wordBoxBlinkTimer?.cancel();
     setState(() => _isPaused = true);
   }
 
@@ -340,6 +458,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
             if (!mounted) return;
             setState(() => _zigzagElapsedSec++);
           });
+          _scheduleZigzagStep();
         }
       case _Phase.wordBox:
         if (!_wordBoxFinished) {
@@ -347,6 +466,14 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
             if (!mounted) return;
             setState(() => _wordBoxElapsedSec++);
           });
+          _wordBoxBlinkTimer = Timer.periodic(
+            const Duration(milliseconds: 450),
+            (_) {
+              if (!mounted) return;
+              setState(() => _wordBoxBlinkOn = !_wordBoxBlinkOn);
+            },
+          );
+          _scheduleWordBoxStep();
         }
       default:
         break;
@@ -406,6 +533,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     required String emoji,
     required String instruction,
     required VoidCallback onStart,
+    bool showSpeed = true,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -474,6 +602,10 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
                         ],
                       ),
                     ),
+                    if (showSpeed) ...[
+                      const SizedBox(height: 12),
+                      _speedChipRow(),
+                    ],
                   ],
                 ),
                 Padding(
@@ -517,20 +649,88 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
           'Amaç: Yatay göz hareketlerini hızlandırmak ve görüş açımızı '
           'genişletmek.\n\nYöntem: Önce soldan sağa, sonra sayfanın '
           'ortasından aşağı doğru bakarak ve içten seslendirmeden en kısa '
-          'sürede bitirmeye çalış (hedef: 5-7 saniye).',
+          'sürede bitirmeye çalış (hedef: 5-7 saniye). Altında zıplayan '
+          'noktayı takip et — hızını aşağıdan kendin ayarlayabilirsin!',
       onStart: _startZigzag,
     );
   }
 
   Widget _buildWordBoxIntro() {
     final page = _wordBoxPages[_wordBoxPageIndex];
+    final previousTimes = _wordBoxAttemptTimes[_wordBoxPageIndex];
+    final encouragement = previousTimes.isEmpty
+        ? ''
+        : '\n\nÖnceki denemelerin: '
+              '${previousTimes.map((t) => "$t sn").join(", ")} — bu sefer '
+              'daha hızlı olmaya çalışalım!';
     return _buildIntro(
       badge:
-          '2. Bölüm · Sayfa ${_wordBoxPageIndex + 1}/${_wordBoxPages.length}',
+          '2. Bölüm · Sayfa ${_wordBoxPageIndex + 1}/${_wordBoxPages.length} '
+          '· Deneme ${_wordBoxAttemptIndex + 1}/$_wordBoxAttemptsPerPage',
       emoji: '🟩',
       instruction:
-          'Amaç: ${page.amac}\n\nYöntem: ${page.yontem}\n\n${page.note}',
+          'Amaç: ${page.amac}\n\nYöntem: ${page.yontem}\n\n${page.note} '
+          'Altında zıplayan noktayı takip et — hızını aşağıdan kendin '
+          'ayarlayabilirsin!$encouragement',
       onStart: _startWordBoxPage,
+    );
+  }
+
+  // Hız değişince öğrenci sayfanın başına dönsün diye aktif adım sıfırlanıp
+  // akış yeni hızla baştan planlanıyor — farklı hızların karışması yerine
+  // her zaman tek bir tutarlı hızda tekrar baştan izleniyor.
+  void _changeSpeed(int level) {
+    if (_phase == _Phase.zigzag) {
+      _zigzagStepTimer?.cancel();
+      setState(() {
+        _speedLevel = level;
+        _zigzagActiveStep = 0;
+      });
+      _scheduleZigzagStep();
+    } else if (_phase == _Phase.wordBox) {
+      _wordBoxStepTimer?.cancel();
+      setState(() {
+        _speedLevel = level;
+        _wordBoxActiveStep = 0;
+      });
+      _scheduleWordBoxStep();
+    } else {
+      setState(() => _speedLevel = level);
+    }
+  }
+
+  Widget _speedChipRow() {
+    return Row(
+      children: [
+        Text(
+          'Hız: ',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        const SizedBox(width: 6),
+        for (int i = 0; i < _speedLabels.length; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          ChoiceChip(
+            label: Text(_speedLabels[i]),
+            selected: _speedLevel == i,
+            onSelected: (_) => _changeSpeed(i),
+            selectedColor: _color,
+            labelStyle: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: _speedLevel == i ? Colors.white : _color,
+            ),
+            backgroundColor: _color.withValues(alpha: 0.08),
+            side: BorderSide(
+              color: _color.withValues(alpha: _speedLevel == i ? 1 : 0.3),
+            ),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ],
     );
   }
 
@@ -574,22 +774,24 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
   }
 
   Widget _buildZigzagFlow() {
+    final lineStarts = _groupStarts(_zigzagLines);
+    final activeLine = _lineIndexForStep(lineStarts, _zigzagActiveStep);
     return Column(
       children: [
         _stageHeader(
-          '1. Bölüm · Zikzak Okuma',
+          '1. Bölüm · Satır ${activeLine + 1}/${_zigzagLines.length}',
           timerText: 'Süre: $_zigzagElapsedSec sn',
           showPause: true,
         ),
+        const SizedBox(height: 10),
+        _speedChipRow(),
         const SizedBox(height: 12),
         Expanded(
           child: SingleChildScrollView(
             child: Column(
               children: [
-                for (int i = 0; i < _zigzagLines.length; i++) ...[
-                  _zigzagLineBanner(i),
-                  if (i < _zigzagLines.length - 1) _zigzagArrowMarker(i),
-                ],
+                for (int i = 0; i < _zigzagLines.length; i++)
+                  _zigzagLineBlock(i, _zigzagActiveStep - lineStarts[i]),
               ],
             ),
           ),
@@ -624,10 +826,42 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     );
   }
 
-  Widget _zigzagLineBanner(int index) {
+  // offset < 0: bu satırda aktif öbek yok. Aksi halde 0 = soldaki
+  // (ya da tek) öbek, 1 = sağdaki öbek aktif demek.
+  Widget _zigzagLineBlock(int index, int offset) {
+    final phrases = _zigzagLines[index];
+    final isLineActive = offset >= 0 && offset < phrases.length;
+    return Column(
+      children: [
+        _zigzagLineBanner(index, activePhrase: isLineActive ? offset : -1),
+        const SizedBox(height: 4),
+        if (isLineActive)
+          _activeDot(
+            alignment: phrases.length == 1 ? 0.0 : (offset == 0 ? -0.6 : 0.6),
+          ),
+      ],
+    );
+  }
+
+  Widget _zigzagLineBanner(int index, {required int activePhrase}) {
     final phrases = _zigzagLines[index];
     final color = index.isEven ? _zigzagBlue : _zigzagYellow;
-    return ClipPath(
+    final isLineActive = activePhrase >= 0;
+
+    Widget phraseText(int p) {
+      final active = activePhrase == p;
+      return AnimatedDefaultTextStyle(
+        duration: const Duration(milliseconds: 200),
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: active ? 17 : 15,
+          color: active ? _color : Colors.black87,
+        ),
+        child: Text(phrases[p]),
+      );
+    }
+
+    final banner = ClipPath(
       clipper: const _ChevronBannerClipper(),
       child: Container(
         width: double.infinity,
@@ -636,48 +870,52 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 34),
         alignment: Alignment.center,
         child: phrases.length == 1
-            ? Text(
-                phrases[0],
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-              )
+            ? phraseText(0)
             : Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    phrases[0],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                  Text(
-                    phrases[1],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
+                children: [phraseText(0), phraseText(1)],
               ),
       ),
     );
+    // Aktif satır hafifçe büyür — hangi satırda olduğunu belirginleştirir.
+    return AnimatedScale(
+      scale: isLineActive ? 1.05 : 1.0,
+      duration: const Duration(milliseconds: 200),
+      child: banner,
+    );
   }
 
-  // Satır aralarındaki küçük üçgen işaretler, kitaptaki gibi göz akışının
-  // dönüşümlü olarak sola-sağa kaydığını gösteriyor.
-  Widget _zigzagArrowMarker(int index) {
+  // Altında zıplayan, öğrencinin takip etmesi gereken nokta. `alignment`
+  // -1..1 arası yatay konumu belirler: tek öbekli satırda/kutuda 0
+  // (ortada), iki öbekli satırda/kutuda soldaki için negatif, sağdaki
+  // için pozitif — nokta önce soldakinin, sonra sağdakinin altına zıplar.
+  Widget _activeDot({double alignment = 0.0}) {
+    final stepKey = _phase == _Phase.zigzag
+        ? _zigzagActiveStep
+        : _wordBoxActiveStep;
     return Align(
-      alignment: index.isEven
-          ? const Alignment(-0.5, 0)
-          : const Alignment(0.5, 0),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Text(
-          '▲',
-          style: TextStyle(fontSize: 12, color: _color.withValues(alpha: 0.7)),
+      alignment: Alignment(alignment, 0),
+      child: TweenAnimationBuilder<double>(
+        key: ValueKey(stepKey),
+        tween: Tween(begin: 0.4, end: 1.0),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        builder: (context, value, child) =>
+            Transform.scale(scale: value, child: child),
+        child: Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: _color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: _color.withValues(alpha: 0.5),
+                blurRadius: 8,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -685,20 +923,30 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
 
   Widget _buildWordBoxFlow() {
     final page = _wordBoxPages[_wordBoxPageIndex];
+    final activePair = _wordBoxActiveStep ~/ 2;
+    final activeWordInPair = _wordBoxActiveStep % 2;
     return Column(
       children: [
         _stageHeader(
-          '2. Bölüm · Sayfa ${_wordBoxPageIndex + 1}/${_wordBoxPages.length}',
+          '2. Bölüm · Sayfa ${_wordBoxPageIndex + 1}/${_wordBoxPages.length} · '
+          'Deneme ${_wordBoxAttemptIndex + 1}/$_wordBoxAttemptsPerPage · '
+          'Kutu ${activePair + 1}/${page.pairs.length}',
           timerText: 'Süre: $_wordBoxElapsedSec sn',
           showPause: true,
         ),
+        const SizedBox(height: 8),
+        _speedChipRow(),
         const SizedBox(height: 10),
         Expanded(
           child: SingleChildScrollView(
             child: Column(
               children: [
                 _wordBoxDirectionHint(),
-                for (final pair in page.pairs) _wordBoxRow(pair),
+                for (int i = 0; i < page.pairs.length; i++)
+                  _wordBoxBlock(
+                    page.pairs[i],
+                    activeWord: i == activePair ? activeWordInPair : -1,
+                  ),
               ],
             ),
           ),
@@ -753,34 +1001,62 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     );
   }
 
-  Widget _wordBoxRow(List<String> pair) {
+  // activeWord < 0: bu kutuda aktif kelime yok. Aksi halde 0 = soldaki,
+  // 1 = sağdaki kelime aktif. Nokta SADECE ilk kutuda (_wordBoxActiveStep
+  // == 0) beliriyor — yönü gösterdikten sonra kayboluyor, çünkü her
+  // satırda yeniden belirip kaybolması listeyi "kaydırıyormuş" gibi bir
+  // görünüme sebep oluyordu. Ondan sonra aktif kutu yanıp sönerek kendini
+  // belli ediyor.
+  Widget _wordBoxBlock(List<String> pair, {required int activeWord}) {
+    return Column(
+      children: [
+        _wordBoxRow(pair, activeWord: activeWord),
+        if (activeWord >= 0 && _wordBoxActiveStep == 0)
+          _activeDot(alignment: activeWord == 0 ? -0.5 : 0.5),
+      ],
+    );
+  }
+
+  Widget _wordBoxRow(List<String> pair, {required int activeWord}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
-          Expanded(child: _wordBoxCell(pair[0])),
+          Expanded(child: _wordBoxCell(pair[0], isActive: activeWord == 0)),
           const SizedBox(width: 10),
-          Expanded(child: _wordBoxCell(pair[1])),
+          Expanded(child: _wordBoxCell(pair[1], isActive: activeWord == 1)),
         ],
       ),
     );
   }
 
-  Widget _wordBoxCell(String text) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF7CB342),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 13,
-          color: Color(0xFF0F3D1E),
+  Widget _wordBoxCell(String text, {bool isActive = false}) {
+    // Aktif kutu yanıp sönerek kendini belli ediyor — nokta artık sadece
+    // ilk kutuda göründüğü için, buradan sonrasında tek gösterge bu.
+    final blinkLit = isActive && _wordBoxBlinkOn;
+    return AnimatedScale(
+      scale: isActive ? 1.06 : 1.0,
+      duration: const Duration(milliseconds: 200),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: blinkLit ? const Color(0xFFC5E8A0) : const Color(0xFFDFF3CC),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive ? _color : const Color(0xFFA9D888),
+            width: isActive ? 2 : 1,
+          ),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+            color: isActive ? _color : const Color(0xFF2E5A1C),
+          ),
         ),
       ),
     );

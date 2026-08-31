@@ -5,27 +5,31 @@ import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
 
-enum _Phase { intro, playing }
-
-class _AnagramQuestion {
-  final String scrambled;
-  final String answer; // normalize edilmiş (büyük harf, Türkçe İ/I) hali
-  final String hint1;
-  final String hint2;
-  final String hint3;
-  const _AnagramQuestion({
-    required this.scrambled,
-    required this.answer,
-    required this.hint1,
-    required this.hint2,
-    required this.hint3,
-  });
+class _HidePuzzle {
+  final String given;
+  final String answer;
+  final String hint1; // ilk/son harf
+  final String hint2; // kategori ipucu
+  final String hint3; // ilk üç harf
+  const _HidePuzzle(
+    this.given,
+    this.answer,
+    this.hint1,
+    this.hint2,
+    this.hint3,
+  );
 }
 
-/// Klasör 2'nin dokuzuncu etkinliği: "Kelimelerle Saklambaç Oynuyorum".
-/// Verilen harflerin hepsini kullanarak (ek almadan) yeni bir kelime
-/// bulmaya çalışıyor. Her 30 saniyede bir ipucu açılıyor, ne kadar erken
-/// bulursa o kadar çok puan kazanıyor (100 → 90 → 80 → 70).
+String _normalize(String s) => s
+    .trim()
+    .replaceAll(RegExp(r'\s+'), '')
+    .replaceAll('İ', 'I')
+    .replaceAll('ı', 'i')
+    .toUpperCase();
+
+/// Klasör 2'nin dokuzuncu etkinliği: "Kelimelerle Saklambaç". Klasör 1 ·
+/// Etkinlik 10 ile TAMAMEN AYNI tema/format/yönergeyi kullanır — bütünlük
+/// olsun diye — tek fark burada FARKLI bulmaca kelimeleri olması.
 class AnagramWordHuntPage extends StatefulWidget {
   const AnagramWordHuntPage({super.key});
 
@@ -34,51 +38,58 @@ class AnagramWordHuntPage extends StatefulWidget {
 }
 
 class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
-  static const Color _color = Color(0xFF475569);
-  static const int _hintIntervalSec = 30;
-  static const int _maxHints = 3;
-  static const int _timeoutSec = _hintIntervalSec * (_maxHints + 1); // 120
-
-  static const List<_AnagramQuestion> _questions = [
-    _AnagramQuestion(
-      scrambled: 'KASLI CAN',
-      answer: 'SALINCAK',
-      hint1: 'İlk harfi S, son harfi K',
-      hint2: 'Çocuk parkında bulunur.',
-      hint3: 'İlk üç harfi: Sal…',
+  static const List<_HidePuzzle> _puzzles = [
+    _HidePuzzle(
+      'KASLI CAN',
+      'SALINCAK',
+      'İlk harfi S, son harfi K',
+      'Çocuk parkında bulunur',
+      'Sal..',
     ),
-    _AnagramQuestion(
-      scrambled: 'DEVE NİL',
-      answer: 'ELDİVEN',
-      hint1: 'İlk harfi E, son harfi N',
-      hint2: 'Ellerimiz üşüyünce…',
-      hint3: 'İlk üç harfi: Eld…',
+    _HidePuzzle(
+      'DEVE NİL',
+      'ELDİVEN',
+      'İlk harfi E, son harfi N',
+      'Ellerimiz üşüyünce takarız',
+      'Eld..',
     ),
-    _AnagramQuestion(
-      scrambled: 'YASTIK ERİ',
-      answer: 'KIRTASİYE',
-      hint1: 'İlk harfi K, son harfi E',
-      hint2: 'Okul ihtiyaçlarımızı alırız.',
-      hint3: 'İlk üç harfi: Kır…',
+    _HidePuzzle(
+      'YASTIK ERİ',
+      'KIRTASİYE',
+      'İlk harfi K, son harfi E',
+      'Okul ihtiyaçlarımızı alırız',
+      'Kır..',
     ),
   ];
 
-  _Phase _phase = _Phase.intro;
+  // Zorunlu 3 soru bitince "eğlenceliydi, devam etmek isterim" diyen
+  // öğrenciye ekstra sorular sunulacak — hoca soru verince buraya eklenecek.
+  // Şimdilik boş: buton yine de gösterilir, tıklanınca "yakında" mesajı
+  // verip normal bitişe döner.
+  static const List<_HidePuzzle> _bonusPuzzles = [];
+
+  static const int _stageSeconds = 30;
+
+  bool _showIntro = true;
   bool _hasCompletedOnce = false;
   bool _isPaused = false;
-
-  int _roundIndex = 0;
+  bool _extraRequested = false;
+  int _index = 0;
   int _totalScore = 0;
-  int _elapsedSec = 0;
+
+  List<_HidePuzzle> get _activePuzzles =>
+      _extraRequested ? [..._puzzles, ..._bonusPuzzles] : _puzzles;
+  int _stage = 0;
+  int _elapsedSeconds = 0;
   Timer? _timer;
   final TextEditingController _controller = TextEditingController();
-  bool _answered = false;
-  int _lastPoints = 0;
-  bool _timedOut = false;
   String? _feedback;
-  // Öğrenci "İPUCU AL" butonuna basmadıkça ipucu ekranda görünmüyor —
-  // sadece süresi geldiğinde buton aktif oluyor.
-  int _hintsRequested = 0;
+  bool _isWrongFlash = false;
+
+  void _startPuzzles() {
+    setState(() => _showIntro = false);
+    _startTimerForCurrent();
+  }
 
   @override
   void dispose() {
@@ -87,58 +98,31 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
     super.dispose();
   }
 
-  _AnagramQuestion get _question => _questions[_roundIndex];
-
-  String _normalize(String s) {
-    return s
-        .trim()
-        .replaceAll('i', 'İ')
-        .replaceAll('ı', 'I')
-        .toUpperCase()
-        .replaceAll(RegExp(r'\s+'), '');
-  }
-
-  // Süreye göre KAÇ ipucu artık alınabilir durumda (kilidi açılmış) —
-  // ekranda görünmesi için öğrencinin yine de butona basması gerekiyor.
-  int get _hintsUnlocked =>
-      (_elapsedSec ~/ _hintIntervalSec).clamp(0, _maxHints);
-
-  void _requestHint() {
-    if (_hintsRequested >= _hintsUnlocked) return;
-    setState(() => _hintsRequested++);
-  }
-
-  int _pointsForElapsed(int sec) {
-    if (sec < 30) return 100;
-    if (sec < 60) return 90;
-    if (sec < 90) return 80;
-    return 70;
-  }
-
-  void _startGame() {
-    setState(() {
-      _phase = _Phase.playing;
-      _roundIndex = 0;
-      _totalScore = 0;
-    });
-    _startRound();
-  }
-
-  void _startRound() {
+  void _startTimerForCurrent() {
     _timer?.cancel();
-    setState(() {
-      _elapsedSec = 0;
-      _answered = false;
-      _timedOut = false;
-      _feedback = null;
-      _lastPoints = 0;
-      _hintsRequested = 0;
-      _controller.clear();
-    });
+    _stage = 0;
+    _elapsedSeconds = 0;
+    _feedback = null;
+    _controller.clear();
+    _startTicking();
+  }
+
+  void _startTicking() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      setState(() => _elapsedSec++);
-      if (_elapsedSec >= _timeoutSec) _timeoutRound();
+      setState(() {
+        _elapsedSeconds++;
+        if (_elapsedSeconds >= _stageSeconds * 3 && _stage < 3) {
+          _stage = 3;
+        } else if (_elapsedSeconds >= _stageSeconds * 2 && _stage < 2) {
+          _stage = 2;
+        } else if (_elapsedSeconds >= _stageSeconds && _stage < 1) {
+          _stage = 1;
+        }
+        if (_elapsedSeconds >= _stageSeconds * 4) {
+          _submit(force: true);
+        }
+      });
     });
   }
 
@@ -149,66 +133,139 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
 
   void _resumeGame() {
     setState(() => _isPaused = false);
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() => _elapsedSec++);
-      if (_elapsedSec >= _timeoutSec) _timeoutRound();
-    });
+    _startTicking();
   }
 
-  void _submit() {
-    if (_answered) return;
-    final input = _normalize(_controller.text);
-    if (input.isEmpty) return;
-    if (input == _question.answer) {
-      _timer?.cancel();
-      final points = _pointsForElapsed(_elapsedSec);
-      _totalScore += points;
+  // Öğrenci beklemeden manuel ipucu isteyebilsin diye — otomatik 30 sn'lik
+  // ipucu zamanlayıcısıyla çakışmaz, çünkü zamanlayıcı sadece _stage GERİDE
+  // kaldıysa ileri alır (_stage < X kontrolü), az önce elle ilerletilmiş bir
+  // aşamayı asla geri almaz.
+  void _requestHint() {
+    if (_stage >= 3) return;
+    SoundManager.playGentleTap();
+    setState(() => _stage++);
+  }
+
+  int get _currentPointValue {
+    switch (_stage) {
+      case 0:
+        return 100;
+      case 1:
+        return 90;
+      case 2:
+        return 80;
+      default:
+        return 70;
+    }
+  }
+
+  void _submit({bool force = false}) {
+    final puzzle = _activePuzzles[_index];
+    final userAnswer = _normalize(_controller.text);
+    final isSameAsGiven = userAnswer == _normalize(puzzle.given);
+    final isCorrect = userAnswer == _normalize(puzzle.answer);
+
+    if (isCorrect) {
       SoundManager.playCorrect();
-      setState(() {
-        _answered = true;
-        _lastPoints = points;
-      });
-      Future.delayed(const Duration(milliseconds: 1600), _nextRoundOrFinish);
+      _timer?.cancel();
+      _totalScore += _currentPointValue;
+      setState(() => _feedback = '✅ Doğru! +$_currentPointValue puan');
+      Future.delayed(const Duration(milliseconds: 900), _nextPuzzle);
+    } else if (force) {
+      SoundManager.playGentleTap();
+      _timer?.cancel();
+      setState(() => _feedback = '⏱️ Süre doldu. Cevap: ${puzzle.answer}');
+      Future.delayed(const Duration(milliseconds: 1400), _nextPuzzle);
     } else {
       SoundManager.playGentleTap();
-      setState(() => _feedback = 'Yanlış, tekrar dene!');
+      setState(() {
+        _isWrongFlash = true;
+        _feedback = isSameAsGiven
+            ? '✍️ Yeni bir kelime bulmalısın, aynısını yazma!'
+            : null;
+      });
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) setState(() => _isWrongFlash = false);
+      });
     }
   }
 
-  void _timeoutRound() {
-    _timer?.cancel();
-    SoundManager.playGentleTap();
-    setState(() {
-      _answered = true;
-      _timedOut = true;
-      _lastPoints = 0;
-    });
-    Future.delayed(const Duration(milliseconds: 2200), _nextRoundOrFinish);
-  }
-
-  void _nextRoundOrFinish() {
+  void _nextPuzzle() {
     if (!mounted) return;
-    if (_roundIndex < _questions.length - 1) {
-      setState(() => _roundIndex++);
-      _startRound();
+    if (_index < _activePuzzles.length - 1) {
+      setState(() => _index++);
+      _startTimerForCurrent();
+    } else if (!_extraRequested) {
+      _offerExtraPuzzles();
     } else {
-      _finishAll();
+      _finish();
     }
   }
 
-  void _finishAll() {
-    _timer?.cancel();
-    _hasCompletedOnce = true;
+  // Zorunlu 3 soru bitince gösterilir: öğrenci isterse ekstra soru çözmeye
+  // devam edebilir. Bonus havuzu henüz boşsa (hoca soru eklemeden önce)
+  // "yakında" mesajı verip normal bitişe döner — buton yine de hazır durur.
+  void _offerExtraPuzzles() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('🎉 3 Soruyu Bitirdin!'),
+        content: const Text(
+          'Eğlenceli buldunsa birkaç soru daha çözebilirsin. Devam etmek ister misin?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _finish();
+            },
+            child: const Text('Bitir'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (_bonusPuzzles.isEmpty) {
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Çok yakında yeni sorular eklenecek! Şimdilik bu kadar 🎉',
+                    ),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                _finish();
+                return;
+              }
+              setState(() {
+                _extraRequested = true;
+                _index++;
+              });
+              _startTimerForCurrent();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.pink,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Devam Et'),
+          ),
+        ],
+      ),
+    );
+  }
 
-    final maxScore = _questions.length * 100;
-    final percent = ((_totalScore / maxScore) * 100).round();
-    ProgressManager.recordAttentionScore(percent);
+  void _finish() {
+    _hasCompletedOnce = true;
+    final maxScore = _activePuzzles.length * 100;
+    ProgressManager.recordAttentionScore(
+      (_totalScore / maxScore * 100).round(),
+    );
 
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
-      type: 'Kelimelerle Saklambaç Oynuyorum',
-      result: '$_totalScore puan (%$percent)',
+      type: 'Kelimelerle Saklambaç',
+      result: '$_totalScore/$maxScore puan',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -216,14 +273,14 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
-        title: const Text('🎉 Etkinlik Tamamlandı!'),
+        title: const Text('🎉 Saklambaç Bitti!'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Toplam puan: $_totalScore / $maxScore (%$percent)',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              'Toplam Puan: $_totalScore / $maxScore',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
@@ -270,17 +327,25 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context, true);
+              Navigator.pop(context); // dialogu kapat
+              Navigator.pop(
+                context,
+                true,
+              ); // Klasör 2'ye dön, tamamlandı olarak işaretle
             },
             child: const Text('Bitir'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              setState(() => _phase = _Phase.intro);
+              setState(() {
+                _index = 0;
+                _totalScore = 0;
+                _extraRequested = false;
+              });
+              _startTimerForCurrent();
             },
-            child: const Text('Yeniden Başlat'),
+            child: const Text('Tekrar Dene'),
           ),
         ],
       ),
@@ -292,19 +357,14 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🙈 Kelimelerle Saklambaç Oynuyorum')),
+        appBar: AppBar(title: const Text('🙈 Kelimelerle Saklambaç')),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
             children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: _phase == _Phase.intro
-                    ? _buildIntro()
-                    : _buildRound(key: ValueKey('round-$_roundIndex')),
-              ),
+              _showIntro ? _buildIntro() : _buildPuzzle(),
               if (_isPaused)
-                buildPauseOverlay(color: _color, onResume: _resumeGame),
+                buildPauseOverlay(color: Colors.pink, onResume: _resumeGame),
             ],
           ),
         ),
@@ -313,14 +373,165 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
   }
 
   Widget _buildIntro() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Nasıl Oynanır?',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Sana verilen harflerin TÜMÜNÜ kullanarak YENİ bir kelime bulacaksın. '
+          'Bulduğun kelime, verilen kelimenin aynısı olamaz ve ek almamış olmalı.',
+          style: TextStyle(
+            color: Colors.grey.shade700,
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.amber.shade50,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'ÖRNEK',
+            style: TextStyle(
+              color: Colors.amber.shade900,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            decoration: BoxDecoration(
+              color: Colors.pink.shade50,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.pink, width: 2),
+            ),
+            child: const Text(
+              'KALEM',
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.arrow_downward, color: Colors.green.shade600),
+              const SizedBox(width: 8),
+              Text(
+                'EMLAK',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green.shade700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'KALEM\'in harfleri (K, A, L, E, M) kullanılarak EMLAK kelimesi bulunmuş — '
+          'aynı harfler, yeni bir kelime!',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontSize: 12,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.amber.shade50,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.lightbulb_outline_rounded,
+                color: Colors.amber.shade800,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '30 saniye içinde cevap veremezsen ipucu kendiliğinden gelir. Beklemek '
+                  'istemiyorsan "İPUCU AL" butonuna basıp hemen bir ipucu alabilirsin — '
+                  'ama her ipucu 10 puan düşürür, dikkatli kullan!',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.amber.shade900,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Spacer(),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _startPuzzles,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text(
+              'ANLADIM, BAŞLA',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.pink,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPuzzle() {
+    final puzzle = _activePuzzles[_index];
+    final remaining =
+        (_stageSeconds - (_elapsedSeconds % _stageSeconds)) % _stageSeconds;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Soru ${_index + 1}/${_activePuzzles.length}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
+                ),
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -328,323 +539,158 @@ class _AnagramWordHuntPageState extends State<AnagramWordHuntPage> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _color.withValues(alpha: 0.1),
+                    color: Colors.amber.shade100,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
-                    'Etkinlik 9 · Kelimelerle Saklambaç Oynuyorum',
+                  child: Text(
+                    'Şu an: $_currentPointValue puan',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: _color,
+                      color: Colors.amber.shade900,
                     ),
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Center(
-                      child: Text('🙈', style: TextStyle(fontSize: 64)),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _color.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline_rounded,
-                                color: _color,
-                                size: 20,
-                              ),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Sana verilen tüm harfleri kullanarak yeni bir kelime bul! '
-                                  'Bulduğun kelime ek almamış olmalı. İlk 30 saniyede ipucu '
-                                  'yok — 100 puan! Cevap gelmezse 30 saniyede bir yeni bir '
-                                  'ipucu açılır (en fazla 3 tane), her ipucundan sonra puan '
-                                  'biraz azalır (90 → 80 → 70). İpucu açık olduğunda "İPUCU '
-                                  'AL" butonuna basarak görebilirsin — sıradaki ipucuya 10 '
-                                  'saniyeden az kalınca geri sayım da gösterilir.',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: _color,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Örnek: KALEM = EMLAK',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: _color,
-                              fontWeight: FontWeight.bold,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      onPressed: _startGame,
-                      icon: const Icon(Icons.play_arrow),
-                      label: const Text(
-                        'BAŞLA',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _color,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                buildPauseButton(color: Colors.pink, onPressed: _pauseGame),
               ],
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  // İpucu butonu HER ZAMAN görünür (bulunması kolay olsun diye): kilidi
-  // açılmış ama henüz istenmemiş bir ipucu varsa aktif "İPUCU AL" olarak
-  // görünür; kilidi henüz açılmadıysa gri/pasif halde kalan süreyi
-  // gösterir; tüm ipuçları alındıysa gizlenir.
-  Widget _hintButton() {
-    if (_hintsRequested >= _maxHints) return const SizedBox(height: 36);
-    final pending = _hintsUnlocked > _hintsRequested;
-    if (pending) {
-      return SizedBox(
-        height: 36,
-        child: OutlinedButton.icon(
-          onPressed: _requestHint,
-          icon: const Icon(Icons.lightbulb_outline, size: 16),
-          label: const Text(
-            'İPUCU AL',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.amber.shade800,
-            side: BorderSide(color: Colors.amber.shade400),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Verilen tüm harfleri kullanarak YENİ bir kelime bul. Bulduğun kelime ek almamış olmalı.',
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            decoration: BoxDecoration(
+              color: Colors.pink.shade50,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: _isWrongFlash ? Colors.red : Colors.pink,
+                width: 2,
+              ),
+            ),
+            child: Text(
+              puzzle.given,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
           ),
         ),
-      );
-    }
-    final nextThreshold = (_hintsUnlocked + 1) * _hintIntervalSec;
-    final remaining = (nextThreshold - _elapsedSec).clamp(0, _hintIntervalSec);
-    return SizedBox(
-      height: 36,
-      child: OutlinedButton.icon(
-        onPressed: null,
-        icon: const Icon(Icons.lock_clock_outlined, size: 16),
-        label: Text(
-          'İPUCU ($remaining sn)',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-        ),
-        style: OutlinedButton.styleFrom(
-          disabledForegroundColor: Colors.grey.shade500,
-          side: BorderSide(color: Colors.grey.shade300),
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRound({required Key key}) {
-    final q = _question;
-    return KeyedSubtree(
-      key: key,
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
+        const SizedBox(height: 20),
+        if (_stage >= 1) _hintChip('💡 İpucu 1: ${puzzle.hint1}'),
+        if (_stage >= 2) _hintChip('💡 İpucu 2: ${puzzle.hint2}'),
+        if (_stage >= 3) _hintChip('💡 İpucu 3: İlk üç harf "${puzzle.hint3}"'),
+        if (_stage < 3)
+          Center(
+            child: OutlinedButton.icon(
+              onPressed: _requestHint,
+              icon: const Icon(Icons.lightbulb_outline_rounded),
+              label: const Text(
+                'İPUCU AL',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.amber.shade800,
+                side: BorderSide(color: Colors.amber.shade400),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  vertical: 10,
+                  horizontal: 18,
                 ),
-                decoration: BoxDecoration(
-                  color: _color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Soru ${_roundIndex + 1}/${_questions.length}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Puan: $_totalScore',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: _color,
-                    ),
-                  ),
-                  if (!_answered)
-                    buildPauseButton(color: _color, onPressed: _pauseGame),
-                ],
-              ),
-            ],
-          ),
-          Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (int i = 0; i < _hintsRequested; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.shade50,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.amber.shade200),
-                          ),
-                          child: Text(
-                            '💡 ${[q.hint1, q.hint2, q.hint3][i]}',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.amber.shade900,
-                            ),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 12),
-                    if (!_answered) _hintButton(),
-                    const SizedBox(height: 12),
-                    Text(
-                      q.scrambled,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: 260,
-                      child: TextField(
-                        controller: _controller,
-                        enabled: !_answered,
-                        textAlign: TextAlign.center,
-                        textCapitalization: TextCapitalization.characters,
-                        onSubmitted: (_) => _submit(),
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Cevabını yaz…',
-                          filled: true,
-                          fillColor: _color.withValues(alpha: 0.06),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: _color.withValues(alpha: 0.3),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (!_answered)
-                      SizedBox(
-                        width: 260,
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed: _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _color,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: const Text(
-                            'GÖNDER',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    if (_feedback != null && !_answered)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: Text(
-                          _feedback!,
-                          style: const TextStyle(
-                            color: Color(0xFFE11D48),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    if (_answered)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: Text(
-                          _timedOut
-                              ? '⏰ Süre doldu! Doğrusu: ${q.answer}'
-                              : '✅ Doğru! +$_lastPoints puan',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: _timedOut
-                                ? const Color(0xFFE11D48)
-                                : const Color(0xFF16A34A),
-                          ),
-                        ),
-                      ),
-                  ],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
           ),
-        ],
+        const Spacer(),
+        if (_feedback != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              _feedback!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.pink,
+              ),
+            ),
+          ),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  hintText: 'Yeni kelimeni yaz...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+                onSubmitted: (_) => _submit(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: () => _submit(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.pink,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 18,
+                  horizontal: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Icon(Icons.check),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: (remaining <= 10 && _stage < 3)
+              ? Text(
+                  'Sonraki ipucuna: $remaining sn',
+                  style: TextStyle(
+                    color: Colors.red.shade400,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              : const SizedBox(height: 16),
+        ),
+      ],
+    );
+  }
+
+  Widget _hintChip(String text) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.shade300),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.amber.shade900,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

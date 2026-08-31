@@ -77,16 +77,23 @@ class _WordSpanPageState extends State<WordSpanPage> {
   List<_SpanWord> _scatterWords = [];
   Timer? _scatterTimer;
 
-  // 3. Bölüm: Quiz — aynı dağınık gösterim + "kaç kere gördün?" sorusu.
+  // 3. Bölüm: Quiz — önce hangi kelimeyi sayacağı duyurulur, sonra kelimeler
+  // 10 AYRI gösterimde (flash) arka arkaya, her seferinde yeniden rastgele
+  // yerleşerek belirir (hedef kelime bazı gösterimlerde hiç çıkmayabilir) —
+  // öğrenci hedefi TÜM gösterimler boyunca toplam kaç kez gördüğünü
+  // sayıp en sonda cevaplıyor.
   int _quizRoundIndex = 0;
   int _quizScore = 0;
   List<_SpanWord> _quizWords = [];
-  Map<String, int> _quizCounts = {};
   String _quizAskedWord = _words.first;
   List<int> _quizOptions = const [];
   int? _quizSelected;
   bool _quizAnnouncing = true;
   bool _quizShowingWords = true;
+  static const int _quizFlashCount = 10;
+  static const int _quizFlashGapMs = 300;
+  int _quizFlashIndex = 0;
+  int _quizTotalCount = 0;
   Timer? _quizFlashTimer;
   static const int _quizAnnounceMs = 1400;
 
@@ -283,51 +290,78 @@ class _WordSpanPageState extends State<WordSpanPage> {
 
   void _startQuizRound() {
     _quizFlashTimer?.cancel();
-    final words = _generateSpanWords();
-    final counts = <String, int>{};
-    for (final w in words) {
-      counts[w.word] = (counts[w.word] ?? 0) + 1;
-    }
     final asked = _words[_random.nextInt(_words.length)];
-    final correctCount = counts[asked] ?? 0;
-    // Doğru sayı 0'a veya _spanWordCount'a çok yakınsa rastgele deneme
-    // sonsuz döngüye girebiliyordu (4 farklı sayı asla bulunamıyordu) —
-    // bu yüzden olası tüm değerlerden karışık örnekleme yapılıyor.
-    final otherValues = [
-      for (int i = 0; i <= _spanWordCount; i++)
-        if (i != correctCount) i,
-    ]..shuffle(_random);
-    final options = [correctCount, ...otherValues.take(3)]..shuffle(_random);
-
     setState(() {
-      _quizWords = words;
-      _quizCounts = counts;
       _quizAskedWord = asked;
-      _quizOptions = options;
+      _quizWords = [];
+      _quizOptions = const [];
       _quizSelected = null;
       _quizAnnouncing = true;
       _quizShowingWords = false;
+      _quizFlashIndex = 0;
+      _quizTotalCount = 0;
     });
 
     _quizFlashTimer = Timer(const Duration(milliseconds: _quizAnnounceMs), () {
       if (!mounted) return;
+      setState(() => _quizAnnouncing = false);
+      _runQuizFlash();
+    });
+  }
+
+  // 10 gösterimin her biri: kelimeler yeniden rastgele yerleştirilir, hedef
+  // kelimenin bu gösterimdeki sayısı toplam sayaca eklenir.
+  void _runQuizFlash() {
+    if (_quizFlashIndex >= _quizFlashCount) {
+      _showQuizQuestion();
+      return;
+    }
+    final words = _generateSpanWords();
+    final countInFlash = words.where((w) => w.word == _quizAskedWord).length;
+    setState(() {
+      _quizWords = words;
+      _quizShowingWords = true;
+      _quizTotalCount += countInFlash;
+    });
+    _quizFlashTimer = Timer(
+      Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+      () {
+        if (!mounted) return;
+        setState(() => _quizShowingWords = false);
+        _advanceQuizFlash();
+      },
+    );
+  }
+
+  void _advanceQuizFlash() {
+    _quizFlashTimer = Timer(const Duration(milliseconds: _quizFlashGapMs), () {
+      if (!mounted) return;
       setState(() {
-        _quizAnnouncing = false;
-        _quizShowingWords = true;
+        _quizWords = [];
+        _quizFlashIndex++;
       });
-      _quizFlashTimer = Timer(
-        Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
-        () {
-          if (!mounted) return;
-          setState(() => _quizShowingWords = false);
-        },
-      );
+      _runQuizFlash();
+    });
+  }
+
+  void _showQuizQuestion() {
+    final correctCount = _quizTotalCount;
+    // Doğru sayı 0'a çok yakınsa rastgele deneme sonsuz döngüye
+    // girebiliyordu — bu yüzden olası tüm değerlerden karışık örnekleme
+    // yapılıyor.
+    const maxOption = 15;
+    final otherValues = [
+      for (int i = 0; i <= maxOption; i++)
+        if (i != correctCount) i,
+    ]..shuffle(_random);
+    setState(() {
+      _quizOptions = [correctCount, ...otherValues.take(3)]..shuffle(_random);
     });
   }
 
   void _answerQuiz(int selected) {
     if (_quizSelected != null) return;
-    final correctCount = _quizCounts[_quizAskedWord] ?? 0;
+    final correctCount = _quizTotalCount;
     final isCorrect = selected == correctCount;
     setState(() => _quizSelected = selected);
     if (isCorrect) {
@@ -464,32 +498,34 @@ class _WordSpanPageState extends State<WordSpanPage> {
             const Duration(milliseconds: _quizAnnounceMs),
             () {
               if (!mounted) return;
-              setState(() {
-                _quizAnnouncing = false;
-                _quizShowingWords = true;
-              });
-              _quizFlashTimer = Timer(
-                Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
-                () {
-                  if (!mounted) return;
-                  setState(() => _quizShowingWords = false);
-                },
-              );
+              setState(() => _quizAnnouncing = false);
+              _runQuizFlash();
             },
           );
-        } else if (_quizShowingWords) {
-          _quizFlashTimer = Timer(
-            Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
-            () {
-              if (!mounted) return;
-              setState(() => _quizShowingWords = false);
-            },
-          );
+        } else if (_quizFlashIndex < _quizFlashCount) {
+          if (_quizShowingWords) {
+            _quizFlashTimer = Timer(
+              Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+              () {
+                if (!mounted) return;
+                setState(() => _quizShowingWords = false);
+                _advanceQuizFlash();
+              },
+            );
+          } else {
+            _advanceQuizFlash();
+          }
         }
       default:
         break;
     }
   }
+
+  // 1. Bölüm'de satırdaki son kelime dar (dikey) ekranlarda kesiliyordu —
+  // bu bölümde artık yatay çevirmesi zorunlu, "telefonunu çevir" ekranı
+  // gösterilir ta ki öğrenci fiziksel olarak çevirene kadar.
+  bool get _needsLandscape =>
+      _phase == _Phase.streamIntro || _phase == _Phase.stream;
 
   @override
   Widget build(BuildContext context) {
@@ -499,17 +535,53 @@ class _WordSpanPageState extends State<WordSpanPage> {
         appBar: AppBar(title: const Text('📝 Görsel Genişlik · Kelime')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: Stack(
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: _buildBody(),
-              ),
-              if (_isPaused)
-                buildPauseOverlay(color: _color, onResume: _resumeGame),
-            ],
+          child: OrientationBuilder(
+            builder: (context, orientation) {
+              if (_needsLandscape && orientation == Orientation.portrait) {
+                return _buildRotatePrompt();
+              }
+              return Stack(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: _buildBody(),
+                  ),
+                  if (_isPaused)
+                    buildPauseOverlay(color: _color, onResume: _resumeGame),
+                ],
+              );
+            },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRotatePrompt() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 900),
+            builder: (context, t, child) {
+              return Transform.rotate(angle: t * 1.5708, child: child);
+            },
+            child: Icon(Icons.screen_rotation_rounded, size: 88, color: _color),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Telefonunu yan çevir',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Bu bölüm yatay ekranda daha rahat oynanır.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+          ),
+        ],
       ),
     );
   }
@@ -684,9 +756,11 @@ class _WordSpanPageState extends State<WordSpanPage> {
       badge: '3. Bölüm · Ne Kadar Gördün?',
       emoji: '❓',
       instruction:
-          'Aynı şekilde ortadaki noktaya bak. Kelimeler kısaca görünecek, sonra '
-          'kaybolup sana bir kelimeyi kaç kere gördüğünü soracağız — doğru '
-          'cevap puan kazandırır!',
+          'Ortadaki noktaya odaklanalım. Kelimeler ekranın her yerinde '
+          'dağınık olarak görünecek, arka arkaya 10 kez gösterilecek — '
+          'hedef kelime bazen olacak bazen olmayacak. Toplamda kaç kez '
+          'çıktığını bulabilir misin? Amaç: gözümüzün çevresel bakışını '
+          'geliştirmek!',
       onStart: _startQuiz,
     );
   }
@@ -950,13 +1024,17 @@ class _WordSpanPageState extends State<WordSpanPage> {
   }
 
   Widget _buildQuizFlow() {
+    final flashesRunning =
+        !_quizAnnouncing && _quizFlashIndex < _quizFlashCount;
+    final badge =
+        '3. Bölüm · Soru ${_quizRoundIndex + 1}/$_quizRoundCount'
+        '${flashesRunning ? ' · Gösterim ${_quizFlashIndex + 1}/$_quizFlashCount' : ''}';
     return Column(
       children: [
         _stageHeader(
-          '3. Bölüm · Soru ${_quizRoundIndex + 1}/$_quizRoundCount',
+          badge,
           showTimer: false,
-          showPause:
-              !_quizAnnouncing && _quizShowingWords && _quizSelected == null,
+          showPause: flashesRunning && _quizSelected == null,
         ),
         const SizedBox(height: 10),
         _speedChipRow(),
@@ -971,7 +1049,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
             ),
             child: _quizAnnouncing
                 ? _buildQuizAnnounce()
-                : (_quizShowingWords
+                : (flashesRunning
                       ? Stack(
                           children: [
                             _centerFocusDot(),
@@ -1015,7 +1093,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
   }
 
   Widget _buildQuizQuestion() {
-    final correctCount = _quizCounts[_quizAskedWord] ?? 0;
+    final correctCount = _quizTotalCount;
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -1031,7 +1109,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'kelimesini kaç kere gördün?',
+            'kelimesini toplamda kaç kere gördün?',
             textAlign: TextAlign.center,
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),

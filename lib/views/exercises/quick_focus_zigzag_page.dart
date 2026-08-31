@@ -35,7 +35,9 @@ class QuickFocusZigzagPage extends StatefulWidget {
 }
 
 class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
-  static const int _stageDurationSec = 60;
+  // Öğrenci bir aşamayı bitirmeden diğerine geçemesin diye SONRAKİ BÖLÜM
+  // (skip) butonu kaldırıldı — her aşama tam 30 saniye sürüyor.
+  static const int _stageDurationSec = 30;
 
   // Hızı öğrenci kendi seçer — her 3 bölüm de bu ortak seviyeden besleniyor,
   // değişiklik bir sonraki tetiklemede devreye girer.
@@ -901,28 +903,6 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
     );
   }
 
-  Widget _skipButton(Color color, VoidCallback onSkip) {
-    return SizedBox(
-      width: double.infinity,
-      height: 44,
-      child: OutlinedButton.icon(
-        onPressed: onSkip,
-        icon: const Icon(Icons.skip_next_rounded),
-        label: const Text(
-          'SONRAKİ BÖLÜM',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: color,
-          side: BorderSide(color: color),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildReactionFlow() {
     const color = Color(0xFF2563EB);
     final stageCount = _flashStagePoints.length;
@@ -1013,8 +993,6 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        _skipButton(color, _finishFlashSequence),
       ],
     );
   }
@@ -1221,8 +1199,6 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        _skipButton(color, _finishZigzagRound),
       ],
     );
   }
@@ -1415,8 +1391,6 @@ class _QuickFocusZigzagPageState extends State<QuickFocusZigzagPage> {
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        _skipButton(color, _finishCrossZigzagRound),
       ],
     );
   }

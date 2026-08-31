@@ -22,6 +22,10 @@ class WordRecallGridPage extends StatefulWidget {
 class _WordRecallGridPageState extends State<WordRecallGridPage> {
   static const Color _color = Color(0xFFDC2626);
   static const int _roundCount = 20;
+  // Bölüm 2 (sayılar) 20 turu ikiye bölünüyor: ilk 10 tur 1-9 arası,
+  // sonraki 10 tur 11-19 arası — her ikisi de tam 9 sayı, 3x3 kareye
+  // birebir oturuyor.
+  static const int _numberSwitchRound = 10;
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
   static const List<int> _flashMsBySpeed = [1500, 1000, 600];
   static const List<int> _answerTimeMsBySpeed = [7000, 5000, 3500];
@@ -40,27 +44,25 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
     'kalem',
   ];
 
-  // 2. Bölüm: aynı mekanik, kelimeler yerine sayılar.
-  static const List<String> _numbers = [
-    '12',
-    '47',
-    '83',
-    '25',
-    '96',
-    '31',
-    '68',
-    '54',
-    '79',
+  // 2. Bölüm: aynı mekanik, kelimeler yerine sayılar — ilk 10 tur bu
+  // havuzdan, sonraki 10 tur ikinci havuzdan.
+  static const List<String> _numbersLow = [
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', //
+  ];
+  static const List<String> _numbersHigh = [
+    '11', '12', '13', '14', '15', '16', '17', '18', '19', //
   ];
 
   final Random _random = Random();
   _Phase _phase = _Phase.intro;
   bool _hasCompletedOnce = false;
   bool _isPaused = false;
+  bool _isDemoRound = false;
   int _currentBolum = 1;
   int _speedLevel = 1;
 
-  late List<String> _gridWords; // sabit kare düzeni (bölüm boyunca sabit)
+  List<String> _gridWords = []; // her turda o turun havuzundan yeniden dizilir
+  String? _lastTargetWord; // aynı kelime/sayı art arda sorulmasın diye
   int _roundIndex = 0;
   int _totalScore = 0;
   int _correctCount = 0;
@@ -85,25 +87,44 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
       _totalScore = 0;
       _correctCount = 0;
     });
-    _startBolum(1, _words);
+    _startBolum(1);
   }
 
   // Bölüm 1 ve 2 aynı mekaniği paylaşıyor, sadece içerik havuzu değişiyor.
   // Puan/doğru sayacı SIFIRLANMIYOR — iki bölümün toplamı olarak birikiyor.
-  void _startBolum(int bolum, List<String> pool) {
-    _gridWords = [...pool]..shuffle(_random);
+  void _startBolum(int bolum) {
     setState(() {
       _currentBolum = bolum;
       _roundIndex = 0;
     });
-    _startRound();
+    if (bolum == 1) {
+      _startDemoRound();
+    } else {
+      _startRound();
+    }
+  }
+
+  // O anki bölüme (ve Bölüm 2 içindeyse tur numarasına) göre hangi
+  // havuzdan seçim yapılacağını belirler.
+  List<String> _poolForCurrentRound() {
+    if (_currentBolum == 1) return _words;
+    return _roundIndex < _numberSwitchRound ? _numbersLow : _numbersHigh;
   }
 
   void _startRound() {
     _answerTimer?.cancel();
     _tickTimer?.cancel();
     _flashTimer?.cancel();
-    final target = _random.nextInt(_gridWords.length);
+    final pool = _poolForCurrentRound();
+    _gridWords = [...pool]..shuffle(_random);
+    // Aynı kelime/sayı art arda iki kez sorulmasın diye, birden fazla
+    // seçenek varsa bir önceki turun hedefiyle aynı olan seçim tekrar
+    // denenir.
+    int target;
+    do {
+      target = _random.nextInt(_gridWords.length);
+    } while (_gridWords.length > 1 && _gridWords[target] == _lastTargetWord);
+    _lastTargetWord = _gridWords[target];
     setState(() {
       _phase = _Phase.flash;
       _targetIndex = target;
@@ -117,6 +138,22 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
         _startAnswerWindow();
       },
     );
+  }
+
+  // Gerçek turlar başlamadan önce puansız bir "antreman" turu: öğrenci
+  // önce mekaniği görüp deneyimlesin diye — "önce bir kelime göstereceğiz,
+  // şimdi sıra sende" akışının canlı bir örneği.
+  void _startDemoRound() {
+    _isDemoRound = true;
+    _startRound();
+  }
+
+  void _skipDemo() {
+    _answerTimer?.cancel();
+    _tickTimer?.cancel();
+    _flashTimer?.cancel();
+    _isDemoRound = false;
+    _startRound();
   }
 
   void _startAnswerWindow() {
@@ -171,27 +208,31 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
     _tickTimer?.cancel();
     _answerTimer?.cancel();
     final isCorrect = index != null && index == _targetIndex;
-    int points = 0;
     setState(() {
       _selectedIndex = index;
       _answered = true;
     });
     if (isCorrect) {
-      final remainingFraction =
-          (1 - (_elapsedMs / _answerTimeMsBySpeed[_speedLevel])).clamp(
-            0.0,
-            1.0,
-          );
-      points = (100 * remainingFraction).round().clamp(20, 100);
-      _totalScore += points;
-      _correctCount++;
+      if (!_isDemoRound) {
+        final remainingFraction =
+            (1 - (_elapsedMs / _answerTimeMsBySpeed[_speedLevel])).clamp(
+              0.0,
+              1.0,
+            );
+        final points = (100 * remainingFraction).round().clamp(20, 100);
+        _totalScore += points;
+        _correctCount++;
+      }
       SoundManager.playCorrect();
     } else {
       SoundManager.playGentleTap();
     }
     Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) return;
-      if (_roundIndex < _roundCount - 1) {
+      if (_isDemoRound) {
+        _isDemoRound = false;
+        _startRound();
+      } else if (_roundIndex < _roundCount - 1) {
         setState(() => _roundIndex++);
         _startRound();
       } else if (_currentBolum == 1) {
@@ -325,7 +366,9 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
                   _Phase.intro => _buildIntro(),
                   _Phase.bolum2Intro => _buildBolum2Intro(),
                   _Phase.flash || _Phase.grid => _buildRound(
-                    key: ValueKey('round-$_currentBolum-$_roundIndex-$_phase'),
+                    key: ValueKey(
+                      'round-$_currentBolum-$_roundIndex-$_isDemoRound-$_phase',
+                    ),
                   ),
                 },
               ),
@@ -345,8 +388,9 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
       instruction:
           'Önce bir kelime tek başına 1 saniye gösterilecek. Sonra 9 '
           'kelimelik kare belirecek — az önce gördüğün kelimenin karede '
-          'NEREDE olduğunu hızlıca bulup dokun! 20 tur sürecek, ne kadar '
-          'hızlı bulursan o kadar çok puan kazanırsın.',
+          'NEREDE olduğunu hızlıca bulup dokun! Başlamadan önce sana '
+          'puansız bir antreman turu göstereceğiz. Ardından 20 tur '
+          'sürecek, ne kadar hızlı bulursan o kadar çok puan kazanırsın.',
       onStart: _startGame,
     );
   }
@@ -358,8 +402,9 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
       instruction:
           'Aynı oyun, bu kez kelime yerine sayılarla! Bir sayı tek başına 1 '
           'saniye gösterilecek, sonra 9 sayılık kare belirecek — o sayının '
-          'karede NEREDE olduğunu hızlıca bulup dokun! Yine 20 tur.',
-      onStart: () => _startBolum(2, _numbers),
+          'karede NEREDE olduğunu hızlıca bulup dokun! İlk 10 turda 1-9 '
+          'arası, sonraki 10 turda 11-19 arası sayılarla oynayacaksın.',
+      onStart: () => _startBolum(2),
     );
   }
 
@@ -528,7 +573,9 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '$_currentBolum. Bölüm · Tur ${_roundIndex + 1}/$_roundCount',
+                  _isDemoRound
+                      ? '🎓 Antreman Turu'
+                      : '$_currentBolum. Bölüm · Tur ${_roundIndex + 1}/$_roundCount',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: _color,
@@ -539,7 +586,7 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Puan: $_totalScore',
+                    _isDemoRound ? 'Puansız' : 'Puan: $_totalScore',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -552,6 +599,38 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
               ),
             ],
           ),
+          if (_currentBolum == 2 && !_isDemoRound) ...[
+            const SizedBox(height: 4),
+            Text(
+              _roundIndex < _numberSwitchRound
+                  ? '1-9 arası sayılar'
+                  : '11-19 arası sayılar',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+          ],
+          if (_isDemoRound) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.amber.shade300),
+              ),
+              child: Text(
+                _phase == _Phase.flash
+                    ? 'Önce sana bir kelime göstereceğiz...'
+                    : 'Şimdi sıra sende! Nerede olduğunu bul.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.amber.shade900,
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           _speedChipRow(),
           const SizedBox(height: 10),
@@ -588,10 +667,12 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
             width: double.infinity,
             height: 44,
             child: OutlinedButton.icon(
-              onPressed: _skipBolum,
+              onPressed: _isDemoRound ? _skipDemo : _skipBolum,
               icon: const Icon(Icons.skip_next_rounded),
               label: Text(
-                _currentBolum == 1 ? 'SAYILARA GEÇ' : 'BİTİR',
+                _isDemoRound
+                    ? 'ANTREMANI GEÇ'
+                    : (_currentBolum == 1 ? 'SAYILARA GEÇ' : 'BİTİR'),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               style: OutlinedButton.styleFrom(

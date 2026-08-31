@@ -59,6 +59,14 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
     '🎈',
     '📏',
     '🐶',
+    '🍇',
+    '🎁',
+    '🚀',
+    '🦋',
+    '🌻',
+    '🎯',
+    '🍊',
+    '🐱',
   ];
   static const int _quizRoundCount = 5;
 
@@ -87,19 +95,23 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
   List<_SpanObject> _scatterObjects = [];
   Timer? _scatterTimer;
 
-  // 3. Bölüm: Quiz — aynı dağınık gösterim + "kaç tane X gördün?" sorusu.
+  // 3. Bölüm: Quiz — önce hangi nesneyi sayacağı duyurulur, sonra nesneler
+  // 10 AYRI gösterimde (flash) arka arkaya, her seferinde yeniden rastgele
+  // yerleşerek belirir (hedef nesne bazı gösterimlerde hiç çıkmayabilir) —
+  // öğrenci hedefi TÜM gösterimler boyunca toplam kaç kez gördüğünü
+  // sayıp en sonda cevaplıyor.
   int _quizRoundIndex = 0;
   int _quizScore = 0;
   List<_SpanObject> _quizObjects = [];
-  Map<String, int> _quizCounts = {};
   String _quizAskedEmoji = _objectEmojis.first;
   List<int> _quizOptions = const [];
   int? _quizSelected;
-  // Önce hangi nesneyi sayacağı duyurulur, sonra dağınık gösterim yapılır,
-  // en son soru sorulur — öğrenci neyi sayacağını bilmeden gösterime
-  // başlamıyor.
   bool _quizAnnouncing = true;
   bool _quizShowingObjects = true;
+  static const int _quizFlashCount = 10;
+  static const int _quizFlashGapMs = 300;
+  int _quizFlashIndex = 0;
+  int _quizTotalCount = 0;
   Timer? _quizFlashTimer;
   static const int _quizAnnounceMs = 1400;
 
@@ -258,6 +270,11 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
   // ekranın kenarlarına kadar dağılıyordu).
   List<_SpanObject> _generateSpanObjects() {
     final list = <_SpanObject>[];
+    // Bir gösterimde aynı nesne birden fazla kez çıkmasın diye emoji
+    // havuzu karıştırılıp baştan _spanObjectCount kadarı sırayla alınıyor
+    // — havuz ( _spanObjectCount'tan büyük) her nesnenin benzersiz
+    // olmasını garanti eder.
+    final emojiPool = List<String>.from(_objectEmojis)..shuffle(_random);
     for (int i = 0; i < _spanObjectCount; i++) {
       double x = 0.5, y = 0.5;
       for (int attempt = 0; attempt < 30; attempt++) {
@@ -274,7 +291,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
         });
         if (!tooCloseToCenter && !tooCloseToOther) break;
       }
-      final emoji = _objectEmojis[_random.nextInt(_objectEmojis.length)];
+      final emoji = emojiPool[i];
       list.add(_SpanObject(_nextObjectId++, emoji, x, y));
     }
     return list;
@@ -302,51 +319,80 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
 
   void _startQuizRound() {
     _quizFlashTimer?.cancel();
-    final objects = _generateSpanObjects();
-    final counts = <String, int>{};
-    for (final o in objects) {
-      counts[o.emoji] = (counts[o.emoji] ?? 0) + 1;
-    }
     final asked = _objectEmojis[_random.nextInt(_objectEmojis.length)];
-    final correctCount = counts[asked] ?? 0;
-    // Doğru sayı 0'a veya _spanObjectCount'a çok yakınsa rastgele deneme
-    // sonsuz döngüye girebiliyordu (4 farklı sayı asla bulunamıyordu) —
-    // bu yüzden olası tüm değerlerden karışık örnekleme yapılıyor.
-    final otherValues = [
-      for (int i = 0; i <= _spanObjectCount; i++)
-        if (i != correctCount) i,
-    ]..shuffle(_random);
-    final options = [correctCount, ...otherValues.take(3)]..shuffle(_random);
-
     setState(() {
-      _quizObjects = objects;
-      _quizCounts = counts;
       _quizAskedEmoji = asked;
-      _quizOptions = options;
+      _quizObjects = [];
+      _quizOptions = const [];
       _quizSelected = null;
       _quizAnnouncing = true;
       _quizShowingObjects = false;
+      _quizFlashIndex = 0;
+      _quizTotalCount = 0;
     });
 
     _quizFlashTimer = Timer(const Duration(milliseconds: _quizAnnounceMs), () {
       if (!mounted) return;
+      setState(() => _quizAnnouncing = false);
+      _runQuizFlash();
+    });
+  }
+
+  // 10 gösterimin her biri: nesneler yeniden rastgele yerleştirilir, hedef
+  // emojinin bu gösterimdeki sayısı toplam sayaca eklenir.
+  void _runQuizFlash() {
+    if (_quizFlashIndex >= _quizFlashCount) {
+      _showQuizQuestion();
+      return;
+    }
+    final objects = _generateSpanObjects();
+    final countInFlash = objects
+        .where((o) => o.emoji == _quizAskedEmoji)
+        .length;
+    setState(() {
+      _quizObjects = objects;
+      _quizShowingObjects = true;
+      _quizTotalCount += countInFlash;
+    });
+    _quizFlashTimer = Timer(
+      Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+      () {
+        if (!mounted) return;
+        setState(() => _quizShowingObjects = false);
+        _advanceQuizFlash();
+      },
+    );
+  }
+
+  void _advanceQuizFlash() {
+    _quizFlashTimer = Timer(const Duration(milliseconds: _quizFlashGapMs), () {
+      if (!mounted) return;
       setState(() {
-        _quizAnnouncing = false;
-        _quizShowingObjects = true;
+        _quizObjects = [];
+        _quizFlashIndex++;
       });
-      _quizFlashTimer = Timer(
-        Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
-        () {
-          if (!mounted) return;
-          setState(() => _quizShowingObjects = false);
-        },
-      );
+      _runQuizFlash();
+    });
+  }
+
+  void _showQuizQuestion() {
+    final correctCount = _quizTotalCount;
+    // Doğru sayı 0'a çok yakınsa rastgele deneme sonsuz döngüye
+    // girebiliyordu — bu yüzden olası tüm değerlerden karışık örnekleme
+    // yapılıyor.
+    const maxOption = 15;
+    final otherValues = [
+      for (int i = 0; i <= maxOption; i++)
+        if (i != correctCount) i,
+    ]..shuffle(_random);
+    setState(() {
+      _quizOptions = [correctCount, ...otherValues.take(3)]..shuffle(_random);
     });
   }
 
   void _answerQuiz(int selected) {
     if (_quizSelected != null) return;
-    final correctCount = _quizCounts[_quizAskedEmoji] ?? 0;
+    final correctCount = _quizTotalCount;
     final isCorrect = selected == correctCount;
     setState(() => _quizSelected = selected);
     if (isCorrect) {
@@ -483,27 +529,23 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
             const Duration(milliseconds: _quizAnnounceMs),
             () {
               if (!mounted) return;
-              setState(() {
-                _quizAnnouncing = false;
-                _quizShowingObjects = true;
-              });
-              _quizFlashTimer = Timer(
-                Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
-                () {
-                  if (!mounted) return;
-                  setState(() => _quizShowingObjects = false);
-                },
-              );
+              setState(() => _quizAnnouncing = false);
+              _runQuizFlash();
             },
           );
-        } else if (_quizShowingObjects) {
-          _quizFlashTimer = Timer(
-            Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
-            () {
-              if (!mounted) return;
-              setState(() => _quizShowingObjects = false);
-            },
-          );
+        } else if (_quizFlashIndex < _quizFlashCount) {
+          if (_quizShowingObjects) {
+            _quizFlashTimer = Timer(
+              Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
+              () {
+                if (!mounted) return;
+                setState(() => _quizShowingObjects = false);
+                _advanceQuizFlash();
+              },
+            );
+          } else {
+            _advanceQuizFlash();
+          }
         }
       default:
         break;
@@ -706,9 +748,11 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
       badge: '3. Bölüm · Ne Kadar Gördün?',
       emoji: '❓',
       instruction:
-          'Aynı şekilde ortadaki noktaya bak. Nesneler kısaca görünecek, sonra '
-          'kaybolup sana "kaç tane gördün?" diye soracağız — doğru cevap puan '
-          'kazandırır!',
+          'Ortadaki noktaya odaklanalım. Nesneler ekranın her yerinde '
+          'dağınık olarak görünecek, arka arkaya 10 kez gösterilecek — '
+          'hedef nesne bazen olacak bazen olmayacak. Toplamda kaç kez '
+          'çıktığını bulabilir misin? Amaç: gözümüzün çevresel bakışını '
+          'geliştirmek!',
       onStart: _startQuiz,
     );
   }
@@ -952,13 +996,17 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
   }
 
   Widget _buildQuizFlow() {
+    final flashesRunning =
+        !_quizAnnouncing && _quizFlashIndex < _quizFlashCount;
+    final badge =
+        '3. Bölüm · Soru ${_quizRoundIndex + 1}/$_quizRoundCount'
+        '${flashesRunning ? ' · Gösterim ${_quizFlashIndex + 1}/$_quizFlashCount' : ''}';
     return Column(
       children: [
         _stageHeader(
-          '3. Bölüm · Soru ${_quizRoundIndex + 1}/$_quizRoundCount',
+          badge,
           showTimer: false,
-          showPause:
-              !_quizAnnouncing && _quizShowingObjects && _quizSelected == null,
+          showPause: flashesRunning && _quizSelected == null,
         ),
         const SizedBox(height: 10),
         _speedChipRow(),
@@ -973,7 +1021,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
             ),
             child: _quizAnnouncing
                 ? _buildQuizAnnounce()
-                : (_quizShowingObjects
+                : (flashesRunning
                       ? Stack(
                           children: [
                             _centerFocusDot(),
@@ -1004,7 +1052,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
   }
 
   Widget _buildQuizQuestion() {
-    final correctCount = _quizCounts[_quizAskedEmoji] ?? 0;
+    final correctCount = _quizTotalCount;
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -1013,7 +1061,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
           Text(_quizAskedEmoji, style: const TextStyle(fontSize: 56)),
           const SizedBox(height: 12),
           const Text(
-            'Kaç tane gördün?',
+            'Toplamda kaç tane gördün?',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 24),

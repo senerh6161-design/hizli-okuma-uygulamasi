@@ -16,6 +16,9 @@ class ReadingPassage {
   final String topic; // ReadingTopic.id ile eşleşir
   final String content;
   final List<Map<String, dynamic>> questions;
+  final String?
+  level; // ReadingLevel.id ile eşleşir — null: seviyeye özel değil
+  final bool isFinalTest; // true: Son Metin'in seviye havuzuna ait
 
   const ReadingPassage({
     required this.id,
@@ -23,6 +26,23 @@ class ReadingPassage {
     required this.topic,
     required this.content,
     required this.questions,
+    this.level,
+    this.isFinalTest = false,
+  });
+}
+
+// Seviyeye göre okuma metni seçimi için — konu seçiminden ayrı, ayrı bir
+// giriş noktası. Şimdilik sadece "Kitaba Hürmet" metninin üç seviye
+// uyarlaması var.
+class ReadingLevel {
+  final String id;
+  final String title;
+  final String emoji;
+
+  const ReadingLevel({
+    required this.id,
+    required this.title,
+    required this.emoji,
   });
 }
 
@@ -52,6 +72,22 @@ class ComprehensionData {
     return null;
   }
 
+  static const List<ReadingLevel> levels = [
+    ReadingLevel(id: 'ilkokul', title: 'İlkokul', emoji: '🎒'),
+    ReadingLevel(id: 'ortaokul', title: 'Ortaokul', emoji: '📘'),
+    ReadingLevel(id: 'lise', title: 'Lise', emoji: '🎓'),
+  ];
+
+  static ReadingPassage? passageForLevel(
+    String levelId, {
+    bool isFinalTest = false,
+  }) {
+    for (final p in passages) {
+      if (p.level == levelId && p.isFinalTest == isFinalTest) return p;
+    }
+    return null;
+  }
+
   static const List<ReadingPassage> passages = [
     ReadingPassage(
       id: 'p1',
@@ -61,7 +97,8 @@ class ComprehensionData {
           'Hızlı okuma, yalnızca gözlerin metin üzerinde hızla kayması değil, beynin görsel verileri işleme kapasitesini artırma sürecidir. İnsan gözü bir kelimeye odaklandığında sıçrama ve duraklama hareketleri yapar. Doğru egzersizlerle bu duraklama süreleri azaltılabilir ve gözün tek bir bakışta algıladığı kelime sayısı artırılabilir.',
       questions: [
         {
-          'question': 'Hızlı okuma, beynin görsel verileri işleme kapasitesini artırma sürecidir.',
+          'question':
+              'Hızlı okuma, beynin görsel verileri işleme kapasitesini artırma sürecidir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -71,7 +108,8 @@ class ComprehensionData {
           'correct': 1,
         },
         {
-          'question': 'Doğru egzersizlerle gözün tek bir bakışta algıladığı kelime sayısı artırılabilir.',
+          'question':
+              'Doğru egzersizlerle gözün tek bir bakışta algıladığı kelime sayısı artırılabilir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -90,22 +128,26 @@ class ComprehensionData {
           'Yapay zekâ teknolojileri, günümüzde veri analizi ve kalıp tanıma yetenekleriyle insan hayatını kolaylaştırmaktadır. Özellikle mühendislik ve tıp alanında karmaşık problemleri saniyeler içinde çözebilmektedir. Ancak yapay zekânın başarısı, eğitildiği verilerin kalitesine ve doğruluğuna doğrudan bağlıdır.',
       questions: [
         {
-          'question': 'Yapay zekânın başarısı, eğitildiği verilerin kalitesine bağlıdır.',
+          'question':
+              'Yapay zekânın başarısı, eğitildiği verilerin kalitesine bağlıdır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
         {
-          'question': 'Yapay zekâ sadece moda ve mimari alanlarında kullanılır.',
+          'question':
+              'Yapay zekâ sadece moda ve mimari alanlarında kullanılır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
         {
-          'question': 'Yapay zekâ, veri analizi ve kalıp tanıma yetenekleriyle öne çıkar.',
+          'question':
+              'Yapay zekâ, veri analizi ve kalıp tanıma yetenekleriyle öne çıkar.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
         {
-          'question': 'Yapay zekânın başarısı kullanılan verilerden bağımsızdır.',
+          'question':
+              'Yapay zekânın başarısı kullanılan verilerden bağımsızdır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
@@ -119,17 +161,20 @@ class ComprehensionData {
           'Arılar, ekosistemin sürdürülebilirliği için kritik bir role sahiptir. Çiçekler arasında polen taşıyarak bitkilerin tozlaşmasını sağlarlar. Dünya üzerindeki tarımsal ürünlerin büyük bir kısmı arıların bu polenleme faaliyetine bağımlıdır. Arı nüfusunun azalması, küresel gıda güvenliği için ciddi bir tehdittir.',
       questions: [
         {
-          'question': 'Arılar, çiçekler arasında polen taşıyarak tozlaşmayı sağlar.',
+          'question':
+              'Arılar, çiçekler arasında polen taşıyarak tozlaşmayı sağlar.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
         {
-          'question': 'Arı nüfusunun azalmasının küresel gıda güvenliğiyle hiçbir ilgisi yoktur.',
+          'question':
+              'Arı nüfusunun azalmasının küresel gıda güvenliğiyle hiçbir ilgisi yoktur.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
         {
-          'question': 'Tarımsal ürünlerin büyük bir kısmı arıların polenleme faaliyetine bağımlıdır.',
+          'question':
+              'Tarımsal ürünlerin büyük bir kısmı arıların polenleme faaliyetine bağımlıdır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -158,7 +203,8 @@ class ComprehensionData {
           'correct': 1,
         },
         {
-          'question': 'Dünya, Güneş\'e olan mesafesi sayesinde yaşama uygun sıcaklığa sahiptir.',
+          'question':
+              'Dünya, Güneş\'e olan mesafesi sayesinde yaşama uygun sıcaklığa sahiptir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -182,12 +228,14 @@ class ComprehensionData {
           'correct': 0,
         },
         {
-          'question': 'Basketbol takımında bütün oyuncular aynı görevi üstlenir.',
+          'question':
+              'Basketbol takımında bütün oyuncular aynı görevi üstlenir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
         {
-          'question': 'Takım arkadaşına güvenmeyi öğrenen sporcu, günlük hayatta da başarılı iletişim kurar.',
+          'question':
+              'Takım arkadaşına güvenmeyi öğrenen sporcu, günlük hayatta da başarılı iletişim kurar.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -206,7 +254,8 @@ class ComprehensionData {
           'Resim yapmak, düşüncelerimizi kelimeler olmadan anlatmanın en özgür yollarından biridir. Bir ressam, fırçasıyla hem gördüklerini hem de hayal ettiklerini tuvale aktarabilir. Renkler bize duygular hakkında ipucu verir: sıcak tonlar coşkuyu, soğuk tonlar ise huzuru çağrıştırabilir. Sanat tarihinde her dönem, kendi zamanının izlerini taşıyan yeni akımlar doğurmuştur.',
       questions: [
         {
-          'question': 'Resim yapmak, düşünceleri kelimeler olmadan anlatmanın en özgür yollarından biridir.',
+          'question':
+              'Resim yapmak, düşünceleri kelimeler olmadan anlatmanın en özgür yollarından biridir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -216,7 +265,8 @@ class ComprehensionData {
           'correct': 1,
         },
         {
-          'question': 'Sanat tarihinde her dönem, kendi zamanının izlerini taşıyan akımlar doğurmuştur.',
+          'question':
+              'Sanat tarihinde her dönem, kendi zamanının izlerini taşıyan akımlar doğurmuştur.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -235,7 +285,8 @@ class ComprehensionData {
           'Yunuslar, denizlerin en zeki canlılarından sayılır. Birbirleriyle özel ıslık sesleriyle iletişim kurar, hatta her yunusun kendine özgü bir "imza ıslığı" olduğu bilinir. Sürü hâlinde avlanırken birbirlerine yardım ederler ve yaralı bir yunusu yüzeye çıkarıp nefes almasına yardımcı olabilirler. Bu davranışlar, yunusların güçlü bir sosyal zekâya sahip olduğunu gösterir.',
       questions: [
         {
-          'question': 'Yunuslar birbirleriyle özel ıslık sesleriyle iletişim kurar.',
+          'question':
+              'Yunuslar birbirleriyle özel ıslık sesleriyle iletişim kurar.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -245,7 +296,8 @@ class ComprehensionData {
           'correct': 1,
         },
         {
-          'question': 'Yaralı bir yunusu sürüsü yüzeye çıkarıp nefes almasına yardım eder.',
+          'question':
+              'Yaralı bir yunusu sürüsü yüzeye çıkarıp nefes almasına yardım eder.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -264,17 +316,20 @@ class ComprehensionData {
           'Yağmur ormanları, Dünya\'daki bitki ve hayvan türlerinin yarısından fazlasına ev sahipliği yapar. Bu ormanlar aynı zamanda "Dünya\'nın akciğerleri" olarak da anılır, çünkü ürettikleri oksijen tüm gezegene yayılır. Ne yazık ki tarım ve inşaat için yapılan ağaç kesimleri, bu değerli ekosistemleri her geçen yıl küçültüyor. Ormanları korumak, geleceğimizi korumak anlamına gelir.',
       questions: [
         {
-          'question': 'Yağmur ormanları "Dünya\'nın akciğerleri" olarak anılır.',
+          'question':
+              'Yağmur ormanları "Dünya\'nın akciğerleri" olarak anılır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
         {
-          'question': 'Yağmur ormanları hiçbir tehditle karşı karşıya değildir.',
+          'question':
+              'Yağmur ormanları hiçbir tehditle karşı karşıya değildir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
         {
-          'question': 'Yağmur ormanları, Dünya\'daki bitki ve hayvan türlerinin yarısından fazlasına ev sahipliği yapar.',
+          'question':
+              'Yağmur ormanları, Dünya\'daki bitki ve hayvan türlerinin yarısından fazlasına ev sahipliği yapar.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -293,7 +348,8 @@ class ComprehensionData {
           'Robotlar artık yalnızca fabrikalarda değil, evlerimizde, hastanelerde ve hatta uzayda da görev yapıyor. Temizlik robotları evi süpürürken, cerrahi robotlar doktorlara hassas ameliyatlarda yardımcı oluyor. Mars\'ta gezen keşif robotları ise insan ayak basmadan önce gezegen hakkında bilgi topluyor. Robotların en büyük avantajı, tehlikeli ya da tekrar eden işleri yorulmadan yapabilmeleridir.',
       questions: [
         {
-          'question': 'Cerrahi robotlar doktorlara hassas ameliyatlarda yardımcı olur.',
+          'question':
+              'Cerrahi robotlar doktorlara hassas ameliyatlarda yardımcı olur.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -303,7 +359,8 @@ class ComprehensionData {
           'correct': 1,
         },
         {
-          'question': 'Mars\'taki keşif robotları gezegen hakkında bilgi toplar.',
+          'question':
+              'Mars\'taki keşif robotları gezegen hakkında bilgi toplar.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -322,12 +379,14 @@ class ComprehensionData {
           'Kodlama, bilgisayara ne yapması gerektiğini adım adım anlatmaktır. Programcılar, "kod" adı verilen özel bir dille bilgisayara talimatlar yazar. Bir oyunun nasıl çalışacağını, bir uygulamanın nasıl görüneceğini bile kodlama sayesinde tasarlarız. En küçük bir hata bile, tıpkı bir tarifte yanlış malzeme kullanmak gibi, programın çalışmamasına neden olabilir. Bu yüzden kodlama hem yaratıcılık hem de sabır gerektirir.',
       questions: [
         {
-          'question': 'Kodlama, bilgisayara adım adım ne yapması gerektiğini anlatmaktır.',
+          'question':
+              'Kodlama, bilgisayara adım adım ne yapması gerektiğini anlatmaktır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
         {
-          'question': 'Kodlamada küçük bir hata programın çalışmasını asla etkilemez.',
+          'question':
+              'Kodlamada küçük bir hata programın çalışmasını asla etkilemez.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
@@ -356,7 +415,8 @@ class ComprehensionData {
           'correct': 0,
         },
         {
-          'question': 'Şekerli ve yağlı yiyecekler her öğünde bol miktarda tüketilmelidir.',
+          'question':
+              'Şekerli ve yağlı yiyecekler her öğünde bol miktarda tüketilmelidir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
@@ -419,7 +479,8 @@ class ComprehensionData {
           'correct': 1,
         },
         {
-          'question': 'Bir ülkenin başkenti, o ülkenin yönetim merkezi olarak kabul edilir.',
+          'question':
+              'Bir ülkenin başkenti, o ülkenin yönetim merkezi olarak kabul edilir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -438,17 +499,20 @@ class ComprehensionData {
           'İbni Sina, 980 yılında bugünkü Özbekistan sınırları içinde doğmuş ünlü bir bilgin ve hekimdir. Küçük yaşta tıp, felsefe ve matematik alanlarında kendini yetiştirmiş, on sekiz yaşına geldiğinde döneminin önde gelen hekimlerinden biri olmuştur. En bilinen eseri El-Kânun fi\'t-Tıbb (Tıbbın Kanunu), yüzyıllarca hem İslam dünyasında hem de Avrupa üniversitelerinde tıp eğitiminin temel kaynağı olarak okutulmuştur. İbni Sina\'nın çalışmaları, modern tıbbın gelişimine de önemli katkılar sağlamıştır.',
       questions: [
         {
-          'question': 'İbni Sina\'nın en bilinen eseri El-Kânun fi\'t-Tıbb\'dır.',
+          'question':
+              'İbni Sina\'nın en bilinen eseri El-Kânun fi\'t-Tıbb\'dır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
         {
-          'question': 'İbni Sina\'nın eserleri sadece İslam dünyasında okutulmuş, Avrupa\'da hiç kullanılmamıştır.',
+          'question':
+              'İbni Sina\'nın eserleri sadece İslam dünyasında okutulmuş, Avrupa\'da hiç kullanılmamıştır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
         {
-          'question': 'İbni Sina, küçük yaşta tıp, felsefe ve matematik alanlarında kendini yetiştirmiştir.',
+          'question':
+              'İbni Sina, küçük yaşta tıp, felsefe ve matematik alanlarında kendini yetiştirmiştir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -472,12 +536,14 @@ class ComprehensionData {
           'correct': 0,
         },
         {
-          'question': 'Ali Kuşçu, Fatih Sultan Mehmed\'in davetini reddederek İstanbul\'a hiç gitmemiştir.',
+          'question':
+              'Ali Kuşçu, Fatih Sultan Mehmed\'in davetini reddederek İstanbul\'a hiç gitmemiştir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
         {
-          'question': 'Ay üzerinde Ali Kuşçu\'nun adını taşıyan bir krater vardır.',
+          'question':
+              'Ay üzerinde Ali Kuşçu\'nun adını taşıyan bir krater vardır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
@@ -501,17 +567,20 @@ class ComprehensionData {
           'correct': 0,
         },
         {
-          'question': 'Bîrûnî yalnızca astronomiyle ilgilenmiş, başka hiçbir alanda çalışma yapmamıştır.',
+          'question':
+              'Bîrûnî yalnızca astronomiyle ilgilenmiş, başka hiçbir alanda çalışma yapmamıştır.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
         {
-          'question': 'Kitâbü\'l-Hind, Bîrûnî\'nin Hindistan gezileri sonucunda yazdığı bir eserdir.',
+          'question':
+              'Kitâbü\'l-Hind, Bîrûnî\'nin Hindistan gezileri sonucunda yazdığı bir eserdir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 0,
         },
         {
-          'question': 'Bîrûnî sadece Avrupa\'yı ziyaret etmiştir, Hindistan\'a hiç gitmemiştir.',
+          'question':
+              'Bîrûnî sadece Avrupa\'yı ziyaret etmiştir, Hindistan\'a hiç gitmemiştir.',
           'answers': ['Doğru', 'Yanlış'],
           'correct': 1,
         },
@@ -524,10 +593,27 @@ class ComprehensionData {
       content:
           'Mikroplar, çıplak gözle görülemeyecek kadar küçük canlılardır; bakteri, virüs ve mantarları kapsar. Bazı mikroplar hastalıklara neden olurken, bazıları sindirim sistemimizde besinleri parçalamamıza yardımcı olan faydalı canlılardır. Bilim insanları mikroskop sayesinde bu küçük dünyayı keşfedip incelemeyi başarmıştır. Ellerimizi düzenli yıkamak, zararlı mikropların vücudumuza girmesini önlemenin en etkili yollarından biridir.',
       questions: [
-        {'question': 'Mikroplar çıplak gözle görülemeyecek kadar küçüktür.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Bütün mikroplar vücudumuza zarar verir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Elleri düzenli yıkamak zararlı mikroplardan korunmanın etkili bir yoludur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Mikroplar mikroskopla bile görülemez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Mikroplar çıplak gözle görülemeyecek kadar küçüktür.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Bütün mikroplar vücudumuza zarar verir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Elleri düzenli yıkamak zararlı mikroplardan korunmanın etkili bir yoludur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Mikroplar mikroskopla bile görülemez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -537,10 +623,27 @@ class ComprehensionData {
       content:
           'Enerji, bir işin yapılabilmesini sağlayan güçtür ve farklı biçimlerde bulunabilir: ışık enerjisi, ısı enerjisi, hareket enerjisi ve elektrik enerjisi gibi. Güneş, dünyadaki en büyük enerji kaynağıdır ve bitkiler fotosentez yoluyla bu enerjiyi kullanır. Enerji yoktan var edilemez ya da yok edilemez, sadece bir biçimden diğerine dönüşür. Rüzgar türbinleri, rüzgarın hareket enerjisini elektrik enerjisine çevirerek evlerimizi aydınlatmamıza yardımcı olur.',
       questions: [
-        {'question': 'Güneş, dünyadaki en büyük enerji kaynağıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Enerji yoktan var edilip yok edilebilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Rüzgar türbinleri rüzgarın hareket enerjisini elektrik enerjisine çevirir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Bitkiler güneş enerjisini hiçbir şekilde kullanmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Güneş, dünyadaki en büyük enerji kaynağıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Enerji yoktan var edilip yok edilebilir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Rüzgar türbinleri rüzgarın hareket enerjisini elektrik enerjisine çevirir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Bitkiler güneş enerjisini hiçbir şekilde kullanmaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -550,10 +653,28 @@ class ComprehensionData {
       content:
           'Bilim insanları, bir fikrin doğru olup olmadığını anlamak için deneyler yapar. Bir deney yaparken önce bir soru sorulur, sonra bu soruya cevap bulmak için dikkatli bir plan hazırlanır. Aynı deneyin birkaç kez tekrarlanması, sonuçların güvenilir olup olmadığını anlamamızı sağlar. Deneyler sırasında elde edilen veriler dikkatle kaydedilir ve sonunda bir sonuca varılır.',
       questions: [
-        {'question': 'Deneyler bir fikrin doğru olup olmadığını anlamak için yapılır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Bir deneyi sadece bir kez yapmak sonuçların güvenilirliği için yeterlidir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Deneyler sırasında elde edilen veriler kaydedilmez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Bir deney yapmadan önce dikkatli bir plan hazırlanır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {
+          'question':
+              'Deneyler bir fikrin doğru olup olmadığını anlamak için yapılır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Bir deneyi sadece bir kez yapmak sonuçların güvenilirliği için yeterlidir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Deneyler sırasında elde edilen veriler kaydedilmez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Bir deney yapmadan önce dikkatli bir plan hazırlanır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
       ],
     ),
     ReadingPassage(
@@ -563,10 +684,30 @@ class ComprehensionData {
       content:
           'Karıncalar, küçük görünse de son derece düzenli bir toplum içinde yaşayan böceklerdir. Her karınca kolonisinde işçi karıncalar, asker karıncalar ve bir kraliçe karınca farklı görevler üstlenir. Karıncalar, kendi ağırlıklarının kat kat fazlasını taşıyabilecek kadar güçlüdür. Birbirleriyle özel kokular (feromonlar) bırakarak iletişim kurar ve yiyecek kaynaklarına giden yolu arkadaşlarına gösterirler.',
       questions: [
-        {'question': 'Karınca kolonisinde farklı görevler üstlenen karıncalar vardır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Karıncalar kendi ağırlıklarını bile taşıyamayacak kadar güçsüzdür.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Karıncalar birbirleriyle özel kokular bırakarak iletişim kurar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Karıncalar birbirleriyle hiçbir şekilde iletişim kurmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Karınca kolonisinde farklı görevler üstlenen karıncalar vardır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Karıncalar kendi ağırlıklarını bile taşıyamayacak kadar güçsüzdür.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Karıncalar birbirleriyle özel kokular bırakarak iletişim kurar.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Karıncalar birbirleriyle hiçbir şekilde iletişim kurmaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -576,10 +717,29 @@ class ComprehensionData {
       content:
           'Kutup ayıları, Kuzey Kutbu\'nun buzlu sularında ve karlarla kaplı topraklarında yaşayan büyük memelilerdir. Kalın kürkleri ve altındaki yağ tabakası, onları dondurucu soğuktan korur. Mükemmel yüzücülerdir ve saatlerce kesintisiz yüzebilirler. Beslenmeleri büyük ölçüde foklara dayanır, bu yüzden buzların erimesi onların hayatta kalması için ciddi bir tehdit oluşturur.',
       questions: [
-        {'question': 'Kutup ayılarının kalın kürkü ve yağ tabakası onları soğuktan korur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Kutup ayıları yüzmeyi hiç beceremez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Buzların erimesi kutup ayıları için bir tehdit oluşturur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Kutup ayılarının beslenmesi foklarla hiç ilgili değildir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Kutup ayılarının kalın kürkü ve yağ tabakası onları soğuktan korur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Kutup ayıları yüzmeyi hiç beceremez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Buzların erimesi kutup ayıları için bir tehdit oluşturur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Kutup ayılarının beslenmesi foklarla hiç ilgili değildir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -589,10 +749,26 @@ class ComprehensionData {
       content:
           'Bir kelebeğin hayatı, minik bir yumurtadan başlar ve tırtıl haline gelmesiyle devam eder. Tırtıl, yeterince büyüdüğünde kendini bir kozanın içine sarar ve burada büyük bir dönüşüm geçirir. Bu sürece başkalaşım (metamorfoz) denir. Kozadan çıkan canlı, artık renkli kanatlara sahip bir kelebektir ve çiçeklerden nektar toplayarak beslenir.',
       questions: [
-        {'question': 'Kelebeğin hayatı bir yumurtayla başlar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Tırtıl, kozaya girmeden doğrudan kelebeğe dönüşür.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Bu dönüşüm sürecine başkalaşım (metamorfoz) denir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Kelebekler nektarla değil etle beslenir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Kelebeğin hayatı bir yumurtayla başlar.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Tırtıl, kozaya girmeden doğrudan kelebeğe dönüşür.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Bu dönüşüm sürecine başkalaşım (metamorfoz) denir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Kelebekler nektarla değil etle beslenir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -602,10 +778,28 @@ class ComprehensionData {
       content:
           'Kütüphaneler, binlerce yıldır bilginin saklandığı özel yerlerdir. Tarihteki en ünlü kütüphanelerden biri, Mısır\'daki İskenderiye Kütüphanesi\'ydi ve dönemin en büyük bilgi hazinesini barındırıyordu. Eskiden kitaplar el yazmasıyla yazıldığı için çok değerliydi ve üretilmesi uzun zaman alıyordu. Günümüzde kütüphaneler hem basılı kitapları hem de dijital kaynakları bir arada sunmaktadır.',
       questions: [
-        {'question': 'İskenderiye Kütüphanesi Mısır\'daydı.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Eskiden kitaplar matbaa makineleriyle saniyeler içinde basılırdı.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Günümüz kütüphaneleri sadece basılı kitap sunar, dijital kaynak sunmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Eskiden kitaplar el yazmasıyla yazılırdı.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {
+          'question': 'İskenderiye Kütüphanesi Mısır\'daydı.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Eskiden kitaplar matbaa makineleriyle saniyeler içinde basılırdı.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Günümüz kütüphaneleri sadece basılı kitap sunar, dijital kaynak sunmaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Eskiden kitaplar el yazmasıyla yazılırdı.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
       ],
     ),
     ReadingPassage(
@@ -615,10 +809,28 @@ class ComprehensionData {
       content:
           'Bir kitap yazmak, önce bir fikir bulmakla başlar. Yazar, hikayesinin karakterlerini, olay örgüsünü ve mekanını dikkatlice planlar. İlk taslak tamamlandıktan sonra, yazar metni tekrar tekrar gözden geçirir ve düzeltmeler yapar. Bu düzenleme sürecine "editleme" denir ve bir kitabın okuyucuya ulaşmadan önce geçirdiği en önemli aşamalardan biridir.',
       questions: [
-        {'question': 'Bir kitap yazmak bir fikir bulmakla başlar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Yazarlar ilk taslağı yazdıktan sonra hiç değişiklik yapmadan kitabı yayınlar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Metni gözden geçirip düzeltme sürecine editleme denir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Yazar, hikayesinin karakterlerini ve olay örgüsünü hiç planlamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Bir kitap yazmak bir fikir bulmakla başlar.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Yazarlar ilk taslağı yazdıktan sonra hiç değişiklik yapmadan kitabı yayınlar.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Metni gözden geçirip düzeltme sürecine editleme denir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Yazar, hikayesinin karakterlerini ve olay örgüsünü hiç planlamaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -628,10 +840,28 @@ class ComprehensionData {
       content:
           'Günümüzde kitaplar hem kağıt hem de elektronik (e-kitap) biçiminde okunabiliyor. E-kitaplar, bir tablet ya da telefonla yüzlerce kitabı yanınızda taşımanıza olanak tanır. Kağıt kitaplar ise sayfaları çevirme hissini ve göz yorgunluğunun daha az olmasını sağlar. Her iki biçimin de kendine göre avantajları vardır ve tercih genellikle okuyucunun alışkanlıklarına bağlıdır.',
       questions: [
-        {'question': 'E-kitaplar bir cihazla yüzlerce kitabı taşımaya olanak tanır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Kağıt kitapların hiçbir avantajı yoktur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Kitap biçimi tercihi genellikle okuyucunun alışkanlıklarına bağlıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Kağıt kitaplar göz yorgunluğunu artırır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'E-kitaplar bir cihazla yüzlerce kitabı taşımaya olanak tanır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Kağıt kitapların hiçbir avantajı yoktur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Kitap biçimi tercihi genellikle okuyucunun alışkanlıklarına bağlıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Kağıt kitaplar göz yorgunluğunu artırır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -641,10 +871,29 @@ class ComprehensionData {
       content:
           'Algoritma, bir problemi çözmek için izlenen adım adım talimatlar dizisidir. Günlük hayatta bile farkında olmadan algoritmalar kullanırız; örneğin bir sandviç yapmanın adımları da bir algoritmadır. Bilgisayar programcıları, bir algoritmayı kodlama diline çevirerek bilgisayarın belirli bir görevi yerine getirmesini sağlar. İyi bir algoritma, hem doğru sonucu verir hem de mümkün olduğunca hızlı çalışır.',
       questions: [
-        {'question': 'Algoritma, bir problemi çözmek için izlenen adım adım talimatlardır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Algoritmalar sadece bilgisayarlarda kullanılır, günlük hayatta kullanılmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'İyi bir algoritma doğru sonucu vermeli ve hızlı çalışmalıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Algoritmalar günlük hayatta hiç kullanılmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Algoritma, bir problemi çözmek için izlenen adım adım talimatlardır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Algoritmalar sadece bilgisayarlarda kullanılır, günlük hayatta kullanılmaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'İyi bir algoritma doğru sonucu vermeli ve hızlı çalışmalıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Algoritmalar günlük hayatta hiç kullanılmaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -654,10 +903,26 @@ class ComprehensionData {
       content:
           'Bir robotun hareket edebilmesi, aslında arkasındaki koda bağlıdır. Programcılar, robota ne zaman döneceğini, ne zaman duracağını ve engellerden nasıl kaçınacağını kod satırlarıyla öğretir. Sensörler sayesinde robot çevresini algılar ve bu bilgiyi kodun belirlediği kurallara göre işler. Kodlama sayesinde bir robot, fabrikalarda parça taşımaktan evde toz almaya kadar birçok işi yapabilir.',
       questions: [
-        {'question': 'Bir robotun hareketleri arkasındaki koda bağlıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Robotlar çevrelerini hiçbir sensör kullanmadan algılar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Kodlama sayesinde robotlar farklı birçok işi yapabilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Programcılar robota nasıl duracağını hiç öğretmez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Bir robotun hareketleri arkasındaki koda bağlıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Robotlar çevrelerini hiçbir sensör kullanmadan algılar.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Kodlama sayesinde robotlar farklı birçok işi yapabilir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Programcılar robota nasıl duracağını hiç öğretmez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -667,10 +932,28 @@ class ComprehensionData {
       content:
           'Video oyunları, arkasında yüzlerce satır kodla çalışan karmaşık programlardır. Bir oyun programcısı, karakterlerin nasıl hareket edeceğini, puanların nasıl hesaplanacağını ve oyunun kurallarını kodla belirler. Grafik tasarımcılar görsel dünyayı oluştururken, programcılar bu dünyayı hayata geçiren "motoru" yazar. Basit bir oyun bile, saatlerce planlama ve kodlama gerektirir.',
       questions: [
-        {'question': 'Video oyunları yüzlerce satır kodla çalışan programlardır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Bir oyunu kodlamak hiç zaman almaz, anında tamamlanır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Programcılar oyunun kurallarını ve karakter hareketlerini kodla belirler.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Grafik tasarımcılar oyunun kod motorunu yazar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Video oyunları yüzlerce satır kodla çalışan programlardır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Bir oyunu kodlamak hiç zaman almaz, anında tamamlanır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Programcılar oyunun kurallarını ve karakter hareketlerini kodla belirler.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Grafik tasarımcılar oyunun kod motorunu yazar.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -680,10 +963,26 @@ class ComprehensionData {
       content:
           'Heykel, taş, tunç, ahşap ya da kil gibi malzemelerden üç boyutlu eserler yaratma sanatıdır. Heykeltıraşlar, düz bir resimden farklı olarak eserlerini her açıdan izlenebilecek şekilde şekillendirir. Tarihteki en ünlü heykellerden biri, Michelangelo\'nun yaptığı Davut Heykeli\'dir. Heykel yapmak, hem sabır hem de malzemenin doğasını iyi anlamayı gerektiren zorlu bir zanaattir.',
       questions: [
-        {'question': 'Heykel üç boyutlu eserler yaratma sanatıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Heykeller sadece tek bir açıdan izlenebilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Davut Heykeli Michelangelo tarafından yapılmıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Heykel yapmak hiçbir sabır gerektirmez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Heykel üç boyutlu eserler yaratma sanatıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Heykeller sadece tek bir açıdan izlenebilir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Davut Heykeli Michelangelo tarafından yapılmıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Heykel yapmak hiçbir sabır gerektirmez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -693,10 +992,29 @@ class ComprehensionData {
       content:
           'Müzik, sesleri belirli bir düzen içinde bir araya getirerek duygu ve düşünceleri anlatan evrensel bir sanattır. Farklı kültürlerin kendine özgü müzik aletleri ve tarzları vardır, ama müziğin duyguları harekete geçirme gücü her yerde aynıdır. Bilim insanları, müzik dinlemenin stresi azaltabileceğini ve odaklanmayı artırabileceğini keşfetmiştir. Bir beste yazmak, notaları doğru sırayla bir araya getirmekten çok daha fazlasını, yani duygu aktarmayı gerektirir.',
       questions: [
-        {'question': 'Müzik, sesleri belirli bir düzen içinde bir araya getiren bir sanattır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Müziğin duyguları harekete geçirme gücü sadece bazı kültürlerde geçerlidir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Müzik dinlemenin stresi azaltabileceği keşfedilmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Bir beste yazmak sadece notaları sıraya koymaktır, duygu gerekmez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Müzik, sesleri belirli bir düzen içinde bir araya getiren bir sanattır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Müziğin duyguları harekete geçirme gücü sadece bazı kültürlerde geçerlidir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Müzik dinlemenin stresi azaltabileceği keşfedilmiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Bir beste yazmak sadece notaları sıraya koymaktır, duygu gerekmez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -706,10 +1024,30 @@ class ComprehensionData {
       content:
           'Tiyatro, insanların bir hikayeyi canlı olarak sahnede canlandırdığı en eski sanat türlerinden biridir. Antik Yunan\'da tiyatro, hem eğlence hem de toplumsal konuları tartışma amacı taşıyordu. Oyuncular, maskeler takarak farklı karakterleri ve duyguları seyirciye aktarırdı. Günümüzde tiyatro, sinema ve dizilerin yanında hâlâ canlı performansın eşsiz heyecanını sunmaya devam ediyor.',
       questions: [
-        {'question': 'Tiyatro insanların bir hikayeyi canlı olarak sahnede canlandırmasıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Antik Yunan\'da tiyatronun toplumsal konularla hiçbir ilgisi yoktu.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Antik Yunan\'da oyuncular maskeler takarak karakterleri canlandırırdı.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Tiyatro yirminci yüzyılda ortaya çıkmış yeni bir sanattır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Tiyatro insanların bir hikayeyi canlı olarak sahnede canlandırmasıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Antik Yunan\'da tiyatronun toplumsal konularla hiçbir ilgisi yoktu.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Antik Yunan\'da oyuncular maskeler takarak karakterleri canlandırırdı.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Tiyatro yirminci yüzyılda ortaya çıkmış yeni bir sanattır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -719,10 +1057,28 @@ class ComprehensionData {
       content:
           'Olimpiyat Oyunları, ilk olarak Antik Yunanistan\'da, Olympia şehrinde binlerce yıl önce düzenlenmeye başlamıştır. O dönemde oyunlar sırasında şehirler arasındaki savaşlar bile geçici olarak durdurulurdu. Modern Olimpiyatlar ise 1896 yılında Atina\'da yeniden başlatılmıştır. Bugün dünyanın dört bir yanından binlerce sporcu, dört yılda bir bu büyük yarışmada bir araya gelmektedir.',
       questions: [
-        {'question': 'Olimpiyat Oyunları ilk olarak Antik Yunanistan\'da başlamıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Modern Olimpiyatlar ilk kez Paris\'te düzenlenmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Olimpiyat Oyunları her yıl düzenlenir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Dört yılda bir dünyanın dört bir yanından sporcular bir araya gelir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {
+          'question':
+              'Olimpiyat Oyunları ilk olarak Antik Yunanistan\'da başlamıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Modern Olimpiyatlar ilk kez Paris\'te düzenlenmiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Olimpiyat Oyunları her yıl düzenlenir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Dört yılda bir dünyanın dört bir yanından sporcular bir araya gelir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
       ],
     ),
     ReadingPassage(
@@ -732,10 +1088,27 @@ class ComprehensionData {
       content:
           'Yüzme, vücuttaki hemen hemen tüm kasları aynı anda çalıştıran ender sporlardan biridir. Su içinde hareket etmek, eklemlere kara sporlarına göre çok daha az yük bindirir. Düzenli yüzmek, kalp ve akciğer sağlığını güçlendirir ve dayanıklılığı artırır. Ayrıca suyun serinletici etkisi, yüzmeyi hem eğlenceli hem de rahatlatıcı bir aktivite haline getirir.',
       questions: [
-        {'question': 'Yüzme vücuttaki hemen hemen tüm kasları çalıştırır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Su içinde hareket etmek eklemlere kara sporlarından daha fazla yük bindirir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Düzenli yüzmek kalp ve akciğer sağlığını güçlendirir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Yüzme kalp ve akciğer sağlığına hiçbir katkı sağlamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Yüzme vücuttaki hemen hemen tüm kasları çalıştırır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Su içinde hareket etmek eklemlere kara sporlarından daha fazla yük bindirir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Düzenli yüzmek kalp ve akciğer sağlığını güçlendirir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Yüzme kalp ve akciğer sağlığına hiçbir katkı sağlamaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -745,10 +1118,29 @@ class ComprehensionData {
       content:
           'Satranç, fiziksel güç gerektirmese de büyük bir zihinsel yoğunluk ve strateji becerisi ister. Uluslararası Olimpiyat Komitesi, satrancı "zihin sporu" olarak tanımaktadır. Profesyonel satranç oyuncuları, uzun bir maç sırasında yüzlerce kalori harcayabilir çünkü yoğun konsantrasyon beyni oldukça yorar. Satranç, sabırlı planlama ve rakibin hamlelerini önceden tahmin etme becerisini geliştirir.',
       questions: [
-        {'question': 'Satranç Uluslararası Olimpiyat Komitesi tarafından "zihin sporu" olarak tanınır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Satranç oynamak beyni hiç yormaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Satranç, rakibin hamlelerini önceden tahmin etme becerisini geliştirir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Profesyonel satranç oyuncuları maç sırasında hiç kalori harcamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Satranç Uluslararası Olimpiyat Komitesi tarafından "zihin sporu" olarak tanınır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Satranç oynamak beyni hiç yormaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Satranç, rakibin hamlelerini önceden tahmin etme becerisini geliştirir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Profesyonel satranç oyuncuları maç sırasında hiç kalori harcamaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -758,10 +1150,28 @@ class ComprehensionData {
       content:
           'Japonya, modern teknolojisiyle tanınsa da köklü geleneklerini de büyük bir özenle korumaktadır. Çay seremonisi, sadece çay içmekten öte, sakinlik ve saygıyı simgeleyen özel bir törendir. Kiraz çiçeklerinin (sakura) açtığı bahar mevsiminde, aileler parklarda "hanami" adı verilen çiçek izleme etkinlikleri düzenler. Japon kültüründe nezaket ve düzen, günlük yaşamın her alanında önemli bir yer tutar.',
       questions: [
-        {'question': 'Japonya\'da çay seremonisi sakinlik ve saygıyı simgeler.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Japonya geleneklerini tamamen terk etmiş, sadece teknolojiye odaklanmıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Hanami, kiraz çiçeklerini izleme etkinliğidir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Hanami, kış mevsiminde yapılan bir kar festivalidir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Japonya\'da çay seremonisi sakinlik ve saygıyı simgeler.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Japonya geleneklerini tamamen terk etmiş, sadece teknolojiye odaklanmıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Hanami, kiraz çiçeklerini izleme etkinliğidir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Hanami, kış mevsiminde yapılan bir kar festivalidir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -771,10 +1181,29 @@ class ComprehensionData {
       content:
           'Mısır piramitleri, binlerce yıl önce firavunlar için mezar olarak inşa edilmiş devasa yapılardır. En büyük ve en ünlü piramit, Giza\'daki Büyük Piramit\'tir ve yüzyıllarca dünyanın en yüksek yapısı olma özelliğini korumuştur. Piramitlerin nasıl inşa edildiği hâlâ bilim insanlarını şaşırtan bir konudur, çünkü o dönemde modern makineler yoktu. Bu yapılar, Antik Mısır uygarlığının mühendislik becerisinin canlı bir kanıtıdır.',
       questions: [
-        {'question': 'Mısır piramitleri firavunlar için mezar olarak inşa edilmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Giza\'daki Büyük Piramit dünyanın en küçük yapısıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Piramitler modern makineler kullanılarak inşa edilmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Piramitlerin nasıl inşa edildiği hâlâ bilim insanlarını şaşırtmaktadır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
+        {
+          'question':
+              'Mısır piramitleri firavunlar için mezar olarak inşa edilmiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Giza\'daki Büyük Piramit dünyanın en küçük yapısıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Piramitler modern makineler kullanılarak inşa edilmiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Piramitlerin nasıl inşa edildiği hâlâ bilim insanlarını şaşırtmaktadır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
       ],
     ),
     ReadingPassage(
@@ -784,10 +1213,26 @@ class ComprehensionData {
       content:
           'Antarktika, Dünya\'nın en güneyinde yer alan ve neredeyse tamamı kalın buzla kaplı bir kıtadır. Burada herhangi bir ülkenin daimi vatandaşı yaşamaz, sadece bilim insanları araştırma istasyonlarında geçici olarak kalır. Kıtadaki sıcaklıklar bazen eksi 80 dereceye kadar düşebilir, bu da onu Dünya\'nın en soğuk yeri yapar. Antarktika\'daki buzullar, Dünya\'nın tatlı su rezervlerinin büyük bir kısmını barındırır.',
       questions: [
-        {'question': 'Antarktika\'nın neredeyse tamamı kalın buzla kaplıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Antarktika\'da milyonlarca daimi vatandaş yaşar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Antarktika, Dünya\'nın en soğuk yerlerinden biridir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Antarktika Dünya\'nın en sıcak yeridir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Antarktika\'nın neredeyse tamamı kalın buzla kaplıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Antarktika\'da milyonlarca daimi vatandaş yaşar.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Antarktika, Dünya\'nın en soğuk yerlerinden biridir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Antarktika Dünya\'nın en sıcak yeridir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -797,10 +1242,27 @@ class ComprehensionData {
       content:
           'İnsanoğlu ilk kez 1969 yılında Ay\'a ayak basmıştır; bu tarihi adımı atan kişi astronot Neil Armstrong\'dur. Ay\'a gitmek için özel olarak tasarlanmış roketler, dünyanın yerçekiminden kurtulacak kadar güçlü olmalıdır. Ay\'da atmosfer olmadığı için gökyüzü her zaman siyah görünür ve sessizlik tamdır. Bilim insanları, Ay\'dan getirilen kayaları inceleyerek Güneş Sistemi\'nin oluşumu hakkında önemli bilgiler edinmiştir.',
       questions: [
-        {'question': 'İnsanoğlu ilk kez 1969 yılında Ay\'a ayak basmıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Ay\'da yoğun bir atmosfer bulunur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Ay\'dan getirilen kayalar Güneş Sistemi hakkında bilgi vermiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Ay\'a ilk ayak basan kişi bir Rus kozmonottur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'İnsanoğlu ilk kez 1969 yılında Ay\'a ayak basmıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Ay\'da yoğun bir atmosfer bulunur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Ay\'dan getirilen kayalar Güneş Sistemi hakkında bilgi vermiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Ay\'a ilk ayak basan kişi bir Rus kozmonottur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -810,10 +1272,27 @@ class ComprehensionData {
       content:
           'Yıldızlar, uzaydaki dev gaz ve toz bulutlarının kendi yerçekimiyle çökmesi sonucu oluşur. Bu bulutun merkezi giderek ısınır ve sonunda nükleer füzyon adı verilen bir süreç başlar, bu da yıldızın parlamasını sağlar. Güneşimiz de yaklaşık 4.6 milyar yıl önce böyle bir bulutun içinden doğmuştur. Bir yıldızın ömrü, boyutuna bağlı olarak milyonlarca ya da milyarlarca yıl sürebilir.',
       questions: [
-        {'question': 'Yıldızlar dev gaz ve toz bulutlarının çökmesiyle oluşur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Güneşimiz hiçbir bulut olmadan aniden ortaya çıkmıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Bir yıldızın ömrü boyutuna bağlı olarak değişebilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Bütün yıldızların ömrü birbirinin tamamen aynısıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Yıldızlar dev gaz ve toz bulutlarının çökmesiyle oluşur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Güneşimiz hiçbir bulut olmadan aniden ortaya çıkmıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Bir yıldızın ömrü boyutuna bağlı olarak değişebilir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Bütün yıldızların ömrü birbirinin tamamen aynısıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -823,10 +1302,30 @@ class ComprehensionData {
       content:
           'Uluslararası Uzay İstasyonu, Dünya\'nın yörüngesinde dönen ve içinde astronotların aylarca yaşayıp çalışabildiği devasa bir yapıdır. Yerçekimi neredeyse hiç olmadığı için astronotlar istasyon içinde havada süzülerek hareket eder. Yemek yemek bile burada farklıdır; sıvılar damlalar halinde havada uçuşabileceği için özel kaplarda saklanır. Astronotlar, kaslarının erimemesi için istasyonda her gün özel egzersizler yapmak zorundadır.',
       questions: [
-        {'question': 'Uluslararası Uzay İstasyonu\'nda astronotlar havada süzülerek hareket eder.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Uzay istasyonunda yerçekimi Dünya\'dakiyle tamamen aynıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Astronotlar kaslarının erimemesi için her gün egzersiz yapar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Uzay istasyonunda yemekler tabaklarda normal şekilde servis edilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Uluslararası Uzay İstasyonu\'nda astronotlar havada süzülerek hareket eder.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Uzay istasyonunda yerçekimi Dünya\'dakiyle tamamen aynıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Astronotlar kaslarının erimemesi için her gün egzersiz yapar.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Uzay istasyonunda yemekler tabaklarda normal şekilde servis edilir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -836,10 +1335,28 @@ class ComprehensionData {
       content:
           'Ekmek, insanlık tarihinin en eski ve en temel besinlerinden biridir; binlerce yıl önce eski Mısırlılar tarafından mayalanarak yapılmaya başlanmıştır. Un, su ve mayanın bir araya gelmesiyle oluşan hamur, fırınlanarak bugün bildiğimiz ekmeğe dönüşür. Dünyanın farklı bölgelerinde farklı ekmek çeşitleri gelişmiştir; örneğin Fransa\'da baget, Hindistan\'da naan öne çıkar. Ekmek, günümüzde de dünyanın hemen her sofrasında yer alan vazgeçilmez bir besindir.',
       questions: [
-        {'question': 'Ekmek eski Mısırlılar tarafından mayalanarak yapılmaya başlanmıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Dünyanın her yerinde sadece tek bir çeşit ekmek yapılır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Baget, Fransa\'da öne çıkan bir ekmek çeşididir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Ekmek hamuru fırınlanmadan doğrudan yenir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Ekmek eski Mısırlılar tarafından mayalanarak yapılmaya başlanmıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Dünyanın her yerinde sadece tek bir çeşit ekmek yapılır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Baget, Fransa\'da öne çıkan bir ekmek çeşididir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Ekmek hamuru fırınlanmadan doğrudan yenir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -849,10 +1366,26 @@ class ComprehensionData {
       content:
           'Her ülkenin mutfağı, o toplumun kültürünü, iklimini ve tarihini yansıtır. İtalya\'da makarna ve pizza öne çıkarken, Japonya\'da suşi ve ramen çok sevilen yemeklerdendir. Baharatlar, yemeklere hem lezzet hem de renk katar; örneğin Hindistan mutfağında köri baharatı sıkça kullanılır. Farklı mutfakları tatmak, bir ülkeyi ziyaret etmeden de o kültürü tanımanın keyifli bir yoludur.',
       questions: [
-        {'question': 'Her ülkenin mutfağı o toplumun kültürünü yansıtır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Suşi, İtalyan mutfağının bir parçasıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Baharatlar yemeklere lezzet ve renk katar.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Köri baharatı Japon mutfağında sıkça kullanılır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Her ülkenin mutfağı o toplumun kültürünü yansıtır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Suşi, İtalyan mutfağının bir parçasıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Baharatlar yemeklere lezzet ve renk katar.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Köri baharatı Japon mutfağında sıkça kullanılır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -862,10 +1395,28 @@ class ComprehensionData {
       content:
           'Meyveler, vücudumuzun ihtiyaç duyduğu vitamin ve lifleri doğal yoldan almamızı sağlayan besinlerdir. Portakal ve çilek gibi meyveler C vitamini bakımından zengindir ve bağışıklık sistemimizi güçlendirir. Meyvelerdeki lifler, sindirim sistemimizin düzenli çalışmasına yardımcı olur. Günde birkaç porsiyon meyve tüketmek, sağlıklı bir yaşamın basit ama etkili yollarından biridir.',
       questions: [
-        {'question': 'Portakal ve çilek C vitamini bakımından zengindir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Meyvelerdeki lifler sindirim sistemine hiçbir katkı sağlamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Günde birkaç porsiyon meyve tüketmek sağlıklı bir alışkanlıktır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Meyveler vücudumuza hiçbir vitamin sağlamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Portakal ve çilek C vitamini bakımından zengindir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Meyvelerdeki lifler sindirim sistemine hiçbir katkı sağlamaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Günde birkaç porsiyon meyve tüketmek sağlıklı bir alışkanlıktır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Meyveler vücudumuza hiçbir vitamin sağlamaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -875,10 +1426,28 @@ class ComprehensionData {
       content:
           'Dünya\'nın kendi ekseni etrafında eğik durması, mevsimlerin oluşmasının temel nedenidir. Bu eğiklik sayesinde, Dünya Güneş çevresinde dönerken farklı bölgeler farklı zamanlarda daha fazla ya da daha az güneş ışığı alır. İlkbaharda doğa canlanır, yazın sıcaklıklar artar, sonbaharda yapraklar dökülür ve kışın hava soğur. Mevsimler, birçok hayvanın göç etme ya da kış uykusuna yatma zamanını da belirler.',
       questions: [
-        {'question': 'Mevsimlerin oluşmasının temel nedeni Dünya\'nın ekseninin eğik olmasıdır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Bütün bölgeler Güneş\'ten her zaman aynı miktarda ışık alır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Mevsimler bazı hayvanların göç etme zamanını belirler.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Mevsimler hayvanların davranışlarını hiç etkilemez.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'Mevsimlerin oluşmasının temel nedeni Dünya\'nın ekseninin eğik olmasıdır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Bütün bölgeler Güneş\'ten her zaman aynı miktarda ışık alır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Mevsimler bazı hayvanların göç etme zamanını belirler.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Mevsimler hayvanların davranışlarını hiç etkilemez.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -888,10 +1457,27 @@ class ComprehensionData {
       content:
           'Su döngüsü, suyun Dünya üzerinde sürekli olarak buharlaşıp yağış hâlinde geri dönmesini sağlayan doğal bir sistemdir. Güneşin ısısıyla denizlerdeki ve göllerdeki su buharlaşarak gökyüzüne yükselir ve bulutları oluşturur. Bulutlar soğuduğunda, içindeki su damlacıkları yağmur ya da kar olarak yeryüzüne düşer. Bu döngü sayesinde Dünya\'daki su miktarı hiç azalmadan sürekli yeniden kullanılır.',
       questions: [
-        {'question': 'Su döngüsünde su buharlaşıp yağış hâlinde geri döner.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Bulutlar suyun hiçbir aşamasında rol oynamaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Su döngüsü sayesinde Dünya\'daki su sürekli yeniden kullanılır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Su döngüsünde Dünya\'daki su miktarı giderek azalır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Su döngüsünde su buharlaşıp yağış hâlinde geri döner.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Bulutlar suyun hiçbir aşamasında rol oynamaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Su döngüsü sayesinde Dünya\'daki su sürekli yeniden kullanılır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Su döngüsünde Dünya\'daki su miktarı giderek azalır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -901,10 +1487,29 @@ class ComprehensionData {
       content:
           'İnternet, başlangıçta 1960\'larda bilgisayarların birbirleriyle bilgi paylaşabilmesi için askeri ve akademik amaçlarla geliştirilmiştir. Zamanla bu ağ genişleyerek dünyanın dört bir yanındaki milyonlarca bilgisayarı birbirine bağlayan devasa bir sisteme dönüşmüştür. World Wide Web\'in 1990\'larda icat edilmesiyle internet, sıradan insanların da kolayca kullanabileceği bir araç haline geldi. Bugün internet, bilgiye ulaşmaktan iletişim kurmaya kadar hayatımızın her alanında yer almaktadır.',
       questions: [
-        {'question': 'İnternet başlangıçta askeri ve akademik amaçlarla geliştirilmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'World Wide Web 1800\'lerde icat edilmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'İnternet günümüzde hayatımızın her alanında yer almaktadır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'İnternet en başından beri herkesin kolayca kullanabileceği bir araç olmuştur.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'İnternet başlangıçta askeri ve akademik amaçlarla geliştirilmiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'World Wide Web 1800\'lerde icat edilmiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'İnternet günümüzde hayatımızın her alanında yer almaktadır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'İnternet en başından beri herkesin kolayca kullanabileceği bir araç olmuştur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -914,10 +1519,30 @@ class ComprehensionData {
       content:
           'İlk cep telefonları sadece arama yapmak için kullanılırken, günümüzün akıllı telefonları birer mini bilgisayar haline gelmiştir. Kamera, internet tarayıcısı, harita ve binlerce uygulama artık cebimizdeki bu tek cihazda toplanmış durumda. Dokunmatik ekran teknolojisi, telefonların kullanımını çok daha kolay ve sezgisel hale getirmiştir. Akıllı telefonlar sayesinde insanlar artık dünyanın her yerinden anında bilgiye ulaşabilmektedir.',
       questions: [
-        {'question': 'İlk cep telefonları sadece arama yapmak için kullanılırdı.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Akıllı telefonlarda dokunmatik ekran teknolojisi kullanılmaz.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Akıllı telefonlar sayesinde insanlar anında bilgiye ulaşabilir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'İlk cep telefonları kamera ve internet tarayıcısıyla gelirdi.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question':
+              'İlk cep telefonları sadece arama yapmak için kullanılırdı.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Akıllı telefonlarda dokunmatik ekran teknolojisi kullanılmaz.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Akıllı telefonlar sayesinde insanlar anında bilgiye ulaşabilir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'İlk cep telefonları kamera ve internet tarayıcısıyla gelirdi.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
     ReadingPassage(
@@ -927,12 +1552,560 @@ class ComprehensionData {
       content:
           'Mimar Sinan, 16. yüzyılda yaşamış, Osmanlı Devleti\'nin en usta mimarlarından biridir. Süleymaniye Camii ve Selimiye Camii gibi birçok görkemli yapıyı tasarlayarak mimarlık tarihine adını altın harflerle yazdırmıştır. Sinan, yapılarında hem estetiği hem de depreme dayanıklılığı bir araya getirmeyi başarmış, bu yüzden eserlerinin çoğu günümüze kadar sapasağlam ulaşmıştır. Kendisi "ustalık eserim" olarak nitelendirdiği Selimiye Camii\'ni Edirne\'de inşa etmiştir.',
       questions: [
-        {'question': 'Mimar Sinan, Süleymaniye Camii\'ni tasarlamıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Mimar Sinan\'ın eserlerinin hiçbiri günümüze ulaşmamıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
-        {'question': 'Sinan, Selimiye Camii\'ni kendi "ustalık eserim" olarak nitelendirmiştir.', 'answers': ['Doğru', 'Yanlış'], 'correct': 0},
-        {'question': 'Mimar Sinan hiçbir camiyi tasarlamamıştır.', 'answers': ['Doğru', 'Yanlış'], 'correct': 1},
+        {
+          'question': 'Mimar Sinan, Süleymaniye Camii\'ni tasarlamıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Mimar Sinan\'ın eserlerinin hiçbiri günümüze ulaşmamıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question':
+              'Sinan, Selimiye Camii\'ni kendi "ustalık eserim" olarak nitelendirmiştir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Mimar Sinan hiçbir camiyi tasarlamamıştır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
       ],
     ),
+
+    // Seviyeye göre hız ölçme metni: Nurullah Ataç'ın "Kitaba Hürmet"
+    // denemesinin ilkokul/ortaokul/lise seviyelerine göre uyarlanmış üç
+    // hali. Normal konu havuzunun dışında tutuluyor (topic: 'kitaba-hurmet'
+    // ComprehensionData.topics içinde yok) — sadece seviye seçiciyle
+    // erişiliyor.
+    ReadingPassage(
+      id: 'kh-ilkokul',
+      title: 'Kitaba Hürmet',
+      topic: 'kitaba-hurmet',
+      level: 'ilkokul',
+      content:
+          'Okumayı sever misiniz? Böyle bir soru olur mu hiç? Elbette '
+          'seversiniz. Sevmeseydiniz bu yazıyı okuyor olmazdınız. Bir '
+          'yazarın seslendiği kişiler, kesinlikle okumayı seven '
+          'insanlardır. Ama kimisi az okur, kimisi çok. Benim asıl merak '
+          'ettiğim şu: Siz az okuyanlardan mısınız, yoksa çok '
+          'okuyanlardan mı? Eğer az okuyorsanız, kendinize haksızlık '
+          'ediyorsunuz demektir. Çünkü az okumak, neredeyse hiç '
+          'okumamak gibidir. Sizi harika bir kitap dostu olmaya '
+          'çağırıyorum. Dünyada kitaptan daha güzel ne olabilir ki? '
+          'İşte önünüzde iki yüz, üç yüz sayfalık bir kitap duruyor. Ne '
+          'anlattığını henüz bilmiyorsunuz. Yalnızca adını ve yazarını '
+          'görüyorsunuz. Hemen kapağını açın! Belki de içinde '
+          'sevinçleri, üzüntüleri ve meraklarıyla sizi kendine çekecek '
+          'insanlarla tanışacaksınız. Onlarla saatlerce, belki '
+          'günlerce birlikte yaşayacaksınız. Onların sırlarını '
+          'öğrenecek, üzüntülerine üzülüp sevinçleriyle mutlu '
+          'olacaksınız. Hatta en zor günlerinizden birinde, bir roman '
+          'kahramanının yanınıza gelip size destek olduğunu bile '
+          'hissedebilirsiniz. Çok okuyan, kitaplarla vakit geçiren bir '
+          'insan hayatı boyunca asla yalnız kalmaz. Okuyun! Ne '
+          'bulursanız okuyun. En azından bir kere açıp bakın. '
+          'Beğenmediniz mi? Bırakmak çok kolay! Ama diyeceksiniz ki: '
+          '"Kitaplara para veriyoruz, aldanmak istemeyiz. Alacağımız '
+          'kitaplar kaliteli olmalı." Gel gelelim şu para meselesine... '
+          'Bir kitaba ya da dergiye verdiğiniz para ile ondan aldığınız '
+          'mutluluğu kıyaslayabilir misiniz? Beğendiğiniz bir kitabın '
+          'kahramanlarıyla tanışmanın değerini parayla ölçebilir '
+          'misiniz? Bir dergi alırsınız; resimlerine bakar, yazılarını '
+          'okur ve yeni şeyler öğrenirsiniz. Bütün bu kazandıklarınız '
+          'ile ödediğiniz küçük bir miktar para arasında hiçbir ilişki '
+          'yoktur. Zaten hiçbir kitabın veya yazının gerçek değeri '
+          'parayla ölçülemez. Verdiğiniz para, sadece o kitabın '
+          'basılmasına katkı sağlamaktır. Güzel kitapların '
+          'yazılabilmesi için her türlü kitabın basılması gerekir. '
+          'Hayatım boyunca kaç kitap okudum bilmiyorum. Ama '
+          'içlerinden elli, belki de yüz tanesi zihnimde ve kalbimde '
+          'yaşamaya devam ediyor. Diğerlerini okuduğum için de hiç '
+          'pişman değilim. Hatta kötü olduğunu anlayıp yarıda '
+          'bıraktığım kitaplar için bile üzülmüyorum. Aldığı on '
+          'kitaptan biri bile çok iyi çıkan insan şanslı sayılır. Kitap '
+          'alın ve okuyun! Şunu da bilin ki, hiçbir yazar sizi '
+          'kandırmak için yazmaz. Kötü yazan bir yazar bile eserinin '
+          'çok iyi olduğuna inanır. Siz birkaç liranızı verirsiniz, o '
+          'ise yıllarını ve emeğini verir. Ben bu kısa yazıyı yazmak '
+          'için saatlerimi veriyorum. Siz belki beş dakikada okuyup '
+          'bitireceksiniz. Bir roman yazarı ise aylarını bu işe '
+          'ayırıyor. Sırf vakit geçirmek için bir kitaba şöyle bir göz '
+          'atıp geçmek doğru olur mu? Yazıyı beğenmek zorunda '
+          'değilsiniz ama dikkatle okumalısınız. Çünkü yazar, sizi '
+          'güldürmek isterken bile size faydalı olmaya çalışır. Eğer '
+          'bir yazarı ve kitabını ciddiye almazsanız, kitap da size '
+          'küser ve içindeki güzellikleri sizinle paylaşmaz. O zaman '
+          'kitap okumuş olmazsınız; sadece yazılı kâğıtlara bakıp '
+          'gözlerinizi yormuş olursunuz. Kitap okurken beğendiğiniz '
+          'cümleleri yazmak isterseniz not da alabilirsiniz. Ama hiç '
+          'acele etmeyin; çünkü yeni dostunuz olan kitap her zaman '
+          'yanınızda duruyor ve hiçbir yere kaçmıyor.\n\n— Nurullah '
+          'Ataç',
+      questions: [
+        {
+          'question': 'Yazar, insanları kitap okumaya davet etmektedir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Yazara göre, bir kitabın değeri sadece ödenen parayla ölçülür.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Yazara göre az okumak, neredeyse hiç okumamak gibidir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Yazı, kitap okumanın zararlı olduğunu anlatmaktadır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+      ],
+    ),
+    ReadingPassage(
+      id: 'kh-ortaokul',
+      title: 'Kitaba Hürmet',
+      topic: 'kitaba-hurmet',
+      level: 'ortaokul',
+      content:
+          'Okumayı sever misiniz? Böyle bir soru olur mu hiç? Elbette '
+          'seversiniz. Sevmeseydiniz bu yazıyı elinize almaz, bu '
+          'satırları okumazdınız. Bir yazarın seslendiği kitle, '
+          'kesinlikle okumayı seven insanlardan oluşur. Ancak kimimiz '
+          'çok okuruz, kimimiz az. Benim asıl merak ettiğim soru şu: '
+          'Siz az okuyanlardan mısınız, yoksa çok okuyanlardan mı? '
+          'Eğer az okuyan taraftaysanız kendinize haksızlık '
+          'ediyorsunuz demektir. Çünkü az okumak, neredeyse hiç '
+          'okumamakla eş değerdir. Sizi gerçek bir kitap dostu olmaya '
+          'davet ediyorum. Şu dünyada kitaptan daha güzel ne '
+          'olabilir? Önünüzde iki yüz, üç yüz sayfalık bir kitap '
+          'duruyor diyelim... Ne anlattığını henüz bilmiyorsunuz, '
+          'sadece adını ve yazarını görüyorsunuz. Hiç durmayın, açın '
+          'kapağını! Belki de içinde sevinçleri, üzüntüleri, sevgileri '
+          'ya da nefretleriyle sizi kendine çekecek karakterlerle '
+          'tanışacaksınız. Onlarla günlerce birlikte yaşayacak, '
+          'sırlarına ortak olacaksınız. Üzüntülerine üzülüp '
+          'başarılarıyla sevineceksiniz. Hatta en zor gününüzde bir '
+          'roman kahramanının zihninizde belirip size, "Yalnız '
+          'değilsin, ben de benzer şeyler yaşadım!" dediğini '
+          'duyabilirsiniz. Çok okuyan ve kitapların sunduğu dünyalara '
+          'inanan bir insan, hayatı boyunca asla yalnızlık çekmez. '
+          'Okuyun; ne bulursanız okuyun. En azından bir şans verip '
+          'kapağını açın. Beğenmediniz mi? Bırakmak zor değil ya! Ama '
+          'diyeceksiniz ki: "Parayla alıyoruz, aldanmak istemeyiz; '
+          'aldığımız kitaplar kaliteli olmalı." Gelin şu para ve '
+          'aldanma konusunu biraz konuşalım. Bir kitaba veya dergiye '
+          'ödediğiniz miktar ile ondan aldığınız zevk ve bilgi '
+          'arasında bir oran kurabilir misiniz? Beğendiğiniz bir '
+          'romanın dünyasına girmek parayla ölçülebilir mi? Bir '
+          'dergi alırsınız; resimlerine bakar, yazılarını okur, belki '
+          'yeni bir şey öğrenir ya da düşüncelerinizi sorgularsınız. '
+          'Bütün bu zihinsel kazanımlar ile ödediğiniz küçük miktar '
+          'arasında bir ilişki kurmak imkânsızdır. Hiçbir kitabın '
+          'veya yazının gerçek değeri parayla ölçülemez. Verdiğiniz '
+          'ücret, yalnızca o eserin basılmasına ve edebiyat '
+          'dünyasının yaşamasına sağladığınız bir katkıdır. İyi '
+          'kitapların yazılabilmesi için zayıf örneklerin de var '
+          'olması gerekir. Hayatım boyunca kaç kitap okuduğumu '
+          'hatırlamıyorum. Fakat bunların içinden belki elli, belki '
+          'yüz tanesi zihnimde ve ruhumda yaşamaya devam ediyor. '
+          'Diğerlerinin de mutlaka faydası oldu, üzerimde iz '
+          'bıraktılar. Hiçbirini okuduğuma pişman değilim; hatta ilk '
+          'sayfasında kötü olduğunu anlayıp kenara koyduğum kitaplar '
+          'için bile üzülmüyorum. Aldığı on kitaptan biri bile harika '
+          'çıkan insan şanslı sayılır. Şunu da unutmayın: Hiçbir '
+          'yazar okurunu kandırmak için kaleme sarılmaz. En zayıf '
+          'yazan bile eserinin nitelikli olduğuna inanır. Siz en '
+          'fazla küçük bir miktar paranızı riske atarsınız, yazar ise '
+          'aylarını, hatta yıllarını verir. Ben bu kısa yazıyı '
+          'hazırlamak için saatlerimi harcıyorum; siz ise belki '
+          'beş-on dakikada okuyup bitireceksiniz. Bir roman yazarı '
+          'ise aylarını o yapıta adıyor. Dolayısıyla bir yazara veya '
+          'romana sırf vakit geçirme aracı gözüyle bakmak doğru bir '
+          'yaklaşım değildir. Yazarı beğenmek zorunda değilsiniz '
+          'elbette; ancak ona ve emeğine saygı duyarak, ciddiyetle '
+          'okumalısınız. Yazar sizi güldürmeyi amaçladığında bile '
+          'aslında zihninize ve ruhunuza hizmet ediyordur. Eğer bir '
+          'yazarı ve eserini ciddiye almazsanız, kitap da size küser '
+          've derinindeki sırları sizinle paylaşmaz. O zaman okumuş '
+          'olmazsınız; yalnızca yazılı kâğıtlar üzerinde gözlerinizi '
+          'yormuş olursunuz. Okurken beğendiğiniz cümlelerin altını '
+          'çizebilir veya not alabilirsiniz. Ancak acele etmeyin; '
+          'dostunuz olan kitap başucunuzda duruyor ve hiçbir yere '
+          'kaçmıyor.\n\n— Nurullah Ataç',
+      questions: [
+        {
+          'question': 'Yazar, insanları kitap okumaya davet etmektedir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Yazara göre, bir kitabın değeri sadece ödenen parayla ölçülür.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Yazara göre az okumak, neredeyse hiç okumamak gibidir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Yazı, kitap okumanın zararlı olduğunu anlatmaktadır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+      ],
+    ),
+    ReadingPassage(
+      id: 'kh-lise',
+      title: 'Kitaba Hürmet',
+      topic: 'kitaba-hurmet',
+      level: 'lise',
+      content:
+          '— Okumayı sever misiniz? Böyle soru olur mu? Elbette '
+          'seversiniz; eğer sevmeseydiniz bu gazeteyi almaz, bu '
+          'satırları okumazdınız. Her kim olursa olsun bir yazarın '
+          'hitap ettiği kimseler muhakkak okumayı seven kimselerdir. '
+          'Ama kimisi çok kimisi az okur. Ben de sorumu sorarken '
+          'bilhassa bunu öğrenmek istiyordum: Az okuyanlardan '
+          'mısınız, çok okuyanlardan mı? Birinci sınıftansanız '
+          'haksızsınız; çünkü az okumak, hemen hemen hiç '
+          'okumamakla birdir. Sizi bir kitap dostu olmaya davet '
+          'ediyorum. Dünyada kitaptan güzel ne vardır ki? İşte '
+          'önünüzde iki yüz, üç yüz sayfalık bir kitap... Ne '
+          'olduğunu, neden bahsettiğini bilmiyorsunuz. Yalnız ismini '
+          'görüyorsunuz. Yazarını da tanımıyorsunuz. Sadece '
+          'biliyorsunuz ki bir romandır. Hiç durmadan açın, belki '
+          'içinde elemleri, sevinçleri, muhabbetleri veya nefretleri '
+          'sizi alakadar edecek bir veya birkaç insanla '
+          'tanışacaksınız. Onlarla birkaç saat veya birkaç gün '
+          'beraber yaşayacak, onların sırlarını -belki '
+          'kendinizkinden de daha iyi- öğreneceksiniz. Onların belki '
+          'de dostu olacaksınız, onların kederlerine ağlayacak, '
+          'saadetleri ile sevineceksiniz. Onlar da sizin dostunuz '
+          'olacak, en ıstıraplı günlerinizden birinde bir roman '
+          'kahramanlarının size geldiğini görebilir, "Bilmez misin? '
+          'Ben de senin gibi idim!" dediğini duyabilirsiniz. Çok '
+          'okuyan, hikâye ve romanlarla geçen saatlerin '
+          'kaybolmadığına inanan adam ömründe asla yalnız kalmaz. '
+          'Okuyun, ne bulursanız okuyun; hiç olmazsa bir kere açın. '
+          'Çok mu fena buldunuz? Bırakması zor değil ya!... Ama '
+          'diyeceksiniz ki, para veriyorsunuz, aldanmak '
+          'istemezsiniz, alacağınız kitaplar değerli olmalı... Şu '
+          'para ve aldanmak meselesinden bahsedelim. Aldığınız '
+          'kitaba nihayet on, on beş; dergiye de beş yahut en fazla '
+          'yedi lira vermiyor musunuz? Bunu da yerine sarf etmek '
+          'iddiasındasınız. Okuduğunuz kitap, dergi iyi ise ondan '
+          'aldığınız zevk ile verdiğiniz para arasında bir '
+          'münasebet var mıdır? Beğendiğiniz bir romanın şahısları '
+          'ile tanışmak yüz elli kuruş mu eder? On kuruş verip bu '
+          'mecmuayı aldınız. Birtakım resimler gördünüz, yazılar '
+          'okudunuz, belki bir şey öğrendiniz, belki düşüncelerinize '
+          'uymayan sözlerle karşılaşıp sinirlendiniz ve bu suretle '
+          'belki kanaatleriniz biraz sarsıldı veya kuvvet buldu. '
+          'Bütün bunlarla o beş-on lira arasında, sorarım size, bir '
+          'nispet kurmak imkânı var mı? Hayır, siz on lira ile bir '
+          'kitabın, beş lira ile bir derginin hakiki değerini vermiş '
+          'olmuyorsunuz. Zaten hiçbir kitabın, yazının para ile '
+          'ölçülecek bir değeri yoktur. Verdiğiniz para bir iştirak '
+          'bedelidir. Kitabın yazılmasını, derginin çıkmasını mümkün '
+          'kılmak isteyenlerin arasına karışıyorsunuz. İyi kitap '
+          'yazılması için, iyi dergi çıkması için fenalarının da '
+          'bulunması lazımdır. Bilin ki, güzel yazı adeta bir '
+          'mucizedir; fakat bu mucizeyi etrafı hazırlar. Ömrümde kaç '
+          'kitap okudum bilmiyorum; fakat bütün bunlardan belki '
+          'kırk, elli nihayet yüz tanesi içimde yaşar. Öbürleri... '
+          'Elbette onların da faydası oldu, onlar da izini bıraktı. '
+          'Hiçbirini okuduğuma pişman değilim; hatta fena olduğu '
+          'daha ilk sahifede anlaşıldığı için attığım kitapları '
+          'aldığıma da pişman değilim. Aldığı on kitaptan yalnız bir '
+          'tanesi iyi olan adam bahtiyar sayılır. Kitap alın, okuyun, '
+          'beğenirseniz devam edersiniz; fakat bilin ki iyiler '
+          'fenaların, fenalar iyilerin sayesinde yazılıp neşredilir. '
+          'Aldanmak... Tersini bile bile aldatan yazar yok gibidir. '
+          'En fena yazan bile eserinin iyi olduğuna emindir ve sizi '
+          'aldatmak istemez. Zavallı, kendisi aldanıyordur. Siz '
+          'aldanıp beş-on lira veriyorsunuz; o aldanıp ömrünü '
+          'veriyor. Kim daha ziyanda? Ben, derginizde nihayet bir '
+          'sayfa tutacak bu satırları ne kadar zamanda yazıyorum? '
+          'Hiç olmazsa bir saatim gidiyor. Siz belki on dakikada, '
+          'hatta beş dakikada okuyuvereceksiniz. Yalnız bir saatim '
+          'mi? Hayır, elbette her satırda bütün ömrümün, bütün '
+          'okuduklarımın bir hissesi var. Roman yazan bir saatte de '
+          'bitirmiyor, haftalarını, aylarını o işe bağlıyor ve '
+          'kendisi kadar size, kendisinden ziyade size hizmet '
+          'ediyor. Benim yazıma veya onun romanına yalnız vakit '
+          'geçirmek maksadıyla bir göz atmak hakkınız mıdır? '
+          'Beğenmeye mecbursunuz demiyoruz; fakat dikkatlice '
+          'okumaya başlayın, bizi okurken ciddi bir iş gördüğünüzü '
+          'bilin. Bizim hakkımızda vereceğiniz hüküm ağır olabilir. '
+          '"Bir para etmez" diye elinizden atabilirsiniz; fakat '
+          'eğlenmek için okumayın, çünkü ben de o da sizinle '
+          'eğlenmek için yazmıyoruz. Söylediklerimizi, '
+          'yazdıklarımızı beğenirseniz dikkatle okuyun ki '
+          'unutmayasınız. Size not alın, kitapların altını çizin '
+          'demiyorum; onu ben de sevmem. Dikkatle, ciddiyetle '
+          'okumanız kâfidir, yani kitap veya mecmua okuduğunuz '
+          'zaman elinizdeki yazı tuhaf varlık vakalar bile '
+          'anlatıyorsa, ciddi bir iş gördüğünüze inanın. Çünkü yazar '
+          'sizi güldürmek istediği zaman bile, size hizmet etmek '
+          'ister. Ama bu hizmet eşit adamlar arasındaki hizmettir; '
+          'siz yazarı kendinizden küçük görür, onu ciddiye almaz ve '
+          'eserlerini ancak vakit geçirmek için bir vasıta '
+          'sayarsanız, o da size küser ve yazısı, size sırlarını '
+          'vermez. O zaman kitap okumuş olmazsınız; bütün yaptığınız '
+          'birtakım karalamış kâğıtlarla göz yormaktan ibaret kalır. '
+          'Not almak da olur; fakat beğendiğiniz cümle sizi bizzat '
+          'buna mecbur etmeli. O zaman kalkar, kâğıt kalem arar, '
+          'yazarsınız. Ama acele etmeyin, kitap, dergi yani '
+          'dostunuz yanınızda, kaçmıyor, kaçmayacak...\n\n— '
+          'Nurullah Ataç',
+      questions: [
+        {
+          'question': 'Yazar, insanları kitap okumaya davet etmektedir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Yazara göre, bir kitabın değeri sadece ödenen parayla ölçülür.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Yazara göre az okumak, neredeyse hiç okumamak gibidir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question': 'Yazı, kitap okumanın zararlı olduğunu anlatmaktadır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+      ],
+    ),
+
+    // Seviyeye göre Son Metin (son test) havuzu — "Hayatına Kitap Okuyarak
+    // Hareket Kat!" metninin ilkokul ve ortaokul/lise seviyelerine göre
+    // uyarlanmış halleri. Ortaokul ve lise için hoca AYNI metni verdi.
+    ReadingPassage(
+      id: 'st-ilkokul',
+      title: 'Hayatına Kitap Okuyarak Hareket Kat!',
+      topic: 'son-test',
+      level: 'ilkokul',
+      isFinalTest: true,
+      content:
+          'Evrende her şey hareket eder. Yıldızlar, gezegenler, ağaçlar ve '
+          'canlı-cansız bütün varlıklar... Hareketsiz duran hiçbir şey '
+          'yoktur. Nerede bir hareket varsa, orada hayat vardır. Cansız '
+          'gördüğümüz taş ve demir bile kendi içinde sistemli bir '
+          'harekete sahiptir. Bir atasözümüz şöyle der: "Nerede hareket, '
+          'orada bereket." Bu söz hayatın her alanında geçerlidir. '
+          'Durarak ve sadece bekleyerek kim hedefine ulaşabilir ki? '
+          'Dünyamız, denizlerimiz ve nehirlerimiz sürekli hareket eder. '
+          'Zaman bile bir an olsun durmaz. Peki, biz insanlar nasıl '
+          'hareketsiz kalabiliriz? Karlı toprağı delip çıkan kardelen '
+          'çiçeklerini düşünün... Onlar da hareket hâlindedir. Çünkü '
+          'hareket varsa hayat vardır. Durgun kalmak ise gerilemek '
+          'demektir. Toprağa can veren sudur. Su olmazsa toprak kurur. '
+          'Su geldiğinde ise her yer yeşillenir ve şenlenir. İnsan '
+          'bedeni de böyledir. Uzun süre hareketsiz kalırsak '
+          'hantallaşırız, çabuk yoruluruz. Spor yapan bir insan canlı '
+          've sağlıklıyken, yapmayan insan sürekli yorgun hisseder. '
+          'Ancak buradaki tek konu bedenimizin hareketi değil. Asıl '
+          'önemli olan zihnimizin ve ruhumuzun hareketidir. İnsan '
+          'sadece bedenden ibaret değildir; ruhumuz ve beynimiz de '
+          'vardır. Beynimiz hareketsiz kalırsa tıpkı kurak bir toprak '
+          'gibi verimsizleşir. Peki, beynimizin pas tutmasını nasıl '
+          'önleriz? Tabii ki yeni şeyler öğrenerek! Su toprağa nasıl '
+          'can veriyorsa, kitaplar da beynimize öyle can verir. '
+          'Faydalı bir kitap okuduğumuzda, bilgilerin ışığı beynimizi '
+          'aydınlatır. Bunun yolu da her gün düzenli ve planlı '
+          'okumaktan geçer. Bir çiftçinin "Ben tarlamı geçen yıl '
+          'suladım, artık sulamama gerek yok" demesi ne kadar '
+          'yanlışsa, "Bugün okudum, yarın okumama gerek yok" demek de '
+          'o kadar yanlıştır. Başarılı olmak istiyorsak okuma '
+          'alışkanlığımızı her gün sürdürmeliyiz. Bir söz vardır: '
+          '"Düşüncelerine dikkat et, davranışın olur. Davranışlarına '
+          'dikkat et, alışkanlığın olur. Alışkanlıklarına dikkat et, '
+          'karakterin olur. Karakterine dikkat et, kaderin olur." İşte '
+          'kitaplar, bizim en büyük düşünce kaynağımızdır. Bazen bir '
+          'kitap, hatta tek bir cümle bile hayatımızı değiştirebilir. '
+          'Zamanını iyi planlayan, okuyan ve çalışan insanlar hayatı '
+          'dolu dolu yaşarlar. Gerçekten iz bırakan insanların hayata '
+          'attıkları bir imza vardır. Kimi buluşlarıyla, kimi güzel '
+          'düşünceleriyle, kimi de dürüstlüğü ve yardımseverliğiyle '
+          'unutulmaz olur. Şimdi harekete geçme zamanı! Akan su '
+          'tazeliğini korur, akmayan su ise zamanla bozulur. Siz de '
+          'hayatınıza kitap okuyarak hareket katın!',
+      questions: [
+        {
+          'question': 'Yazıya göre, hareket olan yerde hayat vardır.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Yazıya göre, kitap okumanın beynimize hiçbir faydası yoktur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+        {
+          'question': 'Yazıya göre, okuma alışkanlığı her gün sürdürülmelidir.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 0,
+        },
+        {
+          'question':
+              'Yazıya göre, bir kez okuyup bırakmak yeterlidir, tekrar '
+              'okumaya gerek yoktur.',
+          'answers': ['Doğru', 'Yanlış'],
+          'correct': 1,
+        },
+      ],
+    ),
+    ReadingPassage(
+      id: 'st-ortaokul',
+      title: 'Hayatına Kitap Okuyarak Hareket Kat!',
+      topic: 'son-test',
+      level: 'ortaokul',
+      isFinalTest: true,
+      content: _sonTestOrtaokulLiseContent,
+      questions: _sonTestOrtaokulLiseQuestions,
+    ),
+    ReadingPassage(
+      id: 'st-lise',
+      title: 'Hayatına Kitap Okuyarak Hareket Kat!',
+      topic: 'son-test',
+      level: 'lise',
+      isFinalTest: true,
+      content: _sonTestOrtaokulLiseContent,
+      questions: _sonTestOrtaokulLiseQuestions,
+    ),
+  ];
+
+  // Ortaokul ve lise için hoca AYNI son test metnini verdi — tek bir yerde
+  // tanımlayıp iki ReadingPassage'da da kullanıyoruz.
+  static const String _sonTestOrtaokulLiseContent =
+      'Kâinatta her şey hareket halinde… Yıldızlar, gezegenler, ağaçlar, '
+      'canlı ve cansız tüm varlıklar. Boş duran hareketsiz duran hiçbir '
+      'şey yok. Nerde hareket varsa orda hayat var. Cansız dediğimiz taş '
+      've demir gibi cisimlerde bile hareket söz konusu. Bu tür cisimler '
+      'atomdan yaratıldığı için onlarda da elektron hareketi vardır. '
+      'Cansız varlıklar da, yani hareketsiz dursa da içten içe hareket '
+      'halinde. Peki, canlıların en şereflisi, en mükemmeli biz insanlar '
+      'ne kadar hareketliyiz? Canlı olduğumuz halde ne kadar canlıyız? '
+      'Her günümüz aynı mı geçiyor? Yoksa capcanlı, hareketli günler mi '
+      'yaşıyoruz? "Nerde hareket, orda bereket." demiş atalarımız. Bu '
+      'söz, ticaret alanında, sosyal alanda, bireysel hayatta, her yerde '
+      'geçerlidir bence. Hareketin olmadığı yer; durgunluğun, '
+      'beklemenin olduğu yerdir. Durarak, bekleyerek kim hedefine '
+      'ulaşmış söyler misiniz? Dünyamız, her an hareket halinde değil '
+      'mi? Denizler, nehirler her zaman hareket halinde değil mi? '
+      'Güneşimiz ve tüm yıldızlar hareket halinde değil mi? Ya zaman! '
+      'Zaman, durmadan hareket halinde değil mi? Öyle iken biz, nasıl '
+      'hareketsiz kalabiliriz? Karları delen kardelenler, toprağı yaran '
+      'tohumlar hep hareket halinde. Çünkü hareket varsa bereket var; '
+      'hareket varsa hayat var. Durgunluğun, gerilemekten hatta '
+      'ölmekten farkı yoktur. Bakın, toprağı hareketlendiren, '
+      'canlandıran sudur. Allah su vermezse toprak; çorak ve kurak '
+      'olarak kalır. Suyla ilkbahar gelir, her yer şenlenir, yeşillenir '
+      've canlanır. Yani, su hayattır toprak için. Şimdi de insan '
+      'hayatına bakalım. Bedenimiz, uzun süre hareketsiz kalsa '
+      'hantallaşır, yağlanır ve ağırlaşır. Böylece hareket hızımız '
+      'yavaşlar. Hareket derken sadece sporu kast etmiyorum tabii ki. '
+      'Spor bile söz konusu olsa spor yapan ile yapmayan kişiler '
+      'arasında bile ne kadar fark olduğunu biliyoruz. Biri hareketli, '
+      'canlı, sağlıklı iken; diğeri ise monoton, her zaman yorgun ve '
+      'hastalıklı… Doktorların neden her zaman spor yapın, dediğini '
+      'şimdi daha iyi anlıyorum. Aslında spordan bahsetmiyorum. '
+      'Konumuz "Hayatta hareketlilik." Yani hiçbir iş yapmadan boş '
+      'oturmanın ne kadar tehlikeli olduğunu anlatmaya çalışıyorum. '
+      'Yalnız, fiziksel hareketsizlik tehlikeli olduğu gibi, ruhsal, '
+      'düşünsel hareketsizlik daha tehlikelidir; çünkü insan sadece '
+      'fiziksel yapıdan ibaret değildir. Bizim ruhumuz, beynimiz de '
+      'var. Oradaki durgunluk, başıboşluk, hedefsizlik fiziksel '
+      'hayatımızı doğrudan etkileyeceği gibi, gelecek hayatımızı da '
+      'büsbütün etkiler. Beynimiz hareketsiz kalsa, çevikliğini ve '
+      'dinamikliğini kaybeder. Kurak bir toprak gibi verimsizleşir. '
+      'Peki, "Beynimizin pas tutmasını nasıl önleriz?" derseniz, tabii '
+      'ki de her zaman öğrendiğimiz ve öğreneceğimiz bilgilerle... '
+      'Bilgi de beynimizin hayat kaynağıdır. Su toprağa nasıl hayat '
+      'veriyorsa, ışık yandığında karanlık nasıl kaçıyorsa; bizler de '
+      'faydalı bir kitap okuduğumuzda, bilgilerin ışığıyla beynimiz, '
+      'canlanır ve aydınlanır. Yani beynimizin de bilgi hareketliliğine '
+      'ihtiyacı var. Bunun yolu da sürekli ve planlı olarak okumaktır. '
+      'Neden sürekli ve planlı diyorum? Çünkü başarmak için, ilerlemek '
+      'için, yükselmek için, bilgi hareketliliğinin sürekli olması '
+      'gerekir. "Bugün okudum, yarın okumaya gerek yok." ya da "Okul '
+      'bitti, artık kitaplar da bitti." demek çok yanlıştır. Bu durum '
+      'şuna benzer: Bir çiftçinin, "Ben tarlamı geçen sene suladım, '
+      'artık bundan sonra sulamaya gerek yok." demesine benzer ki, bu '
+      'da hayati bir yanlıştır. O çiftçi istediği kadar eksin, ne '
+      'yazık ki, ektiğini biçemeyecektir. Okumak da öyledir. Her gün '
+      'olmalıdır, her yıl olmalıdır, sürekli olmalıdır. Aksi takdirde '
+      'başarılı ve kazançlı bir hayatı zor buluruz. Kısacası, '
+      'beynimizin, hayatımızın verimliliği, başarısı, ilacı; bilgi '
+      'hareketliliğiyle, yani kitap okumakla sağlanır. Hani "Her şey '
+      'düşüncede başlar." diye bir söz var. Gerçekten de çok doğru. '
+      'Hatta bir atasözü var, konuyla tamamen örtüşüyor: '
+      '"Düşüncelerine dikkat et, davranışın haline gelir; '
+      'davranışlarına dikkat et; alışkanlığın haline gelir; '
+      'alışkanlığına dikkat et, karakterin olur; karakterine dikkat '
+      'et, kaderin olur." Kitaplar en büyük düşünce kaynağıdır. Bir '
+      'kitap, hatta bir kitaptan bir söz, bir örnek hayatını '
+      'değiştirebilir. Belli bir işi, bir ödevi olan biri için zamanın '
+      'çok büyük önemi vardır. Bu tür insanlar başarı odaklı, azimli, '
+      'prensipli insanlardır. Dakikaların hatta saniyelerin bile '
+      'hesabını yaparlar. Nerde, ne zaman, ne iş yapacakları bellidir. '
+      'Monoton bir hayattan uzaktırlar. İşte bu tür insanlar hayatı '
+      'yaşarlar. Çünkü hayatı, yaşlanarak yaşayamazsın; hayatı '
+      'yaşayarak, çalışarak ve başarılı olarak yaşayabilirsin. '
+      'Gerçekten yaşayanların ise, hayata attıkları bir imza vardır. O '
+      'imza yıllar geçse de unutulmaz. Kimisi buluşlarıyla hayata '
+      'imza atar, kimisi düşünceleriyle, kimisi eserleriyle imza atar, '
+      'kimisi başarılarıyla, kimisi dürüstlüğüyle, kimisi '
+      'yardımseverliğiyle, kimisi çalışkanlığıyla, kimisi hizmetiyle… '
+      'Önemli olan bundan yüz yıl sonra sen olmasan da hayata, '
+      'ülkene attığın iyi bir imzanın olmasıdır. Şimdi harekete geçme '
+      'zamanı, hareketsizlik ölüm demektir. Akan su değil, akmayan su '
+      'kokar. Hayata akan yol alır; akmayan buhar olur, tıpkı akmayan '
+      'su gibi yok olur. Hayatına kitap okuyarak ve okuduklarını '
+      'uygulayarak hareket kat!';
+
+  static const List<Map<String, dynamic>> _sonTestOrtaokulLiseQuestions = [
+    {
+      'question': 'Yazıya göre, hareket olan yerde hayat vardır.',
+      'answers': ['Doğru', 'Yanlış'],
+      'correct': 0,
+    },
+    {
+      'question':
+          'Yazıya göre, kitap okumanın beynimize hiçbir faydası yoktur.',
+      'answers': ['Doğru', 'Yanlış'],
+      'correct': 1,
+    },
+    {
+      'question': 'Yazıya göre, okuma alışkanlığı her gün sürdürülmelidir.',
+      'answers': ['Doğru', 'Yanlış'],
+      'correct': 0,
+    },
+    {
+      'question':
+          'Yazıya göre, bir kez okuyup bırakmak yeterlidir, tekrar okumaya '
+          'gerek yoktur.',
+      'answers': ['Doğru', 'Yanlış'],
+      'correct': 1,
+    },
   ];
 
   /// Verilen konu id'sine ait metinleri döner. Konu null ise ya da o

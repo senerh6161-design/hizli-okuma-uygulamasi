@@ -235,15 +235,33 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
   };
 
   static const int _totalPasses = 3;
-  // Klasör 1 · Etkinlik 9'dan bir tık daha hızlı zamanlama.
-  static const int _lineIntervalMs = 1200;
-  static const int _stage1RevealMs = 380;
   static const int _wordsPerLine = 7;
   static const int _fillerWordCount = 22;
+
+  // Öğrenci hızını kendi seçebilsin diye 1. ve 2. Bölüm'ün akış hızı
+  // sabit değil, seçilebilir bir aralıkta.
+  static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
+  static const List<int> _stage1RevealMsBySpeed = [550, 380, 230];
+  static const List<int> _lineIntervalMsBySpeed = [1700, 1200, 800];
+  int _speedLevel = 1;
 
   final Random _random = Random();
   bool _hasCompletedOnce = false;
   bool _isPaused = false;
+
+  // ANTREMAN (en başta çalışır, ısınma turu): Klasör 1 · Kelime Akışı'ndaki
+  // ile AYNI mekanik — kelimeler en üstten, soldan sağa doğru tek tek
+  // birikerek gelir, TEK SAYFA, döngü yok. Süresiz/puansız, öğrenci hazır
+  // olunca DEVAM ET'e basar.
+  static const Color _warmupColor = Color(0xFF0284C7);
+  static const int _warmupWordsPerPage = 30;
+  bool _warmupDone = false;
+  bool _warmupRunning = false;
+  late List<String> _warmupWords;
+  int _warmupWordIndex = 0;
+  Timer? _warmupTimer;
+  int _warmupElapsedSeconds = 0;
+  Timer? _warmupElapsedTimer;
 
   // 1. BÖLÜM (ÖNCE çalışır): 3 AYRI tur — her turda tek bir hedef kelime
   // önceden duyurulur, kelimeler TEK TEK yan yana birikerek akar, aralarına
@@ -255,6 +273,8 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
   bool _stage1ShowQuestion = false;
   int _stage1FlowIndex = 0;
   Timer? _stage1Timer;
+  int _stage1ElapsedSec = 0;
+  Timer? _stage1ElapsedTimer;
 
   _WordRound get _stage1Round => _stage1Rounds[_stage1RoundIndex];
 
@@ -270,6 +290,8 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
   int _pass = 0;
   int _lineIndex = 0;
   Timer? _timer;
+  int _stage2ElapsedSec = 0;
+  Timer? _stage2ElapsedTimer;
 
   _WordFlowRound get _oldRound => _stage2Rounds[_stage2RoundIndex];
 
@@ -292,11 +314,68 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
   void dispose() {
     _timer?.cancel();
     _stage1Timer?.cancel();
+    _stage1ElapsedTimer?.cancel();
+    _stage2ElapsedTimer?.cancel();
+    _warmupTimer?.cancel();
+    _warmupElapsedTimer?.cancel();
     super.dispose();
   }
 
   void _prepareSession() {
+    _prepareWarmup();
     _prepareStage1Rounds();
+  }
+
+  void _prepareWarmup() {
+    final pool = List<String>.from(_wordPool)..shuffle(_random);
+    _warmupWords = pool.take(_warmupWordsPerPage).toList();
+    _warmupWordIndex = 0;
+    _warmupRunning = false;
+    _warmupDone = false;
+  }
+
+  void _startWarmup() {
+    _warmupTimer?.cancel();
+    _warmupElapsedTimer?.cancel();
+    setState(() {
+      _warmupRunning = true;
+      _warmupWordIndex = 1; // ilk kelime hemen görünsün
+      _warmupElapsedSeconds = 0;
+    });
+    _scheduleWarmupWord();
+    _warmupElapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _warmupElapsedSeconds++);
+    });
+  }
+
+  // Öğrenci baştan izlemek isterse AYNI sayfayı sıfırdan tekrar birikmeye
+  // başlatır — "DEVAM ET"e basmadan istediği kadar tekrar izleyebilir.
+  void _replayWarmup() {
+    _startWarmup();
+  }
+
+  void _finishWarmup() {
+    _warmupTimer?.cancel();
+    _warmupElapsedTimer?.cancel();
+    setState(() {
+      _warmupRunning = false;
+      _warmupDone = true;
+    });
+  }
+
+  // Tek sayfalık antreman — tüm kelimeler bir kez birikip biter, döngü
+  // yok (gerçek akış zaten 1. Bölüm'de baştan sona gösterilecek).
+  void _scheduleWarmupWord() {
+    if (_warmupWordIndex >= _warmupWords.length) return;
+    _warmupTimer = Timer(
+      Duration(milliseconds: _stage1RevealMsBySpeed[_speedLevel]),
+      () {
+        if (!mounted || !_warmupRunning) return;
+        setState(() => _warmupWordIndex++);
+        _scheduleWarmupWord();
+      },
+    );
   }
 
   void _prepareStage1Rounds() {
@@ -402,61 +481,91 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
 
   void _startStage1Flow() {
     _stage1Timer?.cancel();
+    _stage1ElapsedTimer?.cancel();
     setState(() {
       _stage1FlowRunning = true;
       _stage1FlowIndex = 0;
+      _stage1ElapsedSec = 0;
+    });
+    _stage1ElapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _stage1ElapsedSec++);
     });
     _scheduleStage1Next();
   }
 
   void _scheduleStage1Next() {
-    _stage1Timer = Timer(const Duration(milliseconds: _stage1RevealMs), () {
-      if (!mounted) return;
-      if (_stage1FlowIndex >= _stage1Round.sequence.length - 1) {
-        setState(() {
-          _stage1FlowRunning = false;
-          _stage1ShowQuestion = true;
-        });
-        return;
-      }
-      setState(() => _stage1FlowIndex++);
-      _scheduleStage1Next();
-    });
+    _stage1Timer = Timer(
+      Duration(milliseconds: _stage1RevealMsBySpeed[_speedLevel]),
+      () {
+        if (!mounted) return;
+        if (_stage1FlowIndex >= _stage1Round.sequence.length - 1) {
+          _stage1ElapsedTimer?.cancel();
+          setState(() {
+            _stage1FlowRunning = false;
+            _stage1ShowQuestion = true;
+          });
+          return;
+        }
+        setState(() => _stage1FlowIndex++);
+        _scheduleStage1Next();
+      },
+    );
   }
 
   void _pauseGame() {
+    _warmupTimer?.cancel();
+    _warmupElapsedTimer?.cancel();
     _stage1Timer?.cancel();
+    _stage1ElapsedTimer?.cancel();
     _timer?.cancel();
+    _stage2ElapsedTimer?.cancel();
     setState(() => _isPaused = true);
   }
 
   void _resumeGame() {
     setState(() => _isPaused = false);
-    if (_stage1FlowRunning) {
+    if (_warmupRunning) {
+      _scheduleWarmupWord();
+      _warmupElapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _warmupElapsedSeconds++);
+      });
+    } else if (_stage1FlowRunning) {
+      _stage1ElapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _stage1ElapsedSec++);
+      });
       _scheduleStage1Next();
     } else if (_isRunning) {
-      _timer = Timer.periodic(const Duration(milliseconds: _lineIntervalMs), (
-        _,
-      ) {
+      _stage2ElapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted) return;
-        final lines = _oldRound.lines;
-        if (_lineIndex >= lines.length - 1) {
-          if (_pass >= _totalPasses - 1) {
-            _timer?.cancel();
-            setState(() {
-              _isRunning = false;
-              _showQuestions = true;
-            });
-            return;
-          }
-          setState(() {
-            _pass++;
-            _lineIndex = 0;
-          });
-        } else {
-          setState(() => _lineIndex++);
-        }
+        setState(() => _stage2ElapsedSec++);
       });
+      _timer = Timer.periodic(
+        Duration(milliseconds: _lineIntervalMsBySpeed[_speedLevel]),
+        (_) {
+          if (!mounted) return;
+          final lines = _oldRound.lines;
+          if (_lineIndex >= lines.length - 1) {
+            if (_pass >= _totalPasses - 1) {
+              _timer?.cancel();
+              _stage2ElapsedTimer?.cancel();
+              setState(() {
+                _isRunning = false;
+                _showQuestions = true;
+              });
+              return;
+            }
+            setState(() {
+              _pass++;
+              _lineIndex = 0;
+            });
+          } else {
+            setState(() => _lineIndex++);
+          }
+        },
+      );
     }
   }
 
@@ -542,32 +651,42 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
 
   void _start() {
     _timer?.cancel();
+    _stage2ElapsedTimer?.cancel();
     setState(() {
       _isRunning = true;
       _showQuestions = false;
       _pass = 0;
       _lineIndex = 0;
+      _stage2ElapsedSec = 0;
     });
-    _timer = Timer.periodic(const Duration(milliseconds: _lineIntervalMs), (_) {
+    _stage2ElapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      final lines = _oldRound.lines;
-      if (_lineIndex >= lines.length - 1) {
-        if (_pass >= _totalPasses - 1) {
-          _timer?.cancel();
-          setState(() {
-            _isRunning = false;
-            _showQuestions = true;
-          });
-          return;
-        }
-        setState(() {
-          _pass++;
-          _lineIndex = 0;
-        });
-      } else {
-        setState(() => _lineIndex++);
-      }
+      setState(() => _stage2ElapsedSec++);
     });
+    _timer = Timer.periodic(
+      Duration(milliseconds: _lineIntervalMsBySpeed[_speedLevel]),
+      (_) {
+        if (!mounted) return;
+        final lines = _oldRound.lines;
+        if (_lineIndex >= lines.length - 1) {
+          if (_pass >= _totalPasses - 1) {
+            _timer?.cancel();
+            _stage2ElapsedTimer?.cancel();
+            setState(() {
+              _isRunning = false;
+              _showQuestions = true;
+            });
+            return;
+          }
+          setState(() {
+            _pass++;
+            _lineIndex = 0;
+          });
+        } else {
+          setState(() => _lineIndex++);
+        }
+      },
+    );
   }
 
   List<int> _optionsFor(int correct) {
@@ -730,6 +849,59 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
     );
   }
 
+  Widget _elapsedBadge(int seconds) {
+    return Container(
+      margin: const EdgeInsets.only(right: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.shade300),
+      ),
+      child: Text(
+        '⏱ $seconds sn',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: Colors.amber.shade800,
+        ),
+      ),
+    );
+  }
+
+  Widget _speedChipRow(Color color) {
+    return Row(
+      children: [
+        Text(
+          'Hız:',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Wrap(
+          spacing: 6,
+          children: [
+            for (int i = 0; i < _speedLabels.length; i++)
+              ChoiceChip(
+                label: Text(_speedLabels[i]),
+                selected: _speedLevel == i,
+                onSelected: (_) => setState(() => _speedLevel = i),
+                selectedColor: color,
+                labelStyle: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: _speedLevel == i ? Colors.white : Colors.black87,
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return CompletionPopScope(
@@ -757,6 +929,18 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
   }
 
   Widget _buildBody() {
+    if (!_warmupDone) {
+      if (_warmupRunning) {
+        return KeyedSubtree(
+          key: const ValueKey('warmup-flow'),
+          child: _buildWarmupFlow(),
+        );
+      }
+      return KeyedSubtree(
+        key: const ValueKey('warmup-intro'),
+        child: _buildWarmupIntro(),
+      );
+    }
     if (_slideStageStarted) {
       if (_showSlideIntro) {
         return KeyedSubtree(
@@ -796,6 +980,229 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
     return KeyedSubtree(
       key: ValueKey('old-flow-$_stage2RoundIndex'),
       child: _showQuestions ? _buildOldQuestionView() : _buildOldFlowView(),
+    );
+  }
+
+  Widget _buildWarmupIntro() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: _warmupColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Text(
+            'Antreman · Odaklanma',
+            style: TextStyle(fontWeight: FontWeight.bold, color: _warmupColor),
+          ),
+        ),
+        const Spacer(),
+        const Center(child: Text('📝', style: TextStyle(fontSize: 96))),
+        const SizedBox(height: 20),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: _warmupColor.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: _warmupColor, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Önce gözümüzü ısındıracağız! Kelimeler kutunun en '
+                  'üstünden, soldan sağa doğru tek tek birikerek gelecek — '
+                  'biz de her birini birlikte takip edeceğiz. Hazır '
+                  'olduğunda sıra sende, BAŞLA\'ya basalım!',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF075985),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        _speedChipRow(_warmupColor),
+        const Spacer(),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _startWarmup,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text(
+              'BAŞLA',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _warmupColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWarmupFlow() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: _warmupColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'Antreman · Odaklanma',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: _warmupColor,
+                ),
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '⏱ $_warmupElapsedSeconds sn',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber.shade900,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                buildPauseButton(color: _warmupColor, onPressed: _pauseGame),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _speedChipRow(_warmupColor),
+        const SizedBox(height: 10),
+        Expanded(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade300),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            // Klasör 1 · Kelime Akışı'ndaki gibi: kelimeler en üstten,
+            // soldan sağa doğru tek tek birikerek geliyor, kutu/kayma yok.
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: SingleChildScrollView(
+                child: Wrap(
+                  alignment: WrapAlignment.start,
+                  spacing: 14,
+                  runSpacing: 12,
+                  children: [
+                    for (int i = 0; i < _warmupWordIndex; i++)
+                      TweenAnimationBuilder<double>(
+                        key: ValueKey('warmup-word-$i'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 220),
+                        builder: (context, value, child) => Opacity(
+                          opacity: value,
+                          child: Transform.scale(
+                            scale: 0.8 + 0.2 * value,
+                            child: child,
+                          ),
+                        ),
+                        child: Text(
+                          _warmupWords[i],
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: _replayWarmup,
+                  icon: const Icon(Icons.replay_rounded),
+                  label: const Text(
+                    'TEKRAR İZLE',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _warmupColor,
+                    side: const BorderSide(color: _warmupColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: SizedBox(
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: _finishWarmup,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text(
+                    'DEVAM ET',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _warmupColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -848,8 +1255,8 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'TEK bir kelimeye odaklan — "${round.target}"! Akış boyunca kaç kez '
-                  'göreceğini dikkatlice say.',
+                  '"${round.target}" kelimesine odaklanacağız! Akış boyunca '
+                  'kaç kez göreceğimizi dikkatlice sayacağız.',
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF075985),
@@ -908,10 +1315,7 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  '"${round.target}" say',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                ),
+                _elapsedBadge(_stage1ElapsedSec),
                 buildPauseButton(
                   color: const Color(0xFF0284C7),
                   onPressed: _pauseGame,
@@ -920,6 +1324,13 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Text(
+          '"${round.target}" sayıyoruz',
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        _speedChipRow(const Color(0xFF0284C7)),
         const SizedBox(height: 12),
         Expanded(
           child: Container(
@@ -937,33 +1348,36 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
               ],
             ),
             child: SingleChildScrollView(
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 14,
-                runSpacing: 12,
-                children: [
-                  for (int i = 0; i <= _stage1FlowIndex; i++)
-                    TweenAnimationBuilder<double>(
-                      key: ValueKey('s1-$_stage1RoundIndex-$i'),
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 220),
-                      builder: (context, value, child) => Opacity(
-                        opacity: value,
-                        child: Transform.scale(
-                          scale: 0.8 + 0.2 * value,
-                          child: child,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  alignment: WrapAlignment.start,
+                  spacing: 14,
+                  runSpacing: 12,
+                  children: [
+                    for (int i = 0; i <= _stage1FlowIndex; i++)
+                      TweenAnimationBuilder<double>(
+                        key: ValueKey('s1-$_stage1RoundIndex-$i'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 220),
+                        builder: (context, value, child) => Opacity(
+                          opacity: value,
+                          child: Transform.scale(
+                            scale: 0.8 + 0.2 * value,
+                            child: child,
+                          ),
+                        ),
+                        child: Text(
+                          round.sequence[i],
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
                         ),
                       ),
-                      child: Text(
-                        round.sequence[i],
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -1122,8 +1536,9 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Bu sefer kelimeler satır satır akıp kaybolacak. TEK bir kelimeyi '
-                  'aklında tut — "${round.targetWord}"! Kaç kez göreceğini dikkatlice say.',
+                  'Bu sefer kelimeler satır satır akıp kaybolacak. '
+                  '"${round.targetWord}" kelimesini aklımızda tutacağız! '
+                  'Kaç kez göreceğimizi dikkatlice sayacağız.',
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF115E59),
@@ -1179,14 +1594,10 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  '"${round.targetWord}" say',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                ),
+                if (_isRunning) _elapsedBadge(_stage2ElapsedSec),
                 if (_isRunning)
                   buildPauseButton(
                     color: const Color(0xFF0D9488),
@@ -1196,7 +1607,14 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
             ),
           ],
         ),
-        const SizedBox(height: 30),
+        const SizedBox(height: 8),
+        Text(
+          '"${round.targetWord}" sayıyoruz',
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        _speedChipRow(const Color(0xFF0D9488)),
+        const SizedBox(height: 14),
         Expanded(
           child: Center(
             child: Container(
@@ -1222,34 +1640,37 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
                   ).animate(animation),
                   child: FadeTransition(opacity: animation, child: child),
                 ),
-                child: Wrap(
+                child: Align(
                   key: ValueKey('$_pass-$_lineIndex-$_isRunning'),
-                  alignment: WrapAlignment.center,
-                  spacing: 14,
-                  runSpacing: 10,
-                  children: _isRunning
-                      ? round.lines[_lineIndex]
-                            .map(
-                              (w) => Text(
-                                w,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    alignment: WrapAlignment.start,
+                    spacing: 14,
+                    runSpacing: 10,
+                    children: _isRunning
+                        ? round.lines[_lineIndex]
+                              .map(
+                                (w) => Text(
+                                  w,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0F172A),
+                                  ),
                                 ),
+                              )
+                              .toList()
+                        : [
+                            const Text(
+                              'BAŞLAT\'a bas',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
                               ),
-                            )
-                            .toList()
-                      : [
-                          const Text(
-                            'BAŞLAT\'a bas',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
                             ),
-                          ),
-                        ],
+                          ],
+                  ),
                 ),
               ),
             ),
@@ -1420,7 +1841,8 @@ class _ClassroomWordsPageState extends State<ClassroomWordsPage> {
               Expanded(
                 child: Text(
                   'Bu sefer soru yok! Kelimeler satırın bir ucundan diğerine kayacak, '
-                  'her kelimede yön değişecek. Başını oynatmadan, sadece gözlerinle takip et.',
+                  'her kelimede yön değişecek. Başımızı oynatmadan, sadece '
+                  'gözlerimizle takip edeceğiz.',
                   style: TextStyle(
                     fontSize: 13,
                     color: Color(0xFF9F1239),

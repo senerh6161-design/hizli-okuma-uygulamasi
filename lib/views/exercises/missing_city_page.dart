@@ -7,7 +7,7 @@ import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
 
-enum _Phase { intro, playing }
+enum _Phase { intro, preview, playing }
 
 class _Round {
   final List<String> shown;
@@ -49,6 +49,10 @@ class _MissingCityPageState extends State<MissingCityPage> {
   bool _isPaused = false;
   int _speedLevel = 1;
 
+  static const int _previewSeconds = 10;
+  int _previewElapsedSec = 0;
+  Timer? _previewTimer;
+
   int _roundIndex = 0;
   int _totalScore = 0;
   int _correctCount = 0;
@@ -59,6 +63,12 @@ class _MissingCityPageState extends State<MissingCityPage> {
   String? _selectedAnswer;
   bool _answered = false;
   int _lastPoints = 0;
+
+  // Önizleme (6 şehri ezberleme) ve oyun sırasında ekran dar (dikey)
+  // kaldığında butonlar taşabiliyordu — bu iki aşamada artık yatay
+  // çevirme zorunlu, "telefonunu çevir" ekranı gösterilir.
+  bool get _needsLandscape =>
+      _phase == _Phase.preview || _phase == _Phase.playing;
 
   @override
   void initState() {
@@ -75,6 +85,7 @@ class _MissingCityPageState extends State<MissingCityPage> {
   void dispose() {
     _roundTimer?.cancel();
     _tickTimer?.cancel();
+    _previewTimer?.cancel();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -90,6 +101,20 @@ class _MissingCityPageState extends State<MissingCityPage> {
   }
 
   void _startGame() {
+    _previewTimer?.cancel();
+    setState(() {
+      _phase = _Phase.preview;
+      _previewElapsedSec = 0;
+    });
+    _previewTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _previewElapsedSec++);
+      if (_previewElapsedSec >= _previewSeconds) _finishPreview();
+    });
+  }
+
+  void _finishPreview() {
+    _previewTimer?.cancel();
     setState(() {
       _phase = _Phase.playing;
       _roundIndex = 0;
@@ -280,20 +305,160 @@ class _MissingCityPageState extends State<MissingCityPage> {
         appBar: AppBar(title: const Text('🗺️ Eksik Şehri Bul')),
         body: Padding(
           padding: const EdgeInsets.all(20),
-          child: Stack(
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: _phase == _Phase.intro
-                    ? _buildIntro()
-                    : _buildPlaying(key: ValueKey('round-$_roundIndex')),
-              ),
-              if (_isPaused)
-                buildPauseOverlay(color: _color, onResume: _resumeGame),
-            ],
+          child: OrientationBuilder(
+            builder: (context, orientation) {
+              if (_needsLandscape && orientation == Orientation.portrait) {
+                return _buildRotatePrompt();
+              }
+              return Stack(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: switch (_phase) {
+                      _Phase.intro => _buildIntro(),
+                      _Phase.preview => _buildPreview(),
+                      _Phase.playing => _buildPlaying(
+                        key: ValueKey('round-$_roundIndex'),
+                      ),
+                    },
+                  ),
+                  if (_isPaused)
+                    buildPauseOverlay(color: _color, onResume: _resumeGame),
+                ],
+              );
+            },
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRotatePrompt() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 900),
+            builder: (context, t, child) {
+              return Transform.rotate(angle: t * 1.5708, child: child);
+            },
+            child: Icon(Icons.screen_rotation_rounded, size: 88, color: _color),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Telefonunu yan çevir',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Bu etkinlik yatay ekranda daha rahat oynanır.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Oyun başlamadan önce 6 şehir 10 saniye boyunca gösterilir — öğrenci
+  // hepsini ezberleyip turlara öyle başlar.
+  Widget _buildPreview() {
+    final remaining = (_previewSeconds - _previewElapsedSec).clamp(
+      0,
+      _previewSeconds,
+    );
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: _color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'Önizleme · Şehirleri Ezberle',
+                style: TextStyle(fontWeight: FontWeight.bold, color: _color),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$remaining sn',
+                style: TextStyle(
+                  color: Colors.amber.shade900,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: _color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.info_outline_rounded, color: _color, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '6 şehre dikkatlice odaklan! Az sonra her satırda bunlardan '
+                  'sadece 5\'i görünecek.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Center(
+            child: Wrap(
+              spacing: 14,
+              runSpacing: 14,
+              alignment: WrapAlignment.center,
+              children: [
+                for (final city in _cities)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _color.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _color, width: 2),
+                    ),
+                    child: Text(
+                      city,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: _color,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

@@ -151,6 +151,17 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
   static const int _warmupObjectCount = 6;
   static const int _warmupStepMs = 550;
 
+  // 1. Bölüm'ün rengi tek bir mavi olmak zorunda değil — öğrenci kendi
+  // temasını seçebilsin diye küçük bir palet sunuluyor.
+  static const List<Color> _focusThemePalette = [
+    Color(0xFF2563EB), // mavi
+    Color(0xFF16A34A), // yeşil
+    Color(0xFFDB2777), // pembe
+    Color(0xFF7C3AED), // mor
+    Color(0xFFEA580C), // turuncu
+  ];
+  Color _focusThemeColor = _focusThemePalette[0];
+
   final Random _random = Random();
   bool _hasCompletedOnce = false;
   bool _isPaused = false;
@@ -1202,6 +1213,47 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
     );
   }
 
+  Widget _themeSwatchRow() {
+    return Row(
+      children: [
+        Text(
+          'Tema: ',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade600,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(width: 6),
+        for (final color in _focusThemePalette)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: GestureDetector(
+              onTap: () => setState(() => _focusThemeColor = color),
+              child: Container(
+                width: 26,
+                height: 26,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: _focusThemeColor == color
+                        ? Colors.black87
+                        : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                child: _focusThemeColor == color
+                    ? const Icon(Icons.check, color: Colors.white, size: 14)
+                    : null,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _buildWarmupIntro() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1209,14 +1261,14 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+            color: _focusThemeColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Text(
+          child: Text(
             '1. Bölüm · Odaklanma',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2563EB),
+              color: _focusThemeColor,
             ),
           ),
         ),
@@ -1227,18 +1279,18 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+            color: _focusThemeColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Row(
+          child: Row(
             children: [
               Icon(
                 Icons.info_outline_rounded,
-                color: Color(0xFF2563EB),
+                color: _focusThemeColor,
                 size: 20,
               ),
-              SizedBox(width: 8),
-              Expanded(
+              const SizedBox(width: 8),
+              const Expanded(
                 child: Text(
                   'Nesneler daire üzerinde kendiliğinden dönecek. Her nesneye sırayla, sanki '
                   'fotoğrafını çekiyormuş gibi anlık odaklan — sen sadece izle!',
@@ -1252,6 +1304,8 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
             ],
           ),
         ),
+        const SizedBox(height: 14),
+        _themeSwatchRow(),
         const Spacer(),
         SizedBox(
           width: double.infinity,
@@ -1264,7 +1318,7 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
+              backgroundColor: _focusThemeColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -1286,14 +1340,14 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                color: _focusThemeColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text(
+              child: Text(
                 '1. Bölüm · Odaklanma',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2563EB),
+                  color: _focusThemeColor,
                 ),
               ),
             ),
@@ -1319,14 +1373,16 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                   ),
                 ),
                 buildPauseButton(
-                  color: const Color(0xFF2563EB),
+                  color: _focusThemeColor,
                   onPressed: _pauseGame,
                 ),
               ],
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
+        _themeSwatchRow(),
+        const SizedBox(height: 10),
         Expanded(
           child: Center(
             // Dairesel DEĞİL, Wrap DEĞİL: nesneler TEK satırda kalmalı,
@@ -1355,19 +1411,21 @@ class _ObjectFlowCountingPageState extends State<ObjectFlowCountingPage> {
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
+                              // Aktif nesnenin arkası açık tonlu — dolgu
+                              // koyu renk olursa emojiyi kapatıyordu.
                               color: isActive
-                                  ? const Color(0xFF2563EB)
+                                  ? _focusThemeColor.withValues(alpha: 0.16)
                                   : Colors.white,
                               border: Border.all(
-                                color: const Color(0xFF2563EB),
+                                color: _focusThemeColor,
                                 width: isActive ? 3 : 2,
                               ),
                               boxShadow: isActive
                                   ? [
                                       BoxShadow(
-                                        color: const Color(
-                                          0xFF2563EB,
-                                        ).withValues(alpha: 0.4),
+                                        color: _focusThemeColor.withValues(
+                                          alpha: 0.35,
+                                        ),
                                         blurRadius: 14,
                                         spreadRadius: 2,
                                       ),

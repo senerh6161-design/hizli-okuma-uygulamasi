@@ -337,10 +337,7 @@ class _AttentionQuestionPageState extends State<AttentionQuestionPage> {
                   children: [
                     const SizedBox(height: 16),
                     const Center(
-                      child: Image(
-                        image: AssetImage('assets/images/eye_character.png'),
-                        height: 140,
-                      ),
+                      child: Text('🧠', style: TextStyle(fontSize: 88)),
                     ),
                     const SizedBox(height: 16),
                     Container(
@@ -490,6 +487,25 @@ class _AttentionQuestionPageState extends State<AttentionQuestionPage> {
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: _color,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '⏱ ${(remainingFraction * totalMs / 1000).ceil()} sn',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber.shade900,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                   if (!_answered)

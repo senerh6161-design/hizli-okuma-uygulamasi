@@ -18,7 +18,17 @@ import 'word_pair_count_page.dart';
 import 'word_recall_grid_page.dart';
 import 'word_span_page.dart';
 
-enum _Phase { intro, preText, preQuiz, activities, postText, postQuiz, results }
+enum _Phase {
+  intro,
+  warmupIntro,
+  warmup,
+  preText,
+  preQuiz,
+  activities,
+  postText,
+  postQuiz,
+  results,
+}
 
 class _Folder2Activity {
   final String title;
@@ -40,9 +50,11 @@ class _Folder2Activity {
 /// Klasör 1'deki gibi: önce kısa bir metinle okuma hızı ölçülür, ardından
 /// Klasör 2'deki 10 etkinlik tamamlanır, sonra FARKLI bir metinle tekrar hız
 /// ölçülür — her iki metinden sonra da D/Y sorularıyla anlama kontrol
-/// edilir. Klasör 1'den farkı: konu seçme adımı yok, metin havuzundan
-/// rastgele bir metin seçilir (hoca gerçek metinleri verince
-/// [Folder2ReadingData] güncellenecek).
+/// edilir. Klasör 1'den farkı: konu seçme adımı yok (metin havuzundan
+/// rastgele bir metin seçilir — hoca gerçek metinleri verince
+/// [Folder2ReadingData] güncellenecek), ve Ön Metin'den ÖNCE puansız bir
+/// "antreman metni" var — kelimeler sayfanın üstünden soldan sağa doğru tek
+/// tek gelir, hız ÖLÇÜLMEZ, sadece ısınma amaçlıdır.
 class Folder2SessionPage extends StatefulWidget {
   const Folder2SessionPage({super.key});
 
@@ -134,9 +146,165 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
     ),
   ];
 
+  // Son Metin'den ÖNCE gösterilen, puansız antreman metni — Klasör 1'deki
+  // ile AYNI metin: hocanın "Hızlı Okumanın Alışkanlık Haline Gelmesi
+  // İçin Önemli On Madde" metninin TAMAMI (kitap s. 53-57). Kelimeler
+  // sayfanın üstünden soldan sağa doğru tek tek gelir; kutu dolunca yeni
+  // bir sayfa açılır, öğrenci metnin tamamını sayfa sayfa okur. Hız
+  // ÖLÇÜLMEZ, sadece ısınma amaçlıdır.
+  static const String _warmupText =
+      'HIZLI OKUMANIN ALIŞKANLIK HALİNE GELMESİ İÇİN ÖNEMLİ ON MADDE:\n\n'
+      '1. İlk zamanlar sadece göz hızını artırınız.\n'
+      'İlk zamanlar anlamaya odaklanmayınız. Yoksa hızınız istenilen '
+      'düzeye çıkmayabilir. Eski alışkanlıkları yıkmak tabii ki çok zor. '
+      'Dolayısıyla asla önyargılı olmayınız. Bir de başaracağınıza olan '
+      'inanç çok yüksek olsun. Şunu da unutmayınız ki: "Ben '
+      'başaramayacağım galiba." diye işe başlayanla "Ben bu işi '
+      'başaracağım." diye başlayanın elde edecekleri sonuç asla aynı '
+      'olmayacaktır. Zihnimizde şöyle bir düşünce baloncuğu '
+      'oluşturalım: "Her şeye rağmen çalışacağım. Başarana kadar '
+      'vazgeçmeyeceğim!" Emin olun ki insanların çoğu, kaybettikleri '
+      'için başarısız olmazlar. İnsanların çoğunun başarısız olmasının '
+      'nedeni, yaptıkları işi yarıda bırakıp pes etmeleri, o işi '
+      'neticelendirmemeleridir. Bir işi yarıda bırakmak, onu hiç '
+      'yapmamakla eş değer olduğu gibi insan için zaman, enerji ve '
+      'özgüven kaybına da sebep olur.\n\n'
+      '2. Egzersizleri her gün uygulayınız.\n'
+      'Gözlerimiz ve beynimiz, hızlı görmeye ve odaklanmaya alışıncaya '
+      'kadar, göz-beyin arasındaki uyum hızını en az iki katına '
+      'çıkarana kadar, egzersizleri her gün, en az 3-4 hafta boyunca '
+      'aralıksız yapmalı.\n\n'
+      '3. Sözcükleri içten ve dıştan seslendirmeyiniz!\n'
+      'İçten okumanın ya da dudakla okumanın sesli okumadan pek de '
+      'farkı yoktur. İç sesi tamamen yok edemeyiz belki; ama en aza '
+      'indirmemiz gerekir. Bu kazanım da, kitaptaki etkinlikleri '
+      'verilen sayıda ve sürelerde yapmaya bağlı olarak zamanla '
+      'oluşacaktır. Seslendirerek 1 dakikada okuyacağımız kelime '
+      'sayısı sınırlıdır. Sesli olarak anlaşılabilir bir şekilde '
+      'okuyacağımız sözcük sayısı 250-300 kelime arasındadır. Daha '
+      'fazlası okunsa da anlaşılmaz; ama sessiz okumanın sınırı '
+      'kişiden kişiye değişir. Örneğin hızlı okuma tekniğini öğrenmiş '
+      'bir öğrenci dakikada 400-800 kelime okuyabilir.\n\n'
+      '4. Sözcük hazinenizi her gün bir kelime de olsa geliştiriniz.\n'
+      'Eğer bir öğrenci bir kitap kurduysa ve sözcük hazinesi çok '
+      'zenginse bu okuma oranı gitgide artacaktır. Yeteneğine, almış '
+      'olduğu eğitime, kitap okuma alışkanlığına ve kendini sürekli '
+      'geliştirmesine bağlı olarak bu 1 dakikada okunan kelime sayısı, '
+      'daha da yükselecektir. Yani sözcükleri içten seslendirme '
+      'oranımızı ne kadar azaltırsak o kadar hızlı okumaya başlarız. '
+      'Ne kadar çok sözcük bilirsek o kadar az seslendirme yaparız. '
+      'Çünkü genelde seslendirdiğimiz kelimeler, ilk kez '
+      'karşılaştığımız kelimelerdir. Şu bir gerçek ki beynimiz, bir '
+      'salisede bilindik bir kelimeyi algılayabilmektedir. O zaman '
+      'yapacağımız önemli işlerden biri de bilindik kelime sayısını '
+      'artırmak olmalıdır. Bu muhteşem potansiyeli kullanabilmek, '
+      'gözümüzün bu muhteşem hızından faydalanabilmek için sık sık '
+      'kitap okumalı, ara ara sözlük taraması yaparak sözcük '
+      'bilgimizi geliştirmeliyiz. Aslında hızlı okuma sürecinde '
+      'günlük 20 kelimenin anlamını öğrensek bir ayda 600 kelime '
+      'yapar ki, bu da müthiş bir sonuçtur.\n\n'
+      '5. Sözcükleri gruplandırarak okuyunuz.\n'
+      'Tek tek sözcüklere değil, sözcük gruplarına odaklanarak '
+      'okumalı. Bunun alışkanlık haline gelmesi için egzersizleri '
+      'yaparken ilk zamanlar anlama odaklanmamalı. Israrla '
+      'egzersizleri yapmaya devam etmeli. Kelimeleri bir nesne, '
+      'paragrafları da bir hediye kutusu varsayarsak şöyle bir örnek '
+      'verebiliriz: Kutunun içindeki hediyeyi bir bütün olarak '
+      'görürüz. Parçalara pek de takılmayız. O hediyeyi anlamlı kılan '
+      'da zaten o bütünlüktür. Kelimeler de bir cümlenin, paragrafın '
+      'hatta bir yazının anlamlı parçalarıdır. Bir kelimenin cümle '
+      'içinde anlamı değişebilir. Dolayısıyla cümle içindeki bulunan '
+      'kelimeleri ne kadar hızlı okursak anlam hediyesine o kadar '
+      'çabuk ulaşırız. Bu konuyla ilgili örnekleri ve açıklamaları '
+      'etkinlikler bölümünde bulabilirsiniz.\n\n'
+      '6. Geriye dönük değil, ileriye dönük okuyunuz.\n'
+      'Geriye dönüşleri azaltmalı ve sıfıra indirmeli. Bir kelimeyi, '
+      'cümleyi sık sık geriye dönerek tekrar okumak, özgüven '
+      'eksikliğini doğurur. Bunu aşmanın yolu, tüm dikkatimizi '
+      'okuduğumuz yazıya vermektir. Okuduğumuz parçayla adeta '
+      'iletişime geçmeli, bize ne anlatmaya çalıştığını kavramaya '
+      'çalışmalıyız. Dikkatimizi parçada yoğunlaştırmak için yazıyı '
+      'okumadan önce kendimize sorular sorarak dikkatimizi '
+      'canlandırabiliriz. "Yazar bana ne anlatmaya çalışıyor?" "Bu '
+      'metinden ne sonuç çıkarabilirim?" Hatta okuduğumuz paragraf '
+      'sorularını sıkıcılıktan kurtarmak için paragrafa başlamadan '
+      'önce "Hey dostum, senin derdin ne?" diyerek işi biraz da '
+      'espriye vurarak dikkatimize uyandırabiliriz. Bu tip sorularla '
+      'okumaya başladığımızda dikkatimiz, daha canlı olacak ve bir '
+      'cümleyi, bir metni tekrar tekrar okumuş olmaktan ve zaman '
+      'kaybından kurtulmuş olacağız. Şu bir gerçek ki, hedefine '
+      'varmış, başarıya ulaşmış tüm insanların hayatlarını '
+      'gözlemlediğimizde "Her ne iş yapıyorsan o işi, hayatın o işe '
+      'bağlıymışçasına yap." ilkesini tüm çalışmalarında '
+      'kullandıklarını görüyoruz.\n\n'
+      '7. İlk zamanlar her satırı en fazla üç veya dört duruşta '
+      'okuyunuz.\n'
+      'Egzersizleri sabırla uygulayarak odaklanma hızımızı artırmalı '
+      've bir satırdaki duruş sayımızı düşürmek için gayret etmeliyiz. '
+      'Unutmayalım ki, her gün yapılan bir davranış daha kolay ve '
+      'daha hızlı yapılarak alışkanlık haline gelir. Ve şunu da '
+      'unutmayalım ki, biz koşmayı öğrenmeden önce yürümeyi öğrendik. '
+      'Yıllarca tek tek kelimelerle okumaya alışmış olan gözümüzün bu '
+      'alışkanlığını yıkmak, zaman alabilir. Biraz zamana, biraz '
+      'sabırla çalışmaya ve daha çok kendimize inanmaya ihtiyacımız '
+      'olacaktır.\n\n'
+      '8. Dikkatinizi sadece ve sadece okuduğunuz parçaya odaklayınız.\n'
+      'Dağınık dikkat, yapılan işte görünmesine rağmen zihnin '
+      'yapılandan uzaklaşarak daldan dala konması, konudan konuya '
+      'atlamasıdır. Eğer bu okunan bir kitap ise gözler ile '
+      'düşüncenin aynı doğrultuda olmaması demektir. Bunun önüne '
+      'geçmek için okurken belirli aralıklarla kendimize soru '
+      'yöneltebiliriz. "Düşüncem ile okuduklarım aynı doğrultuda mı?" '
+      'Cevabınız evet ise hızınızı hiç düşürmeden cümlenin, '
+      'paragrafın ve metnin ana düşüncesine odaklanarak okumanızı '
+      'sürdürün. Sözcüklere değil, anlama ve düşünceye yoğunlaşın.\n\n'
+      '9. Kararlı ve istikrarlı çalışınız.\n'
+      'Kayayı delen damlacıkların kuvveti değil sürekliliğidir. İlk '
+      'zamanlar anlama oranı düşse de, kararlılıkla okumaya devam '
+      'ederseniz okuma hızınız en az iki katına çıkacaktır. Kültür '
+      'birikimi ve kitap okuma alışkanlığınıza göre de hızınız ve '
+      'anlama oranınızın giderek arttığını gördükçe kendiniz bile '
+      'ulaştığınız seviyeye şaşıracaksınız. İşte başarının altın '
+      'kuralı: Tüm dikkatini, yaptığın işte topla. Okuyorsan sadece '
+      've sadece okuduğunu düşünmelisin ve tüm dikkatini okuduğun '
+      'yazıya vermelisin. Anlam hazinelerinin anahtarı budur.\n\n'
+      '10. Yani hızlı okumak için kısaca üç şey gerekli:\n'
+      '1. İnanarak ISRARLA çalışmak\n'
+      '2. İnanarak ISRARLA çalışmak\n'
+      '3. İnanarak ISRARLA çalışmak\n'
+      'Hızlı okumak için olmazsa olmaz iki madde:\n'
+      '1. Kendine inanmak ve güvenmek\n'
+      '2. Daha iyisini yapabileceğini düşünmek ve çalışmak\n'
+      'Daha iyisi için gayret ediniz ve daha iyisini gerçekleştirene '
+      'kadar vazgeçmeyiniz, pes etmeyiniz, yılmayınız ve lütfen bir '
+      'daha deneyiniz!';
+  // Kimine yavaş, kimine hızlı gelebilir diye öğrenci kendi hızını seçiyor.
+  static const List<String> _warmupSpeedLabels = ['Yavaş', 'Orta', 'Hızlı'];
+  static const List<int> _warmupWordMsBySpeed = [550, 350, 200];
+  int _warmupSpeedLevel = 1;
+  static const int _warmupWordsPerPage = 55;
+
   final Random _random = Random();
   _Phase _phase = _Phase.intro;
   final Set<int> _activityDone = {};
+
+  late final List<String> _warmupWords = _warmupText
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty)
+      .toList();
+  late final List<List<String>> _warmupPages = [
+    for (int i = 0; i < _warmupWords.length; i += _warmupWordsPerPage)
+      _warmupWords.sublist(
+        i,
+        i + _warmupWordsPerPage > _warmupWords.length
+            ? _warmupWords.length
+            : i + _warmupWordsPerPage,
+      ),
+  ];
+  int _warmupPageIndex = 0;
+  int _warmupWordIndex = 0;
+  bool _warmupDone = false;
+  Timer? _warmupTimer;
 
   ReadingPassage? _preText;
   ReadingPassage? _postText;
@@ -157,7 +325,55 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
   @override
   void dispose() {
     _tickTimer?.cancel();
+    _warmupTimer?.cancel();
     super.dispose();
+  }
+
+  // ---------------- ANTREMAN METNİ (puansız, süre ölçülmez) ----------------
+
+  void _goToWarmupIntro() {
+    setState(() => _phase = _Phase.warmupIntro);
+  }
+
+  void _startWarmup() {
+    _warmupTimer?.cancel();
+    setState(() {
+      _phase = _Phase.warmup;
+      _warmupPageIndex = 0;
+      _warmupWordIndex = 1; // ilk kelime hemen görünsün
+      _warmupDone = false;
+    });
+    _scheduleWarmupWord();
+  }
+
+  // Sayfa dolunca (kelimeler bitince) kısa bir bekleme sonrası yeni bir
+  // sayfa açılıp kaldığı yerden devam ediyor — son sayfa bitince metnin
+  // tamamı okunmuş oluyor.
+  void _scheduleWarmupWord() {
+    final currentPage = _warmupPages[_warmupPageIndex];
+    if (_warmupWordIndex >= currentPage.length) {
+      if (_warmupPageIndex >= _warmupPages.length - 1) {
+        setState(() => _warmupDone = true);
+        return;
+      }
+      _warmupTimer = Timer(const Duration(milliseconds: 900), () {
+        if (!mounted) return;
+        setState(() {
+          _warmupPageIndex++;
+          _warmupWordIndex = 1;
+        });
+        _scheduleWarmupWord();
+      });
+      return;
+    }
+    _warmupTimer = Timer(
+      Duration(milliseconds: _warmupWordMsBySpeed[_warmupSpeedLevel]),
+      () {
+        if (!mounted) return;
+        setState(() => _warmupWordIndex++);
+        _scheduleWarmupWord();
+      },
+    );
   }
 
   // Sıra hep aynı kalıpta olmasın diye sorular her seferinde karıştırılmış
@@ -281,20 +497,36 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         title: const Text('📊 Ön Metin Karnen'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _reportRow('⏱️ Süre', '$_elapsedSeconds saniye'),
-            _reportRow('📖 Okunan', '$wordCount kelime'),
-            _reportRow('⚡ Hız', '$_preWpm WPM'),
-            _reportRow('🎯 Anlama', '%$_preComprehensionPercent'),
-            const SizedBox(height: 4),
-            Text(
-              'Şimdi ${_activities.length} etkinliğe geçiyoruz, sonunda tekrar ölçeceğiz!',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _reportRow('⏱️ Süre', '$_elapsedSeconds saniye'),
+              _reportRow('📖 Okunan', '$wordCount kelime'),
+              const SizedBox(height: 14),
+              _metricBar(
+                label: '⚡ Hız',
+                value: _preWpm,
+                maxValue: 300,
+                color: const Color(0xFF2563EB),
+                suffix: ' WPM',
+              ),
+              const SizedBox(height: 10),
+              _metricBar(
+                label: '🎯 Anlama',
+                value: _preComprehensionPercent,
+                maxValue: 100,
+                color: const Color(0xFF16A34A),
+                suffix: '%',
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Şimdi ${_activities.length} etkinliğe geçiyoruz, sonunda tekrar ölçeceğiz!',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              ),
+            ],
+          ),
         ),
         actions: [
           ElevatedButton(
@@ -330,6 +562,54 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
           ),
         ],
       ),
+    );
+  }
+
+  // Tek bir değeri (WPM ya da %) yatay bar olarak gösterir — Ön Metin
+  // karnesinde henüz karşılaştırma yok, tek ölçüm var.
+  Widget _metricBar({
+    required String label,
+    required int value,
+    required int maxValue,
+    required Color color,
+    String suffix = '',
+  }) {
+    final fraction = maxValue <= 0 ? 0.0 : (value / maxValue).clamp(0.0, 1.0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            Text(
+              '$value$suffix',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: fraction,
+            minHeight: 10,
+            backgroundColor: color.withValues(alpha: 0.12),
+            valueColor: AlwaysStoppedAnimation(color),
+          ),
+        ),
+      ],
     );
   }
 
@@ -371,7 +651,7 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _goToPostText();
+              _goToWarmupIntro();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
@@ -441,6 +721,8 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
           padding: const EdgeInsets.all(16),
           child: switch (_phase) {
             _Phase.intro => _buildIntro(),
+            _Phase.warmupIntro => _buildWarmupIntro(),
+            _Phase.warmup => _buildWarmupFlow(),
             _Phase.preText => _buildReadingView(
               _preText!,
               'ÖN METİN',
@@ -532,6 +814,12 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
             subtitle: 'Göz hızından kelime oyunlarına',
           ),
           _stepRow(
+            icon: Icons.local_fire_department_rounded,
+            color: const Color(0xFFEA580C),
+            title: 'Antreman Metni',
+            subtitle: 'Puansız ısınma — hız ölçülmez',
+          ),
+          _stepRow(
             icon: Icons.auto_stories_rounded,
             color: const Color(0xFF059669),
             title: 'Son Metin',
@@ -541,7 +829,7 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
             icon: Icons.emoji_events_rounded,
             color: const Color(0xFFE11D48),
             title: 'Sonuç',
-            subtitle: 'Okuma hızın ve dikkat puanın ayrı ayrı',
+            subtitle: 'Okuma hızın ve dikkat puanın grafikle',
             isLast: true,
           ),
           const SizedBox(height: 28),
@@ -636,6 +924,254 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _warmupSpeedChipRow() {
+    return Row(
+      children: [
+        Text(
+          'Hız: ',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        const SizedBox(width: 6),
+        for (int i = 0; i < _warmupSpeedLabels.length; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          ChoiceChip(
+            label: Text(_warmupSpeedLabels[i]),
+            selected: _warmupSpeedLevel == i,
+            onSelected: (_) => setState(() => _warmupSpeedLevel = i),
+            selectedColor: const Color(0xFFEA580C),
+            labelStyle: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: _warmupSpeedLevel == i
+                  ? Colors.white
+                  : const Color(0xFFEA580C),
+            ),
+            backgroundColor: const Color(0xFFEA580C).withValues(alpha: 0.08),
+            side: BorderSide(
+              color: const Color(
+                0xFFEA580C,
+              ).withValues(alpha: _warmupSpeedLevel == i ? 1 : 0.3),
+            ),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildWarmupIntro() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEA580C).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'Antreman Metni',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFEA580C),
+                    ),
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 16),
+                    const Center(
+                      child: Text('🔥', style: TextStyle(fontSize: 64)),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEA580C).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: Color(0xFFEA580C),
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Kelimeleri sayfanın en üstünden, soldan sağa '
+                              'doğru birlikte takip edeceğiz. Sayfa dolunca '
+                              'yeni bir sayfa açılacak — metnin tamamını '
+                              'birlikte okuyacağız. Bu bölümde hızımızı '
+                              'ÖLÇMEYECEĞİZ — sadece gözlerimizi '
+                              'ısındıracağız!',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF9A3412),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _warmupSpeedChipRow(),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: _startWarmup,
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text(
+                        'BAŞLA',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEA580C),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWarmupFlow() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEA580C).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            'Antreman Metni · Sayfa ${_warmupPageIndex + 1}/'
+            '${_warmupPages.length} · süre ölçülmüyor',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFEA580C),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _warmupSpeedChipRow(),
+        const SizedBox(height: 10),
+        Expanded(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            // Kelimeler sayfanın en üstünden, soldan sağa doğru tek tek
+            // birikiyor — normal bir metin gibi doğal olarak alt satıra
+            // geçiyor, bilerek Center DEĞİL topLeft.
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: SingleChildScrollView(
+                child: Wrap(
+                  alignment: WrapAlignment.start,
+                  spacing: 8,
+                  runSpacing: 12,
+                  children: [
+                    for (
+                      int i = 0;
+                      i < _warmupWordIndex &&
+                          i < _warmupPages[_warmupPageIndex].length;
+                      i++
+                    )
+                      TweenAnimationBuilder<double>(
+                        key: ValueKey('warmup-$_warmupPageIndex-$i'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 220),
+                        builder: (context, value, child) => Opacity(
+                          opacity: value,
+                          child: Transform.scale(
+                            scale: 0.8 + 0.2 * value,
+                            child: child,
+                          ),
+                        ),
+                        child: Text(
+                          _warmupPages[_warmupPageIndex][i],
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: _warmupDone
+              ? ElevatedButton.icon(
+                  onPressed: _goToPostText,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text(
+                    'DEVAM ET',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFEA580C),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
     );
   }
 
@@ -949,7 +1485,7 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
           width: double.infinity,
           height: 52,
           child: ElevatedButton.icon(
-            onPressed: allDone ? _goToPostText : _confirmSkipToPostText,
+            onPressed: allDone ? _goToWarmupIntro : _confirmSkipToPostText,
             icon: Icon(
               allDone ? Icons.arrow_forward : Icons.warning_amber_rounded,
             ),
@@ -973,9 +1509,6 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
   }
 
   Widget _buildResultsView() {
-    final wpmDelta = _postWpm - _preWpm;
-    final comprehensionDelta =
-        _postComprehensionPercent - _preComprehensionPercent;
     final attentionScore = ProgressManager.attentionSuccess;
 
     return Column(
@@ -990,15 +1523,13 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
         Expanded(
           child: ListView(
             children: [
-              _resultCard(
+              _comparisonCard(
                 icon: Icons.speed,
                 color: const Color(0xFF2563EB),
                 title: 'Okuma Hızı',
-                mainValue: '$_preWpm → $_postWpm WPM',
-                subValue: wpmDelta >= 0
-                    ? '+$wpmDelta WPM arttı'
-                    : '$wpmDelta WPM azaldı',
-                subColor: wpmDelta >= 0 ? Colors.green : Colors.orange,
+                before: _preWpm,
+                after: _postWpm,
+                suffix: ' WPM',
               ),
               const SizedBox(height: 12),
               _resultCard(
@@ -1010,18 +1541,13 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
                 subColor: Colors.grey,
               ),
               const SizedBox(height: 12),
-              _resultCard(
+              _comparisonCard(
                 icon: Icons.menu_book,
                 color: Colors.green,
                 title: 'Anlama (D/Y)',
-                mainValue:
-                    '%$_preComprehensionPercent → %$_postComprehensionPercent',
-                subValue: comprehensionDelta >= 0
-                    ? '+$comprehensionDelta puan arttı'
-                    : '$comprehensionDelta puan azaldı',
-                subColor: comprehensionDelta >= 0
-                    ? Colors.green
-                    : Colors.orange,
+                before: _preComprehensionPercent,
+                after: _postComprehensionPercent,
+                suffix: '%',
               ),
             ],
           ),
@@ -1098,6 +1624,119 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
           ),
         ],
       ),
+    );
+  }
+
+  // Sonuç ekranında Ön Metin → Son Metin karşılaştırmasını iki yatay bar
+  // olarak (Önce/Sonra) gösterir — artma/azalma tek bakışta görülür.
+  Widget _comparisonCard({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required int before,
+    required int after,
+    String suffix = '',
+  }) {
+    final delta = after - before;
+    final maxValue = [before, after, 1].reduce((a, b) => a > b ? a : b);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: color.withValues(alpha: 0.12),
+                child: Icon(icon, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              Text(
+                delta >= 0 ? '+$delta$suffix arttı' : '$delta$suffix azaldı',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: delta >= 0 ? Colors.green : Colors.orange,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _comparisonBarRow(
+            'Önce',
+            before,
+            maxValue,
+            color.withValues(alpha: 0.35),
+            suffix,
+          ),
+          const SizedBox(height: 8),
+          _comparisonBarRow('Sonra', after, maxValue, color, suffix),
+        ],
+      ),
+    );
+  }
+
+  Widget _comparisonBarRow(
+    String label,
+    int value,
+    int maxValue,
+    Color color,
+    String suffix,
+  ) {
+    final fraction = (value / maxValue).clamp(0.0, 1.0);
+    return Row(
+      children: [
+        SizedBox(
+          width: 44,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: fraction,
+              minHeight: 16,
+              backgroundColor: color.withValues(alpha: 0.1),
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 54,
+          child: Text(
+            '$value$suffix',
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              color: color,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

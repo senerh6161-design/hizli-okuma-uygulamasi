@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'exam_words_page.dart';
 import 'folder1_session_page.dart';
 import 'folder2_session_page.dart';
+import 'folder3_session_page.dart';
 
 class _FolderInfo {
   final int number;
@@ -22,9 +23,9 @@ class _FolderInfo {
 }
 
 /// Egzersizler sekmesinin giriş ekranı: toplamda 10 klasör (her biri 10
-/// egzersiz, toplam 100 egzersiz) planlanıyor. Şu an Klasör 1 tamamen,
-/// Klasör 2 ise ilk etkinliğiyle hazır; diğerleri hoca yeni etkinlikleri
-/// paylaştıkça açılacak.
+/// egzersiz, toplam 100 egzersiz) planlanıyor. Şu an Klasör 1 ve 2
+/// tamamen, Klasör 3 ise ilk birkaç etkinliğiyle hazır; diğerleri hoca
+/// yeni etkinlikleri paylaştıkça açılacak.
 class ExerciseFoldersPage extends StatelessWidget {
   const ExerciseFoldersPage({super.key});
 
@@ -45,12 +46,13 @@ class ExerciseFoldersPage extends StatelessWidget {
       totalCount: 10,
       page: () => const Folder2SessionPage(),
     ),
-    const _FolderInfo(
+    _FolderInfo(
       number: 3,
       title: 'Klasör 3',
-      isUnlocked: false,
-      readyCount: 0,
+      isUnlocked: true,
+      readyCount: 2,
       totalCount: 10,
+      page: () => const Folder3SessionPage(),
     ),
     _FolderInfo(
       number: 4,
@@ -144,7 +146,7 @@ class ExerciseFoldersPage extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Her klasörde 10 egzersiz olacak. Şimdilik Klasör 1 ve 2 açık.',
+                          'Her klasörde 10 egzersiz olacak. Şimdilik Klasör 1, 2 ve 3 açık.',
                           style: TextStyle(color: Colors.white70, fontSize: 13),
                         ),
                       ],
