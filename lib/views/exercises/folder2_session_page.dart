@@ -20,6 +20,7 @@ import 'word_span_page.dart';
 
 enum _Phase {
   intro,
+  preLevel,
   warmupIntro,
   warmup,
   preText,
@@ -50,11 +51,13 @@ class _Folder2Activity {
 /// Klasör 1'deki gibi: önce kısa bir metinle okuma hızı ölçülür, ardından
 /// Klasör 2'deki 10 etkinlik tamamlanır, sonra FARKLI bir metinle tekrar hız
 /// ölçülür — her iki metinden sonra da D/Y sorularıyla anlama kontrol
-/// edilir. Klasör 1'den farkı: konu seçme adımı yok (metin havuzundan
-/// rastgele bir metin seçilir — hoca gerçek metinleri verince
-/// [Folder2ReadingData] güncellenecek), ve Ön Metin'den ÖNCE puansız bir
-/// "antreman metni" var — kelimeler sayfanın üstünden soldan sağa doğru tek
-/// tek gelir, hız ÖLÇÜLMEZ, sadece ısınma amaçlıdır.
+/// edilir. Klasör 1'deki ön metin seviye seçimi gibi: oturuma girilince
+/// önce seviye (İlkokul / Ortaokul-Lise) seçiliyor, ön metin o seviyenin
+/// gerçek metniyle okunuyor ([Folder2ReadingData.levelPassages]). Son
+/// metin hâlâ rastgele konu havuzundan seçiliyor. Etkinlikler bitince Son
+/// Metin'den ÖNCE puansız bir "antreman metni" var — kelimeler sayfanın
+/// üstünden soldan sağa doğru tek tek gelir, hız ÖLÇÜLMEZ, sadece ısınma
+/// amaçlıdır.
 class Folder2SessionPage extends StatefulWidget {
   const Folder2SessionPage({super.key});
 
@@ -430,9 +433,13 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
     });
   }
 
-  void _goToPreText() {
+  void _goToPreLevel() {
+    setState(() => _phase = _Phase.preLevel);
+  }
+
+  void _choosePreLevel(String levelId) {
     setState(() {
-      _preText = _pickPassage();
+      _preText = Folder2ReadingData.passageForLevel(levelId)!;
       _phase = _Phase.preText;
     });
     _startTimer();
@@ -721,6 +728,7 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
           padding: const EdgeInsets.all(16),
           child: switch (_phase) {
             _Phase.intro => _buildIntro(),
+            _Phase.preLevel => _buildPreLevelPicker(),
             _Phase.warmupIntro => _buildWarmupIntro(),
             _Phase.warmup => _buildWarmupFlow(),
             _Phase.preText => _buildReadingView(
@@ -837,7 +845,7 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton.icon(
-              onPressed: _goToPreText,
+              onPressed: _goToPreLevel,
               icon: const Icon(Icons.play_arrow),
               label: const Text(
                 'OTURUMU BAŞLAT',
@@ -856,6 +864,66 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPreLevelPicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Seviyeni seç',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Ön metni seviyene uygun bir uyarlamayla okuyacaksın.',
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: GridView.count(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.9,
+            children: [
+              for (final level in Folder2ReadingData.levels)
+                Card(
+                  elevation: 1,
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () => _choosePreLevel(level.id),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            level.emoji,
+                            style: const TextStyle(fontSize: 28),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            level.title,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

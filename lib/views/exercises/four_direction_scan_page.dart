@@ -453,6 +453,7 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
     _sweepTimer?.cancel();
     _sweepIndices = _sweepOrder(_cols, _rows, _directions[_directionIndex]);
     setState(() => _sweepPos = 0);
+    SoundManager.playTick();
     _scheduleSweepStep();
   }
 
@@ -464,6 +465,7 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
         _onDirectionDone();
       } else {
         setState(() => _sweepPos++);
+        SoundManager.playTick();
         _scheduleSweepStep();
       }
     });
@@ -1050,15 +1052,29 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
                   duration: const Duration(milliseconds: 90),
                   scale: isActive ? 1 : 0.8,
                   child: Center(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        _currentItems[index],
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: isWarmup ? 42 : 22,
-                          fontWeight: FontWeight.bold,
-                          color: _color,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _color.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _color.withValues(alpha: 0.5),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          _currentItems[index],
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isWarmup ? 42 : 22,
+                            fontWeight: FontWeight.bold,
+                            color: _color,
+                          ),
                         ),
                       ),
                     ),

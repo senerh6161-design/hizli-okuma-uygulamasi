@@ -1228,6 +1228,11 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
   }
 
   Widget _buildTopicPicker({required bool isPost}) {
+    // Ön metin artık doğrudan seviye seçimiyle başlıyor — konu ızgarası
+    // sadece son metin için gösteriliyor.
+    if (!isPost) {
+      return _buildLevelPicker(isPost: false, showBack: false);
+    }
     if (_showLevelPicker) {
       return _buildLevelPicker(isPost: isPost);
     }
@@ -1273,26 +1278,32 @@ class _Folder1SessionPageState extends State<Folder1SessionPage> {
     );
   }
 
-  Widget _buildLevelPicker({required bool isPost}) {
+  Widget _buildLevelPicker({required bool isPost, bool showBack = true}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            IconButton(
-              onPressed: () => setState(() => _showLevelPicker = false),
-              icon: const Icon(Icons.arrow_back_rounded),
-              visualDensity: VisualDensity.compact,
-            ),
-            const SizedBox(width: 4),
-            const Expanded(
-              child: Text(
-                'Seviyeni seç',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        if (showBack)
+          Row(
+            children: [
+              IconButton(
+                onPressed: () => setState(() => _showLevelPicker = false),
+                icon: const Icon(Icons.arrow_back_rounded),
+                visualDensity: VisualDensity.compact,
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 4),
+              const Expanded(
+                child: Text(
+                  'Seviyeni seç',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          )
+        else
+          const Text(
+            'Seviyeni seç',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
         const SizedBox(height: 6),
         Text(
           '"Kitaba Hürmet" metnini seviyene uygun bir uyarlamayla okuyacaksın.',

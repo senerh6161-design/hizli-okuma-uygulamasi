@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
-import '../../models/comprehension_data.dart';
+import '../../models/comprehension_data_folder3.dart';
 import 'comprehension_page.dart';
 
-/// Anlama Testi'ne başlamadan önce çocuğun ilgi alanına göre bir konu
-/// seçmesini sağlayan ekran. Seçilen konu, ComprehensionPage'e aktarılır
-/// ve o konudaki metin havuzundan rastgele bir metin gösterilir.
-class TopicSelectionPage extends StatelessWidget {
-  const TopicSelectionPage({super.key});
+/// Klasör 3 oturumuna girince gösterilen ön metin adımı — Klasör 1/2'deki
+/// ön metin seviye seçimiyle aynı desen. Çocuk seviyesini seçiyor, o
+/// seviyenin gerçek antreman metni ([Folder3ReadingData]) okunuyor ve
+/// ardından D/Y sorularıyla anlama kontrol ediliyor.
+class Folder3LevelSelectionPage extends StatelessWidget {
+  const Folder3LevelSelectionPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('📚 Hangi Konu İlgini Çekiyor?')),
+      appBar: AppBar(title: const Text('📖 Seviyeni Seç')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Bugün ne okumak istersin? Bir konu seç, sana uygun bir metin getirelim.',
+              'Antreman metnini seviyene uygun bir uyarlamayla okuyacaksın.',
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 20),
@@ -29,16 +30,19 @@ class TopicSelectionPage extends StatelessWidget {
                 mainAxisSpacing: 14,
                 childAspectRatio: 1.15,
                 children: [
-                  for (final topic in ComprehensionData.topics)
-                    _TopicCard(
-                      emoji: topic.emoji,
-                      title: topic.title,
+                  for (final level in Folder3ReadingData.levels)
+                    _LevelCard(
+                      emoji: level.emoji,
+                      title: level.title,
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                ComprehensionPage(topicId: topic.id),
+                            builder: (_) => ComprehensionPage(
+                              passage: Folder3ReadingData.passageForLevel(
+                                level.id,
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -53,12 +57,12 @@ class TopicSelectionPage extends StatelessWidget {
   }
 }
 
-class _TopicCard extends StatelessWidget {
+class _LevelCard extends StatelessWidget {
   final String emoji;
   final String title;
   final VoidCallback onTap;
 
-  const _TopicCard({
+  const _LevelCard({
     required this.emoji,
     required this.title,
     required this.onTap,

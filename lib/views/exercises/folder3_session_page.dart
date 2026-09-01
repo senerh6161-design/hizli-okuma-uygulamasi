@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'color_word_match_page.dart';
+import 'column_reading_page.dart';
+import 'focus_box_page.dart';
 import 'four_direction_scan_page.dart';
 import 'number_hunt_page.dart';
+import 'folder3_level_selection_page.dart';
+import 'proverb_matching_page.dart';
+import 'scrambled_letters_page.dart';
 import 'synonym_antonym_page.dart';
+import 'word_pair_scan_page.dart';
 
 class _Folder3Activity {
   final String title;
@@ -22,10 +29,11 @@ class _Folder3Activity {
 
 /// Klasör 3'ün etkinlik listesi. Klasör 1/2'deki gibi tam bir ön
 /// metin/etkinlikler/son metin oturumu DEĞİL — hoca henüz Klasör 3 için
-/// okuma metni paylaşmadı, o yüzden şimdilik sadece hazır olan etkinlikler
-/// tek tek açılabiliyor; kalan sıralar "Yakında" olarak duruyor. Yeterince
-/// etkinlik ve gerçek metin birikince Klasör 1/2'deki gibi tam oturum
-/// akışına taşınacak.
+/// sabit bir ön/son metin paylaşmadı, o yüzden etkinlikler tek tek
+/// açılıyor. Ama Klasör 1/2'deki gibi: oturuma girilince önce bir giriş
+/// ekranı, ardından Klasör 1/2'deki ön metin seviye seçimiyle aynı desen
+/// ([Folder3LevelSelectionPage] — seviye seç, o seviyenin gerçek antreman
+/// metnini oku) gösteriliyor; ardından etkinlik listesine geçiliyor.
 class Folder3SessionPage extends StatefulWidget {
   const Folder3SessionPage({super.key});
 
@@ -59,17 +67,65 @@ class _Folder3SessionPageState extends State<Folder3SessionPage> {
       color: const Color(0xFF7C3AED),
       build: () => const FourDirectionScanPage(),
     ),
-    for (int i = 4; i <= 10; i++)
-      _Folder3Activity(
-        title: 'Yakında Eklenecek',
-        subtitle: 'Hoca yeni etkinlik paylaşınca hazır olacak',
-        badge: 'Etkinlik $i',
-        icon: Icons.lock_outline,
-        color: Colors.grey,
-      ),
+    _Folder3Activity(
+      title: 'Karışık Harfler',
+      subtitle: '9 harfi birleştir, kelimeyi bul',
+      badge: 'Etkinlik 4',
+      icon: Icons.spellcheck_rounded,
+      color: const Color(0xFF0D9488),
+      build: () => const ScrambledLettersPage(),
+    ),
+    _Folder3Activity(
+      title: 'Atasözü Eşleştirme',
+      subtitle: 'Atasözünün doğru yarısını bul',
+      badge: 'Etkinlik 5',
+      icon: Icons.menu_book_rounded,
+      color: const Color(0xFFDB2777),
+      build: () => const ProverbMatchingPage(),
+    ),
+    _Folder3Activity(
+      title: 'Renk Uyumu',
+      subtitle: 'Rengiyle uyuşmayan kelimeyi hızlıca bul',
+      badge: 'Etkinlik 6',
+      icon: Icons.palette_rounded,
+      color: const Color(0xFFEA580C),
+      build: () => const ColorWordMatchPage(),
+    ),
+    _Folder3Activity(
+      title: 'Sütun Takibi',
+      subtitle: 'Metni sütun sütun, yukarıdan aşağıya oku',
+      badge: 'Etkinlik 7',
+      icon: Icons.view_column_rounded,
+      color: const Color(0xFF4338CA),
+      build: () => const ColumnReadingPage(),
+    ),
+    _Folder3Activity(
+      title: 'Odaklanma Kutucukları',
+      subtitle: 'Yanıp sönen kutucuğu soldan sağa takip et',
+      badge: 'Etkinlik 8',
+      icon: Icons.center_focus_strong_rounded,
+      color: const Color(0xFFB91C1C),
+      build: () => const FocusBoxPage(),
+    ),
+    _Folder3Activity(
+      title: 'Kelime Çiftleri Tarama',
+      subtitle: '3 sayfa, 4 yönde kelime çifti tara',
+      badge: 'Etkinlik 9',
+      icon: Icons.grid_view_rounded,
+      color: const Color(0xFF65A30D),
+      build: () => const WordPairScanPage(),
+    ),
+    const _Folder3Activity(
+      title: 'Yakında Eklenecek',
+      subtitle: 'Hoca yeni etkinlik paylaşınca hazır olacak',
+      badge: 'Etkinlik 10',
+      icon: Icons.lock_outline,
+      color: Colors.grey,
+    ),
   ];
 
   final Set<int> _activityDone = {};
+  bool _started = false;
 
   Future<void> _openActivity(int index) async {
     final activity = _activities[index];
@@ -93,42 +149,128 @@ class _Folder3SessionPageState extends State<Folder3SessionPage> {
     }
   }
 
+  Future<void> _goToLevelPick() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const Folder3LevelSelectionPage()),
+    );
+    if (!mounted) return;
+    setState(() => _started = true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Klasör 3')),
       body: Padding(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '10 Etkinlik',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  '${_activityDone.length}/${_activities.length} tamamlandı',
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+        child: _started ? _buildActivityList() : _buildIntro(),
+      ),
+    );
+  }
+
+  Widget _buildIntro() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF0369A1), Color(0xFF15803D)],
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView.separated(
-                itemCount: _activities.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, index) => _activityCard(index),
+            borderRadius: BorderRadius.circular(26),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.folder_open,
+                  size: 40,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Klasör 3 Oturumu',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Önce seviyene uygun bir antreman metni okuyacaksın,\n'
+                'sonra 10 etkinliğe geçeceğiz.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 28),
+        SizedBox(
+          height: 56,
+          child: ElevatedButton.icon(
+            onPressed: _goToLevelPick,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text(
+              'BAŞLA',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0369A1),
+              foregroundColor: Colors.white,
+              elevation: 4,
+              shadowColor: const Color(0xFF0369A1).withValues(alpha: 0.4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActivityList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              '10 Etkinlik',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              '${_activityDone.length}/${_activities.length} tamamlandı',
+              style: const TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: ListView.separated(
+            itemCount: _activities.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (context, index) => _activityCard(index),
+          ),
+        ),
+      ],
     );
   }
 

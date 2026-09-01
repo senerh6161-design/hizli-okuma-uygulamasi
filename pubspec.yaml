@@ -68,6 +68,7 @@ flutter:
     - assets/audio/bg_motivational.mp3
     - assets/audio/bg_inspiration.wav
     - assets/audio/bg_rain.mp3
+    - assets/audio/pop.wav
     - assets/images/eye_character.png
 
   # An image asset can refer to one or more resolution-specific "variants", see

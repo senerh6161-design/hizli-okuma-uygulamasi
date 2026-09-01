@@ -5,7 +5,7 @@ import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
 
-enum _Phase { intro, running }
+enum _Phase { intro, running, reveal }
 
 // Her sayfa: eşleşen kutucuklar (eş anlamlı ya da zıt anlamlı kelime
 // çiftleri), kendi amaç/yöntem/not yönergesiyle birlikte (kitaptaki
@@ -16,8 +16,8 @@ class _PairPage {
   final String note;
   final List<List<String>> boxes;
   // Sayfadaki kutuların çoğu eş (ya da zıt) anlamlıyken, aralarına
-  // kasıtlı olarak karışan TEK farklı çift — sayfa bitince öğrenciye
-  // fark edip etmediği soruluyor.
+  // kasıtlı olarak karışan TEK farklı çift — sayfa bitince bir kutucukta
+  // gösteriliyor.
   final String oddPair;
   final bool isSynonymPage;
   const _PairPage({
@@ -45,8 +45,13 @@ class SynonymAntonymPage extends StatefulWidget {
 
 class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
   static const Color _color = Color(0xFF15803D);
-  static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
-  static const List<int> _stepMsBySpeed = [1600, 1100, 700];
+  static const List<String> _speedLabels = [
+    'Yavaş',
+    'Orta',
+    'Hızlı',
+    'Çok Hızlı',
+  ];
+  static const List<int> _stepMsBySpeed = [1600, 1100, 700, 400];
   int _speedLevel = 1;
 
   // Kutu içindeki yazı boyutu — en büyük seçenekte bile taşmasın diye
@@ -190,50 +195,16 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
     Future.delayed(const Duration(milliseconds: 900), () {
       if (!mounted) return;
       if (_attemptIndex < _attemptsPerPage - 1) {
-        // Bu sayfanın son denemesi değil — aynı sayfayı tekrar deneyeceğiz.
-        setState(() {
-          _attemptIndex++;
-          _phase = _Phase.intro;
-        });
+        // Bu sayfanın son denemesi değil — BAŞLA ekranı göstermeden aynı
+        // sayfayı kendiliğinden baştan başlatıyoruz.
+        _attemptIndex++;
+        _startPage();
       } else {
-        // Sayfanın son (3.) denemesi bitti — "farklı kutuyu fark ettin
-        // mi?" hatırlatmasını burada gösterip sonra bir sonraki sayfaya
-        // geçiyoruz.
-        _showOddPairReveal();
+        // Sayfanın son (3.) denemesi bitti — farklı kutuyu bir kutucukta
+        // gösterip sonra bir sonraki sayfaya geçiyoruz.
+        setState(() => _phase = _Phase.reveal);
       }
     });
-  }
-
-  // Sayfadaki tek "farklı" çifti açıklayan, puansız bir hatırlatma —
-  // öğrenci fark edip etmediğini kendisi değerlendiriyor.
-  void _showOddPairReveal() {
-    final page = _page;
-    final pageKind = page.isSynonymPage ? 'eş anlamlı' : 'zıt anlamlı';
-    final oddKind = page.isSynonymPage ? 'zıt anlamlı' : 'eş anlamlı';
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Text('👀 Fark Ettin mi?'),
-        content: Text(
-          'Bu sayfadaki kutuların hepsi $pageKind kelimelerdi, ama bir '
-          'tanesi farklıydı: "${page.oddPair}" aslında $oddKind bir çift!',
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _advanceAfterPage();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _color,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Devam Et'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _advanceAfterPage() {
@@ -268,6 +239,27 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
         setState(() => _blinkOn = !_blinkOn);
       });
       _scheduleStep();
+    }
+  }
+
+  // Hız değişince öğrenci sayfanın başına dönsün diye nokta/kutu ilerlemesi
+  // sıfırlanıp yeniden başlatılıyor.
+  void _changeSpeed(int level) {
+    if (_phase == _Phase.running && !_finished) {
+      _stepTimer?.cancel();
+      _blinkTimer?.cancel();
+      setState(() {
+        _speedLevel = level;
+        _activeStep = 0;
+        _blinkOn = true;
+      });
+      _blinkTimer = Timer.periodic(const Duration(milliseconds: 450), (_) {
+        if (!mounted) return;
+        setState(() => _blinkOn = !_blinkOn);
+      });
+      _scheduleStep();
+    } else {
+      setState(() => _speedLevel = level);
     }
   }
 
@@ -390,15 +382,20 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
             children: [
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
-                child: _phase == _Phase.intro
-                    ? KeyedSubtree(
-                        key: ValueKey('intro-$_pageIndex'),
-                        child: _buildIntro(),
-                      )
-                    : KeyedSubtree(
-                        key: ValueKey('running-$_pageIndex'),
-                        child: _buildRunning(),
-                      ),
+                child: switch (_phase) {
+                  _Phase.intro => KeyedSubtree(
+                    key: ValueKey('intro-$_pageIndex'),
+                    child: _buildIntro(),
+                  ),
+                  _Phase.running => KeyedSubtree(
+                    key: ValueKey('running-$_pageIndex'),
+                    child: _buildRunning(),
+                  ),
+                  _Phase.reveal => KeyedSubtree(
+                    key: ValueKey('reveal-$_pageIndex'),
+                    child: _buildReveal(),
+                  ),
+                },
               ),
               if (_isPaused)
                 buildPauseOverlay(color: _color, onResume: _resumeGame),
@@ -443,31 +440,6 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (_attemptIndex > 0) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.blue.shade200),
-                        ),
-                        child: Text(
-                          'Önceki denemelerin: '
-                          '${_attemptTimes[_pageIndex].map((t) => "$t sn").join(", ")} '
-                          '— bu sefer daha hızlı olmaya çalışalım!',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue.shade900,
-                          ),
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 16),
                     Center(
                       child: Text(
@@ -511,39 +483,6 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
                         ],
                       ),
                     ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.amber.shade300),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.visibility_outlined,
-                            color: Colors.amber.shade800,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Dikkat! Farklı olan kutuyu fark edecek miyiz?',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.amber.shade900,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: 12),
                     _speedChipRow(),
                     const SizedBox(height: 10),
@@ -571,6 +510,110 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Sayfanın 3 denemesi bitince, aralarına karışmış farklı çifti soru
+  // sormadan, doğrudan gösteren bir bilgi kutusu.
+  Widget _buildReveal() {
+    final page = _page;
+    final pageKind = page.isSynonymPage ? 'eş anlamlı' : 'zıt anlamlı';
+    final oddKind = page.isSynonymPage ? 'zıt anlamlı' : 'eş anlamlı';
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(child: Text('🔍', style: TextStyle(fontSize: 56))),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.amber.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Aralarına Karışan Farklı Çift',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Colors.amber.shade900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text.rich(
+                        TextSpan(
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.amber.shade900,
+                          ),
+                          children: [
+                            TextSpan(
+                              text:
+                                  'Bu sayfadaki kutuların hepsi $pageKind '
+                                  'kelimelerdi, ama ',
+                            ),
+                            TextSpan(
+                              text: '"${page.oddPair}"',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            TextSpan(text: ' aslında $oddKind bir çiftti.'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Okurken bunu fark ettiysen, tebrikler — çok '
+                        'dikkatlisin! Fark etmediysen hiç sorun değil, '
+                        'bir dahaki sayfada gözünü dört açarsın 😉',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.amber.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: _advanceAfterPage,
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text(
+                      'DEVAM ET',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _color,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                   ),
@@ -634,7 +677,7 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
           ChoiceChip(
             label: Text(_speedLabels[i]),
             selected: _speedLevel == i,
-            onSelected: (_) => setState(() => _speedLevel = i),
+            onSelected: (_) => _changeSpeed(i),
             selectedColor: _color,
             labelStyle: TextStyle(
               fontSize: 12,
@@ -691,6 +734,19 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
             ),
           ],
         ),
+        if (_attemptIndex > 0) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Önceki: '
+            '${_attemptTimes[_pageIndex].map((t) => "$t sn").join(", ")} '
+            '— bu sefer daha hızlı olmaya çalışalım!',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue.shade700,
+            ),
+          ),
+        ],
         const SizedBox(height: 8),
         _speedChipRow(),
         const SizedBox(height: 6),

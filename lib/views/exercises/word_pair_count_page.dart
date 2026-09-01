@@ -1033,6 +1033,17 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
               ),
             ],
           ),
+          if (_bolumIndex == 0)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _startBolum2,
+                child: const Text(
+                  '2. Bölüme Geç',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+            ),
           const SizedBox(height: 10),
           if (_phase != _Phase.announcing)
             Container(
