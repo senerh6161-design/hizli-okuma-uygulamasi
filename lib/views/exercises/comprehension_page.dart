@@ -44,6 +44,9 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
   bool isReadingPhase = true; // Önce okuma aşaması, sonra soru aşaması
   int questionIndex = 0;
   int score = 0;
+  DateTime? _readingStartedAt;
+  double? _lastWpm;
+  int? _lastWordCount;
   // Sorular veride hep aynı sırada (çoğunlukla Doğru-Yanlış-Doğru) —
   // çocuk bu kalıbı fark edip okumadan cevaplayabiliyordu. Okuma bitip
   // sorulara geçilince KARIŞTIRILMIŞ bir kopya kullanılır.
@@ -54,9 +57,13 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
   // garanti 2/3 alabiliyordu. Bunu kırmak için her metnin 4 aday sorusu
   // (2 Doğru + 2 Yanlış) var; her denemede rastgele ya 2D+1Y ya da 1D+2Y
   // seçilir — hangi oranın çıkacağı da önceden tahmin edilemez.
-  List<Map<String, dynamic>> _pickQuizQuestions(List<Map<String, dynamic>> pool) {
-    final trueOnes = pool.where((q) => q['correct'] == 0).toList()..shuffle(random);
-    final falseOnes = pool.where((q) => q['correct'] == 1).toList()..shuffle(random);
+  List<Map<String, dynamic>> _pickQuizQuestions(
+    List<Map<String, dynamic>> pool,
+  ) {
+    final trueOnes = pool.where((q) => q['correct'] == 0).toList()
+      ..shuffle(random);
+    final falseOnes = pool.where((q) => q['correct'] == 1).toList()
+      ..shuffle(random);
     final wantTwoTrue = random.nextBool();
     final picked = wantTwoTrue
         ? [...trueOnes.take(2), ...falseOnes.take(1)]
@@ -74,7 +81,10 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
       questionIndex = 0;
       score = 0;
       _quizQuestions = _pickQuizQuestions(currentPassage.questions);
-      if (isReadingPhase) AudioManager.startAmbient();
+      if (isReadingPhase) {
+        _readingStartedAt = DateTime.now();
+        AudioManager.startAmbient();
+      }
     } else {
       _loadRandomPassage();
     }
@@ -99,6 +109,9 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
       questionIndex = 0;
       score = 0;
       _quizQuestions = _pickQuizQuestions(next.questions);
+      _readingStartedAt = DateTime.now();
+      _lastWpm = null;
+      _lastWordCount = null;
     });
     AudioManager.startAmbient();
   }
@@ -110,8 +123,7 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
   }
 
   void answer(int selectedIndex) {
-    final isCorrect =
-        selectedIndex == _quizQuestions[questionIndex]['correct'];
+    final isCorrect = selectedIndex == _quizQuestions[questionIndex]['correct'];
     if (isCorrect) {
       score++;
       SoundManager.playCorrect();
@@ -135,7 +147,10 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
     // Hızlı okuma temposu bu sonuca göre değişecek mi, önce/sonra çarpanını
     // karşılaştırarak anlıyoruz.
     final previousAdjustment = ProgressManager.speedAdjustment;
-    final unlocked = ProgressManager.recordComprehensionResult(correct: score, total: totalQuestions);
+    final unlocked = ProgressManager.recordComprehensionResult(
+      correct: score,
+      total: totalQuestions,
+    );
     final newAdjustment = ProgressManager.speedAdjustment;
 
     SoundManager.playSuccess();
@@ -200,6 +215,38 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
                 ),
               ),
             ),
+            if (_lastWpm != null && _lastWordCount != null) ...[
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '📋 Karne',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF1E40AF),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _karneRow(
+                      'Anlama Seviyesi',
+                      _comprehensionLevel(scorePercent),
+                    ),
+                    _karneRow('Okuma Hızı', '${_lastWpm!.round()} kelime/dk'),
+                    _karneRow('Okunan Kelime', '$_lastWordCount kelime'),
+                  ],
+                ),
+              ),
+            ],
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
               const Text(
@@ -212,7 +259,10 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
                 runSpacing: 8,
                 children: unlocked.map((a) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.amber.shade50,
                       borderRadius: BorderRadius.circular(10),
@@ -240,6 +290,13 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context, true);
+            },
+            child: const Text('Bitir'),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
@@ -252,12 +309,41 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
     );
   }
 
+  String _comprehensionLevel(int percent) {
+    if (percent >= 90) return 'Mükemmel';
+    if (percent >= 75) return 'Çok İyi';
+    if (percent >= 60) return 'İyi';
+    if (percent >= 40) return 'Orta';
+    return 'Gelişmeli';
+  }
+
+  Widget _karneRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E40AF),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('📝 Anlama Testi'),
-      ),
+      appBar: AppBar(title: const Text('📝 Anlama Testi')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: isReadingPhase ? _buildReadingView() : _buildQuizView(),
@@ -292,7 +378,10 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
             if (topic != null) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.amber.shade50,
                   borderRadius: BorderRadius.circular(8),
@@ -309,7 +398,8 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
             ],
             const Spacer(),
             IconButton(
-              onPressed: () => showReadingThemePicker(context, () => setState(() {})),
+              onPressed: () =>
+                  showReadingThemePicker(context, () => setState(() {})),
               icon: const Icon(Icons.palette_outlined),
               tooltip: 'Metin rengini değiştir',
               visualDensity: VisualDensity.compact,
@@ -328,7 +418,11 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
         const SizedBox(height: 6),
         Row(
           children: [
-            Icon(Icons.touch_app_rounded, size: 14, color: Colors.grey.shade500),
+            Icon(
+              Icons.touch_app_rounded,
+              size: 14,
+              color: Colors.grey.shade500,
+            ),
             const SizedBox(width: 4),
             Text(
               'Anlamını bilmediğin bir kelimeye dokun!',
@@ -338,20 +432,30 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
         ),
         const SizedBox(height: 12),
         Expanded(
-          child: SingleChildScrollView(
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: SettingsManager.readingBackgroundColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: SettingsManager.readingBorderColor),
-              ),
-              child: buildInteractiveText(
-                context,
-                currentPassage.content,
-                accentColor: SettingsManager.readingAccentColor,
-              ),
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: SettingsManager.readingBackgroundColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: SettingsManager.readingBorderColor,
+                      ),
+                    ),
+                    child: buildInteractiveText(
+                      context,
+                      currentPassage.content,
+                      accentColor: SettingsManager.readingAccentColor,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
         const SizedBox(height: 16),
@@ -367,8 +471,23 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
               ),
             ),
             onPressed: () {
+              final wordCount = currentPassage.content
+                  .trim()
+                  .split(RegExp(r'\s+'))
+                  .length;
+              final rawElapsedSec = _readingStartedAt == null
+                  ? 0.0
+                  : DateTime.now()
+                            .difference(_readingStartedAt!)
+                            .inMilliseconds /
+                        1000;
+              // Çok hızlı geçilse bile (test amaçlı vs.) bir tahmin
+              // gösterebilmek için süreyi mantıklı bir alt sınıra sabitliyoruz.
+              final elapsedSec = rawElapsedSec < 5 ? 5.0 : rawElapsedSec;
               setState(() {
                 isReadingPhase = false; // Sorulara geç
+                _lastWordCount = wordCount;
+                _lastWpm = wordCount / (elapsedSec / 60);
               });
               AudioManager.stopAmbient();
             },
@@ -434,7 +553,9 @@ class _ComprehensionPageState extends State<ComprehensionPage> {
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.all(18),
-                    alignment: isTrueFalse ? Alignment.center : Alignment.centerLeft,
+                    alignment: isTrueFalse
+                        ? Alignment.center
+                        : Alignment.centerLeft,
                     side: BorderSide(color: optionColor.withValues(alpha: 0.4)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),

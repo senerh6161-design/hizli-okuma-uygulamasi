@@ -12,13 +12,15 @@ class _ProverbPair {
   const _ProverbPair(this.left, this.right);
 }
 
-enum _Phase { intro, warmup, ready, matching }
+enum _Phase { intro, warmup, ready, matching, bolum2Intro }
 
 /// Klasör 3'ün beşinci etkinliği: "Atasözü Eşleştirme". Hocanın verdiği
 /// sunumdaki atasözü yarım-birleştirme sayfalarının karşılığı — önce bir
 /// antreman ekranında mekaniğin nasıl çalıştığı 3 kez otomatik olarak
-/// gösteriliyor, sonra 5 sette (her sette 9 atasözü) öğrenci sol yarıya
-/// dokunup doğru sağ yarıyı bularak atasözünü tamamlıyor.
+/// gösteriliyor, sonra 1. Bölüm'de 5 sette (her sette 9 atasözü) öğrenci
+/// sol yarıya dokunup doğru sağ yarıyı bularak atasözünü tamamlıyor.
+/// 2. Bölüm'de aynı 5 set taraflar yer değiştirmiş halde tekrar geliyor
+/// (tamamlayan yarılar solda, başlangıçlar sağda) — bkz. [_bolumIndex].
 class ProverbMatchingPage extends StatefulWidget {
   const ProverbMatchingPage({super.key});
 
@@ -35,27 +37,10 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
   static const List<double> _textSizeValues = [12, 14, 17];
   int _textSizeLevel = 1;
 
-  // Antremanda otomatik olarak gösterilen 3 küçük tur — her tekrarda
-  // farklı atasözleri geliyor, aynı üçü tekrar tekrar gösterilmiyor. Sol
-  // sütun sırayla, sağ sütun ise gerçek egzersizdeki gibi karışık.
-  static const List<List<_ProverbPair>> _warmupRounds = [
-    [
-      _ProverbPair('İşleyen demir', 'pas tutmaz'),
-      _ProverbPair('Bal bal demekle', 'ağız tatlanmaz'),
-      _ProverbPair('Görünen köy', 'kılavuz istemez'),
-    ],
-    [
-      _ProverbPair('Ateş olmayan yerden', 'duman çıkmaz'),
-      _ProverbPair('Akan su', 'yosun tutmaz'),
-      _ProverbPair('Adam arkadaşından', 'belli olur'),
-    ],
-    [
-      _ProverbPair('Sabır acıdır', 'meyvesi tatlıdır'),
-      _ProverbPair('Boş çuval', 'dik durmaz'),
-      _ProverbPair('Dost kara günde', 'belli olur'),
-    ],
-  ];
-  static const List<int> _warmupRightOrder = [1, 2, 0];
+  // Antreman, egzersizdeki 5 setten İLK 3'ünü otomatik olarak gösterir —
+  // her tekrarda gerçek bir set (9 atasözünün TAMAMI), egzersizle aynı
+  // yoğunlukta ekranı doldursun diye. Sol sütun sırayla, sağ sütun ise
+  // gerçek egzersizdeki gibi karışık (bkz. _startWarmup/_advanceWarmup).
   static const int _warmupRepeats = 3;
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
   static const List<int> _warmupStepMsBySpeed = [1300, 850, 500];
@@ -130,9 +115,14 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
   int _warmupPairIndex = 0;
   int _warmupSubStep = 0; // 0 = sol vurgulu, 1 = sağ da vurgulu + eşleşti
   int _warmupRepeatIndex = 0;
+  List<int> _warmupRightOrder = const [];
   Timer? _warmupTimer;
 
   int _setIndex = 0;
+  // 0 = 1. Bölüm (sol=başlangıç, sağ=tamamlayan yarı), 1 = 2. Bölüm
+  // (aynı 5 set ama sağ-sol yer değiştirmiş — soldakiler sağa, sağdakiler
+  // sola alınmış).
+  int _bolumIndex = 0;
   List<int> _leftOrder = const [];
   List<int> _rightOrder = const [];
   final Set<int> _solvedPairIndices = {};
@@ -156,9 +146,13 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
       _warmupPairIndex = 0;
       _warmupSubStep = 0;
       _warmupRepeatIndex = 0;
+      _warmupRightOrder = _shuffledOrder(_sets[0].length);
     });
     _scheduleWarmupStep();
   }
+
+  List<int> _shuffledOrder(int length) =>
+      (List<int>.generate(length, (i) => i)..shuffle(_random));
 
   void _scheduleWarmupStep() {
     _warmupTimer?.cancel();
@@ -176,7 +170,7 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
       _scheduleWarmupStep();
       return;
     }
-    if (_warmupPairIndex < _warmupRounds[_warmupRepeatIndex].length - 1) {
+    if (_warmupPairIndex < _sets[_warmupRepeatIndex].length - 1) {
       setState(() {
         _warmupPairIndex++;
         _warmupSubStep = 0;
@@ -189,6 +183,7 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
         _warmupRepeatIndex++;
         _warmupPairIndex = 0;
         _warmupSubStep = 0;
+        _warmupRightOrder = _shuffledOrder(_sets[_warmupRepeatIndex].length);
       });
       _scheduleWarmupStep();
     } else {
@@ -293,9 +288,27 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
         if (!mounted) return;
         setState(() => _elapsedSec++);
       });
+    } else if (_bolumIndex == 0) {
+      _elapsedTimer?.cancel();
+      setState(() => _phase = _Phase.bolum2Intro);
     } else {
       _finishAll();
     }
+  }
+
+  // 2. Bölüm: aynı 5 set tekrar geliyor ama sağ-sol yer değiştiriyor —
+  // soldaki atasözü başlangıçları sağa, sağdaki tamamlayan yarılar sola
+  // alınıyor (bkz. _buildMatching'in swapped dalı).
+  void _startBolum2() {
+    _bolumIndex = 1;
+    _setIndex = 0;
+    setState(() => _phase = _Phase.matching);
+    _loadPairs();
+    _elapsedTimer?.cancel();
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedSec++);
+    });
   }
 
   void _finishAll() {
@@ -308,7 +321,7 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Atasözü Eşleştirme',
-      result: '${_sets.length} set · $_mistakeCount hata',
+      result: '2 bölüm · ${_sets.length} set · $_mistakeCount hata',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -322,7 +335,7 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${_sets.length} sette de tüm atasözlerini eşleştirdik!',
+              '2 bölümde de ${_sets.length} sette tüm atasözlerini eşleştirdik!',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             const SizedBox(height: 8),
@@ -383,7 +396,10 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              setState(() => _phase = _Phase.intro);
+              setState(() {
+                _phase = _Phase.intro;
+                _bolumIndex = 0;
+              });
             },
             child: const Text('Yeniden Başlat'),
           ),
@@ -424,7 +440,9 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
       case _Phase.ready:
         return _buildReady();
       case _Phase.matching:
-        return _buildMatching(key: ValueKey('set-$_setIndex'));
+        return _buildMatching(key: ValueKey('set-$_bolumIndex-$_setIndex'));
+      case _Phase.bolum2Intro:
+        return _buildBolum2Intro();
     }
   }
 
@@ -624,7 +642,7 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
         Expanded(
           child: Builder(
             builder: (context) {
-              final roundPairs = _warmupRounds[_warmupRepeatIndex];
+              final roundPairs = _sets[_warmupRepeatIndex];
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -652,7 +670,13 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                   Expanded(
                     child: Column(
                       children: [
-                        for (final r in _warmupRightOrder)
+                        for (final r
+                            in _warmupRightOrder.isEmpty
+                                ? List<int>.generate(
+                                    roundPairs.length,
+                                    (i) => i,
+                                  )
+                                : _warmupRightOrder)
                           Expanded(
                             child: _proverbChip(
                               text: roundPairs[r].right,
@@ -745,6 +769,74 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
     );
   }
 
+  // 1. Bölüm bitince, sağ-sol yer değiştiren 2. Bölüm'e geçmeden önce
+  // gösterilen yönerge ekranı.
+  Widget _buildBolum2Intro() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(child: Text('🔄', style: TextStyle(fontSize: 64))),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _color.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Text(
+                    '1. Bölümü tamamladık! Şimdi aynı 5 set tekrar '
+                    'gelecek ama bu sefer taraflar yer değiştiriyor — '
+                    'atasözünü tamamlayan yarılar solda, başlangıçlar '
+                    'sağda olacak. Yine soldan sağa doğru eşleştireceğiz!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: _startBolum2,
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text(
+                      'BAŞLA',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _color,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildMatching({required Key key}) {
     final pairs = _sets[_setIndex];
     return KeyedSubtree(
@@ -765,8 +857,9 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  'Set ${_setIndex + 1}/${_sets.length} · '
-                  '${_solvedPairIndices.length}/${pairs.length}',
+                  '${_bolumIndex + 1}. Bölüm · Set ${_setIndex + 1}/'
+                  '${_sets.length} · ${_solvedPairIndices.length}/'
+                  '${pairs.length}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: _color,
@@ -814,7 +907,9 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                       for (final i in _leftOrder)
                         Expanded(
                           child: _proverbChip(
-                            text: pairs[i].left,
+                            text: _bolumIndex == 0
+                                ? pairs[i].left
+                                : pairs[i].right,
                             solved: _solvedPairIndices.contains(i),
                             selected: _selectedLeftIndex == i,
                             wrongFlash: _wrongLeftFlash == i,
@@ -831,7 +926,9 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                       for (final i in _rightOrder)
                         Expanded(
                           child: _proverbChip(
-                            text: pairs[i].right,
+                            text: _bolumIndex == 0
+                                ? pairs[i].right
+                                : pairs[i].left,
                             solved: _solvedPairIndices.contains(i),
                             selected: false,
                             wrongFlash: _wrongRightFlash == i,

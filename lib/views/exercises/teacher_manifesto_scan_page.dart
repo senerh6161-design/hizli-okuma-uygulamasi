@@ -5,74 +5,34 @@ import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
 
-class _WordPair {
-  final String top;
-  final String bottom;
-  const _WordPair(this.top, this.bottom);
-}
-
 enum _Direction { leftToRight, rightToLeft, bottomToTop, topToBottom }
-
-// Sayfalardan biri (1. sayfa) kitaptaki gibi kesikli çizgiyle çevrili.
-class _DashedRectPainter extends CustomPainter {
-  final Color color;
-  const _DashedRectPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.4
-      ..style = PaintingStyle.stroke;
-    final rrect = RRect.fromRectAndRadius(
-      Offset.zero & size,
-      const Radius.circular(10),
-    );
-    final path = Path()..addRRect(rrect);
-    const dashWidth = 5.0;
-    const dashSpace = 4.0;
-    for (final metric in path.computeMetrics()) {
-      double distance = 0;
-      while (distance < metric.length) {
-        final next = distance + dashWidth;
-        canvas.drawPath(
-          metric.extractPath(distance, next.clamp(0, metric.length)),
-          paint,
-        );
-        distance = next + dashSpace;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashedRectPainter oldDelegate) =>
-      oldDelegate.color != color;
-}
 
 enum _Phase { warmup, ready, exercise }
 
-/// Klasör 3'ün dokuzuncu etkinliği: "Kelime Çiftleri Tarama". Kitaptaki
-/// Etkinlik 1/2/3'ün karşılığı — her kutuda ortadaki noktaya odaklanarak
-/// algılanacak iki kelime var. Sabit bir kutucuk sırayla dört yönde
-/// geziniyor: önce soldan sağa, sonra sağdan sola, sonra aşağıdan
-/// yukarıya, en son yukarıdan aşağıya. Kitaptaki 3 sayfanın (her biri
-/// kendi renk/çerçeve stiliyle) her biri bu dört yönle taranıyor.
-class WordPairScanPage extends StatefulWidget {
-  const WordPairScanPage({super.key});
+/// Klasör 4'ün yedinci etkinliği: "Ben Bir Öğretmenim" metni. Kitaptaki
+/// 3 sütunlu sayfaların karşılığı — telefon ekranına sığmadığı için
+/// word_pattern_scan_page/exam_word_group_scan_page'deki gibi 2 sütun
+/// olarak gösteriliyor. Aynı mantık: antreman, sonra sıra sende, her
+/// sayfa 4 yönde (soldan sağa/sağdan sola/aşağıdan yukarı/yukarıdan
+/// aşağı) taranıyor. Sütunlar soldan sağa okununca tek bir akan metin
+/// oluşturuyor (satır bazlı bölünmüş bir öğretmen manifestosu).
+class TeacherManifestoScanPage extends StatefulWidget {
+  const TeacherManifestoScanPage({super.key});
 
   @override
-  State<WordPairScanPage> createState() => _WordPairScanPageState();
+  State<TeacherManifestoScanPage> createState() =>
+      _TeacherManifestoScanPageState();
 }
 
-class _WordPairScanPageState extends State<WordPairScanPage> {
-  static const Color _color = Color(0xFF65A30D);
+class _TeacherManifestoScanPageState extends State<TeacherManifestoScanPage> {
+  static const Color _color = Color(0xFF15803D);
   static const List<String> _speedLabels = [
     'Yavaş',
     'Orta',
     'Hızlı',
     'Çok Hızlı',
   ];
-  static const List<int> _stepMsBySpeed = [1100, 750, 450, 320];
+  static const List<int> _stepMsBySpeed = [700, 480, 320, 200];
   static const List<_Direction> _directions = [
     _Direction.leftToRight,
     _Direction.rightToLeft,
@@ -85,89 +45,213 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
     'Aşağıdan Yukarı',
     'Yukarıdan Aşağı',
   ];
-  static const int _cols = 4;
+  static const int _cols = 2;
 
-  // Kitaptaki Etkinlik 1.
-  static const List<_WordPair> _page1 = [
-    _WordPair('Sevgi', 'Saygı'),
-    _WordPair('Silgi', 'Bilgi'),
-    _WordPair('Çizgi', 'Dizgi'),
-    _WordPair('Döngü', 'Görgü'),
-    _WordPair('Çalgı', 'Salgı'),
-    _WordPair('Etki', 'Bitki'),
-    _WordPair('Çengi', 'Dergi'),
-    _WordPair('Dolgu', 'Bulgu'),
-    _WordPair('Halbuki', 'Mademki'),
-    _WordPair('Çalgı', 'Sargı'),
-    _WordPair('Katkı', 'Atkı'),
-    _WordPair('Baskı', 'Askı'),
-    _WordPair('Vergi', 'Sergi'),
-    _WordPair('Sezgi', 'Ezgi'),
-    _WordPair('Yergi', 'Sürgü'),
-    _WordPair('Sorgu', 'Yazgı'),
-    _WordPair('Eski', 'Püskü'),
-    _WordPair('Belki', 'Sanki'),
-    _WordPair('Yetki', 'Biçki'),
-    _WordPair('Çünkü', 'Süngü'),
-    _WordPair('Hangi', 'Keski'),
-    _WordPair('Mevki', 'Tilki'),
-    _WordPair('Coşku', 'Korku'),
-    _WordPair('Tutku', 'Utku'),
+  // Kitaptaki 3 sayfa (169-171), her sayfada 3 sütun. Sütunlar soldan
+  // sağa okununca akan tek bir metin oluşturuyor.
+  static const List<List<String>> _columns = [
+    // Sayfa 169 - 1. sütun
+    [
+      'Ben bir öğretmenim,',
+      'dolmalıyım. O apaydınlık',
+      'Her zaman yanında',
+      'sınırlandırmamalıyım.',
+      'iki yüzü gibi,',
+      'Ben bir öğretmenim,',
+      'İkisi birleşince',
+      'Ben de öğrencilerimle',
+      'Bir zincirin halkaları gibi',
+      'düşünceyi anlatmalıyız.',
+      'tamamlamalıyız.',
+      'gelecek için',
+      'Ben bir öğretmenim,',
+      'Kötülüklerden korumalıyım.',
+      'söndürecek tüm fırtınalara',
+      'yeşertmeliyim ümitlerini.',
+      'cesaretlerini,',
+    ],
+    // Sayfa 169 - 2. sütun
+    [
+      'öğrencilerimin minicik',
+      'zihinlerine kelime kelime',
+      'olmalıyım onların.',
+      'Ben ve öğrencilerim',
+      'kalem ve silgi gibi,',
+      'toprak suya hasret,',
+      'nice güzelliklerle',
+      'bir olmalıyım ve',
+      'kenetlenmeliyiz. Bir',
+      'Bir kalem ve silgi gibi',
+      'Yani bir noktada',
+      've değerlerimiz için',
+      'bir fanus olmalıyım,',
+      'Heveslerini kıracak,',
+      'kalkan olmalıyım.',
+      'Bir coşan deniz gibi',
+      'öz güvenlerini',
+    ],
+    // Sayfa 169 - 3. sütun
+    [
+      'yüreklerine hece hece',
+      'bilgi olarak akmalıyım.',
+      'Sadece sınıfla ve okulla',
+      'bir sayfanın',
+      'toprak ve su gibiyiz.',
+      'su toprağa...',
+      'süslenir tüm dünya.',
+      'yüreklerimiz bir atmalı.',
+      'kitabın sayfaları gibi bir',
+      'birbirimizi',
+      'vatan için, bayrak için,',
+      'birleşmeliyiz.',
+      'temiz düşüncelerine.',
+      'umutlarını, hayallerini',
+      'Bir güneş gibi',
+      'dalgalandırmalıyım',
+      've tüm hayallerini.',
+    ],
+    // Sayfa 170 - 1. sütun
+    [
+      'Bir rüzgar gibi',
+      'Gökkuşağı gibi',
+      'Ben bir öğretmenim,',
+      'Anahtar olmadan',
+      'İki anahtar,',
+      'açacak onlara',
+      'Birincisi, inanmak;',
+      'kendini küçük gören,',
+      'sahip olsa da',
+      'Tıpkı bisiklet',
+      'bisiklet sürmekten',
+      'gerektiğini anlatmalıyım.',
+      'inanmadığımız sürece',
+      'anlatmalıyım.',
+      'çalışmanın, başarlı olmanın',
+      'işlemeliyim zihinlerine.',
+      'Ben bir öğretmenim,',
+      'kandırılabileceklerini ve',
+    ],
+    // Sayfa 170 - 2. sütun
+    [
+      'hareketlendirmeliyim.',
+      'renklendirmeliyim,',
+      '"başarı kapısı"nın',
+      'kapının kırılacağını',
+      'başarı kapılarını',
+      've başarı',
+      'ikincisi çalışmak...',
+      'kendini tanımayan',
+      'başaramayacağını',
+      'sürmek isteyen;',
+      'vazgeçen çocuk gibi.',
+      'Herkes bize inansa da',
+      'küçük bir engeli bile',
+      'Çalışma isteği',
+      'ta kendisi olduğunu',
+      'Çalışmayı sevdirmeliyim',
+      'hata yapabileceklerini,',
+      'insanların bazen',
+    ],
+    // Sayfa 170 - 3. sütun
+    [
+      'tüm hayatlarını.',
+      'tüm geleceklerini.',
+      'anahtarlarını öğretmeliyim',
+      'hatırlatmalıyım onlara.',
+      'sonuna kadar',
+      'kucaklayacak onları.',
+      'Kendine inanmayan,',
+      'tüm imkanlara',
+      'hatırlatmalıyım.',
+      'fakat düşerim korkusuyla',
+      'Kendisine inanması',
+      'biz kendimize',
+      'aşamayacağımızı',
+      'aşılamalıyım onlara ve',
+      'nakış nakış',
+      'onları yüreklendirmeliyim.',
+      'bazen kaybedebileceklerini,',
+      'göründüğü gibi',
+    ],
+    // Sayfa 171 - 1. sütun
+    [
+      'çıkmayacağını',
+      'alınan dersin,',
+      'öğrenilen tecrübelerin,',
+      'olduğunu da anlatmalıyım.',
+      'hazırlıklı olmalarını',
+      'Her duyduğu,',
+      'olmadığı konusunda',
+      'Ben bir öğretmenim,',
+      'aralarında dostluk',
+      'hayatın huzuru;',
+      'zihinlerine işlemeliyim.',
+      'parantez içinde',
+      'Ben bir öğretmenim,',
+      'vazgeçmemelerini,',
+      'haksızlığa karşı',
+      'Ben bir öğretmenim,',
+      'paradan, makamdan',
+      'gerektiğini, insana değer',
+    ],
+    // Sayfa 171 - 2. sütun
+    [
+      'hatırlatmalıyım onlara.',
+      'doğru kadar;',
+      'başarı kadar;',
+      'Hayatın tüm akıntılarına',
+      'öğretmeliyim onlara.',
+      'her okuduğu bilginin ve',
+      'onları bilinçlendirmeliyim.',
+      'kitapları sevdirmeliyim',
+      'kurmalarını sağlamalıyım.',
+      'başarının, aklın anahtarı',
+      'Her kitabın faydalı',
+      'hafızalarına',
+      'haklı olduklarında',
+      'her zaman haklının',
+      'öğrencilerime',
+      've kazançtan önce',
+      'vermemiz gerektiğini',
+    ],
+    // Sayfa 171 - 3. sütun
+    [
+      'Yalnız hatadan',
+      'başarısızlıktan',
+      'değerli, faydalı ve önemli',
+      've tehlikelerine karşı da',
+      'haberin gerçek ve doğru',
+      'onlara. Kitaplarla',
+      'Kitaplar ruhun ve',
+      'olduğunu titizlikle',
+      'olmadığını da',
+      'not düşmeliyim.',
+      'mücadeleden asla',
+      'yanında olmaları ve',
+      'işlemeliyim yüreklerine.',
+      'her şeyden önce',
+      'insan olmamız',
+      've ilk önce',
+    ],
   ];
 
-  // Kitaptaki Etkinlik 2.
-  static const List<_WordPair> _page2 = [
-    _WordPair('Gezgin', 'Bilgin'),
-    _WordPair('Soygun', 'Bozgun'),
-    _WordPair('Yangın', 'Kızgın'),
-    _WordPair('Bitkin', 'Yetkin'),
-    _WordPair('Sezgin', 'Bezgin'),
-    _WordPair('Etkin', 'Seçkin'),
-    _WordPair('Yatkın', 'Katkın'),
-    _WordPair('Vurgun', 'Yorgun'),
-    _WordPair('Üzgün', 'Süzgün'),
-    _WordPair('Saygın', 'Baygın'),
-    _WordPair('Kırgın', 'Dargın'),
-    _WordPair('Solgun', 'Olgun'),
-    _WordPair('Keskin', 'Sürgün'),
-    _WordPair('Salgın', 'Dalgın'),
-    _WordPair('Dolgun', 'Durgun'),
-    _WordPair('Bezgin', 'Dizgin'),
-    _WordPair('Baskın', 'Taşkın'),
-    _WordPair('Bıçkın', 'Kaçkın'),
-    _WordPair('Düzgün', 'Dingin'),
-    _WordPair('Zengin', 'Engin'),
+  static const List<Color> _bgByRole = [
+    Color(0xFFDCFCE7),
+    Color(0xFFDBEAFE),
+    Color(0xFFFEF9C3),
+  ];
+  static const List<Color> _borderByRole = [
+    Color(0xFF15803D),
+    Color(0xFF1D4ED8),
+    Color(0xFFCA8A04),
   ];
 
-  // Kitaptaki Etkinlik 3.
-  static const List<_WordPair> _page3 = [
-    _WordPair('Birlik', 'Dirlik'),
-    _WordPair('Benlik', 'Senlik'),
-    _WordPair('İkilik', 'Beşlik'),
-    _WordPair('Güvenlik', 'İşçilik'),
-    _WordPair('Güzellik', 'Çirkinlik'),
-    _WordPair('Özgürlük', 'Güvenirlik'),
-    _WordPair('Kalemlik', 'Şekerlik'),
-    _WordPair('Yolluk', 'Tuzluk'),
-    _WordPair('Bolluk', 'Darlık'),
-    _WordPair('Odunluk', 'Çamurluk'),
-    _WordPair('Bilgelik', 'Bilimsellik'),
-    _WordPair('Birliktelik', 'Beraberlik'),
-    _WordPair('İyilik', 'Kötülük'),
-    _WordPair('Yüreklilik', 'Sessizlik'),
-    _WordPair('Saygınlık', 'Çalışkanlık'),
-    _WordPair('Aydınlık', 'Karanlık'),
-    _WordPair('Yaşlılık', 'Delikanlılık'),
-    _WordPair('Öğrencilik', 'Seçkinlik'),
-    _WordPair('Yazlık', 'Kışlık'),
-    _WordPair('Zenginlik', 'Fakirlik'),
-    _WordPair('İncelik', 'Çiçeklik'),
-    _WordPair('Sağlık', 'Hastalık'),
-    _WordPair('Yemeklik', 'Sebzelik'),
-    _WordPair('Etkinlik', 'Yetkinlik'),
+  // Ekrana 3 yerine 2 sütun sığdığı için sütunlar ikişer ikişer eşlenip
+  // sayfalara bölündü (9 sütun -> 4 ikili + 1 tekli = 5 sayfa).
+  late final List<List<int>> _pages = [
+    for (int i = 0; i < _columns.length; i += 2)
+      if (i + 1 < _columns.length) [i, i + 1] else [i],
   ];
-
-  late final List<List<_WordPair>> _pages = [_page1, _page2, _page3];
 
   _Phase _phase = _Phase.warmup;
   bool _hasCompletedOnce = false;
@@ -194,42 +278,54 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
     super.dispose();
   }
 
-  List<_WordPair> get _currentPairs =>
-      _phase == _Phase.warmup ? _page1.take(8).toList() : _pages[_pageIndex];
+  List<int> get _currentColumns =>
+      _phase == _Phase.warmup ? [0, 1] : _pages[_pageIndex];
 
-  int get _currentRows => (_currentPairs.length / _cols).ceil();
+  int get _currentRows {
+    final cols = _currentColumns;
+    int maxLen = 0;
+    for (final c in cols) {
+      final len = _phase == _Phase.warmup ? 8 : _columns[c].length;
+      if (len > maxLen) maxLen = len;
+    }
+    return maxLen;
+  }
+
+  String? _cellText(int row, int col) {
+    final cols = _currentColumns;
+    if (col >= cols.length) return null;
+    final lines = _columns[cols[col]];
+    if (row >= (_phase == _Phase.warmup ? 8 : lines.length)) return null;
+    return lines[row];
+  }
 
   List<int> _sweepOrder(_Direction dir) {
-    final cellCount = _currentPairs.length;
     final rows = _currentRows;
     final order = <int>[];
+    bool exists(int r, int c) => _cellText(r, c) != null;
     switch (dir) {
       case _Direction.leftToRight:
         for (int r = 0; r < rows; r++) {
           for (int c = 0; c < _cols; c++) {
-            final i = r * _cols + c;
-            if (i < cellCount) order.add(i);
+            if (exists(r, c)) order.add(r * _cols + c);
           }
         }
       case _Direction.rightToLeft:
         for (int r = 0; r < rows; r++) {
           for (int c = _cols - 1; c >= 0; c--) {
-            final i = r * _cols + c;
-            if (i < cellCount) order.add(i);
+            if (exists(r, c)) order.add(r * _cols + c);
           }
         }
       case _Direction.bottomToTop:
         for (int c = 0; c < _cols; c++) {
           for (int r = rows - 1; r >= 0; r--) {
-            final i = r * _cols + c;
-            if (i < cellCount) order.add(i);
+            if (exists(r, c)) order.add(r * _cols + c);
           }
         }
       case _Direction.topToBottom:
         for (int c = 0; c < _cols; c++) {
           for (int r = 0; r < rows; r++) {
-            final i = r * _cols + c;
-            if (i < cellCount) order.add(i);
+            if (exists(r, c)) order.add(r * _cols + c);
           }
         }
     }
@@ -263,7 +359,7 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
       _activeIndex = 0;
       _blinkOn = true;
     });
-    _blinkTimer = Timer.periodic(const Duration(milliseconds: 420), (_) {
+    _blinkTimer = Timer.periodic(const Duration(milliseconds: 380), (_) {
       if (!mounted) return;
       setState(() => _blinkOn = !_blinkOn);
     });
@@ -326,7 +422,7 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
 
   void _resumeGame() {
     setState(() => _isPaused = false);
-    _blinkTimer = Timer.periodic(const Duration(milliseconds: 420), (_) {
+    _blinkTimer = Timer.periodic(const Duration(milliseconds: 380), (_) {
       if (!mounted) return;
       setState(() => _blinkOn = !_blinkOn);
     });
@@ -343,7 +439,7 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
 
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
-      type: 'Kelime Çiftleri Tarama',
+      type: 'Ben Bir Öğretmenim',
       result: '${_pages.length} sayfa · 4 yön',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
@@ -428,7 +524,7 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🔎 Kelime Çiftleri Tarama')),
+        appBar: AppBar(title: const Text('👩‍🏫 Ben Bir Öğretmenim')),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -438,12 +534,10 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
                 child: switch (_phase) {
                   _Phase.warmup => _buildScan(
                     key: ValueKey('warmup-$_directionIndex'),
-                    pageStyle: 0,
                   ),
                   _Phase.ready => _buildReady(),
                   _Phase.exercise => _buildScan(
                     key: ValueKey('ex-$_pageIndex-$_directionIndex'),
-                    pageStyle: _pageIndex,
                   ),
                 },
               ),
@@ -491,9 +585,8 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
     );
   }
 
-  Widget _buildScan({required Key key, required int pageStyle}) {
+  Widget _buildScan({required Key key}) {
     final isWarmup = _phase == _Phase.warmup;
-    final pairs = _currentPairs;
     return KeyedSubtree(
       key: key,
       child: Column(
@@ -554,13 +647,13 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFECFCCB),
+                color: const Color(0xFFDCFCE7),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: _color, width: 1.2),
               ),
               child: const Text.rich(
                 TextSpan(
-                  style: TextStyle(fontSize: 12.5, color: Color(0xFF365314)),
+                  style: TextStyle(fontSize: 12.5, color: Color(0xFF14532D)),
                   children: [
                     TextSpan(
                       text: 'Amaç: ',
@@ -568,8 +661,8 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
                     ),
                     TextSpan(
                       text:
-                          'Farklı kelimeleri en kısa sürede algılayabilmek, '
-                          'gözün dikey görüş alanını (DİGA) genişletmek.\n',
+                          'Gözümüze ritim kazandırmak ve geriye dönüşü '
+                          'önlemek.\n',
                     ),
                     TextSpan(
                       text: 'Yöntem: ',
@@ -577,10 +670,10 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
                     ),
                     TextSpan(
                       text:
-                          'Kutu içindeki noktaya odaklanarak iki kelimeyi '
-                          'en kısa sürede okuyunuz. Önce antremanı '
-                          'yapacağız, sonra sıra sende — 3 sayfayı da bu '
-                          'şekilde tarayacaksın!',
+                          'Bölünmüş alanlardaki kelimelerin ortasına '
+                          'odaklanarak kelime gruplarını tek bakışta '
+                          'algıla. Önce antremanı yapacağız, sonra sıra '
+                          'sende — 5 sayfayı da bu şekilde tarayacaksın!',
                     ),
                   ],
                 ),
@@ -590,7 +683,7 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
           const SizedBox(height: 8),
           _speedChipRow(),
           const SizedBox(height: 12),
-          Expanded(child: _grid(pairs, pageStyle)),
+          Expanded(child: _grid()),
         ],
       ),
     );
@@ -606,7 +699,9 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Center(child: Text('🎯', style: TextStyle(fontSize: 64))),
+                const Center(
+                  child: Text('👩‍🏫', style: TextStyle(fontSize: 64)),
+                ),
                 const SizedBox(height: 16),
                 Container(
                   width: double.infinity,
@@ -620,7 +715,7 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
                   ),
                   child: const Text(
                     'Antremanı tamamladık! Şimdi sıra sende — az önce '
-                    'izlediğin gibi kutucuğu takip ederek 3 sayfayı da 4 '
+                    'izlediğin gibi kutucuğu takip ederek 5 sayfayı da 4 '
                     'yönde tarayacaksın.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -661,41 +756,34 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
     );
   }
 
-  // Kutucuklar makul bir boyutta (88-140) tutuluyor ama az satırlı
-  // sayfalarda (ör. antreman) satırlar arasına eşit boşluk dağıtılarak
-  // ızgara tüm ekran yüksekliğini dolduruyor; sığmayan sayfalar
-  // kaydırılabiliyor.
-  Widget _grid(List<_WordPair> pairs, int pageStyle) {
+  Widget _grid() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const spacing = 10.0;
-        final rows = (pairs.length / _cols).ceil();
+        const spacing = 8.0;
+        final rows = _currentRows;
+        final cols = _currentColumns;
         final cellWidth =
             (constraints.maxWidth - spacing * (_cols - 1)) / _cols;
         final rawCellHeight =
             (constraints.maxHeight - spacing * (rows - 1)) / rows;
-        final cellHeight = rawCellHeight.clamp(88.0, 140.0);
+        final cellHeight = rawCellHeight.clamp(34.0, 60.0);
         final fits =
             cellHeight * rows + spacing * (rows - 1) <=
             constraints.maxHeight + 0.5;
 
         Widget cellAt(int r, int c) {
+          final text = _cellText(r, c);
+          if (text == null) return SizedBox(width: cellWidth);
           final index = r * _cols + c;
-          if (index >= pairs.length) return SizedBox(width: cellWidth);
-          final pair = pairs[index];
           final isActive =
               index ==
               (_sweepIndices.isEmpty ? -1 : _sweepIndices[_activeIndex]);
           final lit = isActive && _blinkOn;
+          final role = c < cols.length ? cols[c] % 3 : 0;
           return SizedBox(
             width: cellWidth,
             height: cellHeight,
-            child: _pairBox(
-              pair,
-              lit: lit,
-              isActive: isActive,
-              pageStyle: pageStyle,
-            ),
+            child: _cell(text, lit: lit, role: role),
           );
         }
 
@@ -728,84 +816,34 @@ class _WordPairScanPageState extends State<WordPairScanPage> {
     );
   }
 
-  Widget _pairBox(
-    _WordPair pair, {
-    required bool lit,
-    required bool isActive,
-    required int pageStyle,
-  }) {
-    Color bg;
-    Color border;
-    Color fg;
-    switch (pageStyle) {
-      case 1:
-        bg = const Color(0xFFE3A857);
-        border = const Color(0xFF92400E);
-        fg = const Color(0xFF451A03);
-      case 2:
-        bg = const Color(0xFFDDA0DD);
-        border = const Color(0xFF6B21A8);
-        fg = const Color(0xFF3B0764);
-      default:
-        bg = Colors.white;
-        border = Colors.grey.shade400;
-        fg = const Color(0xFF334155);
-    }
-    if (lit) {
-      bg = _color;
-      fg = Colors.white;
-    }
-    final content = AnimatedContainer(
+  Widget _cell(String text, {required bool lit, required int role}) {
+    Color bg = lit ? _color : _bgByRole[role];
+    Color fg = lit ? Colors.white : _borderByRole[role];
+    return AnimatedContainer(
       duration: const Duration(milliseconds: 140),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(10),
-        border: pageStyle == 0
-            ? null
-            : Border.all(color: lit ? _color : border, width: 1.4),
+        border: Border.all(
+          color: lit ? _color : _borderByRole[role],
+          width: 1.2,
+        ),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                pair.top,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: fg,
-                ),
-              ),
-              Text('•', style: TextStyle(fontSize: 12, color: fg)),
-              Text(
-                pair.bottom,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: fg,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (pageStyle != 0) return content;
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: CustomPaint(
-            painter: _DashedRectPainter(
-              color: lit ? _color : Colors.grey.shade400,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: fg,
             ),
           ),
         ),
-        content,
-      ],
+      ),
     );
   }
 }

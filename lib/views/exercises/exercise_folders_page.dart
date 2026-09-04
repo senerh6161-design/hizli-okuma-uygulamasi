@@ -3,6 +3,7 @@ import 'exam_words_page.dart';
 import 'folder1_session_page.dart';
 import 'folder2_session_page.dart';
 import 'folder3_session_page.dart';
+import 'folder4_session_page.dart';
 
 class _FolderInfo {
   final int number;
@@ -57,9 +58,10 @@ class ExerciseFoldersPage extends StatelessWidget {
     _FolderInfo(
       number: 4,
       title: 'Klasör 4',
-      isUnlocked: false,
-      readyCount: 0,
+      isUnlocked: true,
+      readyCount: 9,
       totalCount: 10,
+      page: () => const Folder4SessionPage(),
     ),
     _FolderInfo(
       number: 5,
@@ -146,7 +148,7 @@ class ExerciseFoldersPage extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Her klasörde 10 egzersiz olacak. Şimdilik Klasör 1, 2 ve 3 açık.',
+                          'Her klasörde 10 egzersiz olacak. Şimdilik Klasör 1, 2, 3 ve 4 açık.',
                           style: TextStyle(color: Colors.white70, fontSize: 13),
                         ),
                       ],

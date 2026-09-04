@@ -79,27 +79,54 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
     8,
   ];
 
-  // 1. Bölüm · 1. Tur: tek kart geliyor, renk kelimeyle uyumluysa
-  // hep birlikte alkışlıyoruz.
+  // 1. Bölüm · 1. Tur: tek kart geliyor, renk kelimeyle uyumluysa hep
+  // birlikte alkışlıyoruz. 30 kart — 15'i uyumlu, 15'i uyumsuz, hep aynı
+  // sırada tekrar etmeyecek şekilde karışık.
   static const List<_StroopItem> _clapCards = [
     _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
     _StroopItem(_ColorName.sari, Color(0xFF0070C0)),
     _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
     _StroopItem(_ColorName.mavi, Color(0xFFFF0000)),
     _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFF00B050)),
+    _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.yesil, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
+    _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+    _StroopItem(_ColorName.sari, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+    _StroopItem(_ColorName.sari, Color(0xFF00B050)),
+    _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
     _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.mavi, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
+    _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
   ];
 
   // 1. Bölüm · 2. Tur: iki kart yan yana geliyor, hangisi uyumluysa o
-  // elin parmaklarını şıklatıyoruz.
+  // elin parmaklarını şıklatıyoruz. 30 çift, her birinde SADECE bir taraf
+  // gerçekten uyumlu (correctIsRight) — hangi tarafın doğru olduğu da
+  // karışık sırayla değişiyor.
   static const List<_SnapPair> _snapPairs = [
     _SnapPair(
       _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
-      _StroopItem(_ColorName.sari, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
       false,
     ),
     _SnapPair(
-      _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
       _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
       true,
     ),
@@ -109,18 +136,138 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
       false,
     ),
     _SnapPair(
-      _StroopItem(_ColorName.mavi, Color(0xFFFF0000)),
-      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
-      true,
-    ),
-    _SnapPair(
-      _StroopItem(_ColorName.kirmizi, Color(0xFF00B050)),
+      _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
       _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
       true,
     ),
     _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFF00B050)),
       _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+      false,
+    ),
+    _SnapPair(
       _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.sari, Color(0xFF0070C0)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFF00B050)),
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.sari, Color(0xFF00B050)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFF00B050)),
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
       false,
     ),
   ];
@@ -240,6 +387,13 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
   bool _hasCompletedOnce = false;
   bool _isPaused = false;
 
+  // 1. Bölüm (alkış/şıklatma turları) kendiliğinden ilerliyor — öğretmen
+  // butona basmak zorunda kalmasın diye. Hız seçilebiliyor.
+  static const List<String> _clapSnapSpeedLabels = ['Yavaş', 'Orta', 'Hızlı'];
+  static const List<int> _clapSnapStepMsBySpeed = [2600, 1800, 1100];
+  int _clapSnapSpeedLevel = 1;
+  Timer? _clapSnapTimer;
+
   int _clapCardIndex = 0;
   int _snapPairIndex = 0;
 
@@ -255,6 +409,7 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
   void dispose() {
     _wrongFlashTimer?.cancel();
     _elapsedTimer?.cancel();
+    _clapSnapTimer?.cancel();
     super.dispose();
   }
 
@@ -265,24 +420,57 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
     setState(() {
       _phase = _Phase.clap;
       _clapCardIndex = 0;
+      _elapsedSec = 0;
     });
+    _scheduleClapSnapStep();
+    _elapsedTimer?.cancel();
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedSec++);
+    });
+  }
+
+  void _scheduleClapSnapStep() {
+    _clapSnapTimer?.cancel();
+    _clapSnapTimer = Timer(
+      Duration(milliseconds: _clapSnapStepMsBySpeed[_clapSnapSpeedLevel]),
+      () {
+        if (!mounted) return;
+        if (_phase == _Phase.clap) {
+          _nextClapCard();
+        } else if (_phase == _Phase.snap) {
+          _nextSnapPair();
+        }
+      },
+    );
+  }
+
+  void _changeClapSnapSpeed(int level) {
+    setState(() => _clapSnapSpeedLevel = level);
+    if (_phase == _Phase.clap || _phase == _Phase.snap) {
+      _scheduleClapSnapStep();
+    }
   }
 
   void _nextClapCard() {
     if (_clapCardIndex < _clapCards.length - 1) {
       setState(() => _clapCardIndex++);
+      _scheduleClapSnapStep();
     } else {
       setState(() {
         _phase = _Phase.snap;
         _snapPairIndex = 0;
       });
+      _scheduleClapSnapStep();
     }
   }
 
   void _nextSnapPair() {
     if (_snapPairIndex < _snapPairs.length - 1) {
       setState(() => _snapPairIndex++);
+      _scheduleClapSnapStep();
     } else {
+      _clapSnapTimer?.cancel();
       setState(() => _phase = _Phase.bolum2Intro);
     }
   }
@@ -665,22 +853,48 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: _color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '1. Bölüm · 1. Tur · Kart ${_clapCardIndex + 1}/'
-              '${_clapCards.length}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: _color,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '1. Bölüm · 1. Tur · Kart ${_clapCardIndex + 1}/'
+                  '${_clapCards.length}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _color,
+                  ),
+                ),
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade300),
+                ),
+                child: Text(
+                  '⏱ $_elapsedSec sn',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber.shade800,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+          _clapSnapSpeedChipRow(),
+          const SizedBox(height: 8),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -689,14 +903,24 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: _color, width: 1.5),
             ),
-            child: const Text(
-              '👏 Renk, kelimeyle UYUMLUYSA hep birlikte alkışlayalım!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF7C2D12),
-              ),
+            child: Column(
+              children: [
+                const Text(
+                  '👏 Renk, kelimeyle UYUMLUYSA hep birlikte alkışlayalım!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF7C2D12),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Bir kartı kaçırsan da üzülme, hemen sıradaki renge odaklan!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.brown.shade700),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -714,27 +938,46 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
               ),
             ),
           ),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: _nextClapCard,
-              icon: const Icon(Icons.arrow_forward),
-              label: const Text(
-                'SONRAKİ KART',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _color,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
+    );
+  }
+
+  Widget _clapSnapSpeedChipRow() {
+    return Row(
+      children: [
+        Text(
+          'Hız: ',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade600,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(width: 6),
+        for (int i = 0; i < _clapSnapSpeedLabels.length; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          ChoiceChip(
+            label: Text(_clapSnapSpeedLabels[i]),
+            selected: _clapSnapSpeedLevel == i,
+            onSelected: (_) => _changeClapSnapSpeed(i),
+            selectedColor: _color,
+            labelStyle: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: _clapSnapSpeedLevel == i ? Colors.white : _color,
+            ),
+            backgroundColor: _color.withValues(alpha: 0.08),
+            side: BorderSide(
+              color: _color.withValues(
+                alpha: _clapSnapSpeedLevel == i ? 1 : 0.3,
+              ),
+            ),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ],
     );
   }
 
@@ -747,22 +990,48 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: _color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '1. Bölüm · 2. Tur · Kart ${_snapPairIndex + 1}/'
-              '${_snapPairs.length}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: _color,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '1. Bölüm · 2. Tur · Kart ${_snapPairIndex + 1}/'
+                  '${_snapPairs.length}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _color,
+                  ),
+                ),
               ),
-            ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade300),
+                ),
+                child: Text(
+                  '⏱ $_elapsedSec sn',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.amber.shade800,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+          _clapSnapSpeedChipRow(),
+          const SizedBox(height: 8),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -771,15 +1040,25 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: _color, width: 1.5),
             ),
-            child: const Text(
-              '🤟 Hangi kart uyumluysa o elimizin parmaklarını '
-              'şıklatalım! Sol uyumluysa sol el, sağ uyumluysa sağ el.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF7C2D12),
-              ),
+            child: Column(
+              children: [
+                const Text(
+                  '🤟 Hangi kart uyumluysa o elimizin parmaklarını '
+                  'şıklatalım! Sol uyumluysa sol el, sağ uyumluysa sağ el.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF7C2D12),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Bir çifti kaçırsan da üzülme, hemen sıradaki renge odaklan!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Colors.brown.shade700),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -789,25 +1068,6 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
                 const SizedBox(width: 16),
                 Expanded(child: _snapCard('SAĞ', pair.right)),
               ],
-            ),
-          ),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: _nextSnapPair,
-              icon: const Icon(Icons.arrow_forward),
-              label: const Text(
-                'SONRAKİ KART',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _color,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
             ),
           ),
         ],
@@ -978,12 +1238,21 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
             ],
           ),
           const SizedBox(height: 10),
-          const Text(
-            'Rengiyle uyumlu OLMAYAN kelimelere dokun!',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: Colors.grey,
+          Text.rich(
+            TextSpan(
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+              children: [
+                const TextSpan(text: 'Rengiyle uyumlu '),
+                TextSpan(
+                  text: 'OLMAYAN',
+                  style: TextStyle(color: Colors.red.shade700),
+                ),
+                const TextSpan(text: ' kelimelere dokun!'),
+              ],
             ),
           ),
           const SizedBox(height: 16),

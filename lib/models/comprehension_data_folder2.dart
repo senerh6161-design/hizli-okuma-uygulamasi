@@ -205,9 +205,12 @@ class Folder2ReadingData {
   // "İlk Test ve Antreman Metni" belgelerinin ilkokul ve ortaokul-lise
   // uyarlamaları. Yukarıdaki rastgele konu havuzunun dışında tutuluyor,
   // sadece seviye seçiciyle erişiliyor (bkz. Klasör 1'deki Kitaba Hürmet).
+  // Ortaokul ve Lise metni aynı olsa da (hoca tek bir "ortaokul-lise"
+  // uyarlaması verdi), Klasör 1'deki gibi ayrı iki kart olarak gösteriliyor.
   static const List<ReadingLevel> levels = [
     ReadingLevel(id: 'ilkokul', title: 'İlkokul', emoji: '🎒'),
-    ReadingLevel(id: 'ortaokul_lise', title: 'Ortaokul - Lise', emoji: '📘'),
+    ReadingLevel(id: 'ortaokul', title: 'Ortaokul', emoji: '📘'),
+    ReadingLevel(id: 'lise', title: 'Lise', emoji: '🎓'),
   ];
 
   static ReadingPassage? passageForLevel(String levelId) {
@@ -308,120 +311,134 @@ class Folder2ReadingData {
       ],
     ),
     ReadingPassage(
-      id: 'f2-ortaokul-lise',
+      id: 'f2-ortaokul',
       title: 'Dünyayı Değiştiren Asıl Güç',
       topic: 'egitim',
-      level: 'ortaokul_lise',
-      content:
-          'Dünyayı zenginlikleriyle göz kamaştıran ve teknolojisiyle öne '
-          'çıkan ülkelerin yönettiğini düşünebiliriz. Dışarıdan '
-          'bakıldığında tablo böyle görünse de meselenin özüne '
-          'indiğimizde dünyayı biçimlendiren asıl gücün kalem ve kitap '
-          'olduğunu çok iyi biliriz. Bir ülkeyi ayakta tutan, onu '
-          'geleceğe güvenle taşıyan ve gerçek gücün kaynağını özetleyen '
-          'tarihi bir hikâye anlatılır:\n\n'
-          'Eski zamanlarda güçlü bir ordu, zengin yer altı kaynaklarına '
-          'sahip küçük bir ülkeye saldırmak üzere yola çıkmış. Halk '
-          'büyük bir endişe ve paniğe kapılmış. Kimi ülkeyi terk etmek '
-          'isterken kimi de "Düşman yakında burayı yerle bir edecek, '
-          'buna nasıl engel olacağız?" kaygısıyla çaresizce beklemiş. '
-          'Tam o sırada toplumun saygı duyduğu bilge biri ortaya çıkmış '
-          've gür bir sesle:\n'
-          '— "Okul yapın! Hiç durmayın, hemen okul yapın!" demiş.\n'
-          'Halk şaşkınlıkla itiraz etmiş:\n'
-          '— "Zaman mı var? Düşman kapımıza dayandı, okul yapmanın '
-          'sırası mı?"\n'
-          'Bilge adam acı bir tebessümle cevap vermiş:\n'
-          '— "İşte başımıza gelen bu felaket, okuyanlarımızın azlığından '
-          'kaynaklanıyor ya! Belki bu gelişlerinde düşmana engel '
-          'olamayız, fakat okullarımızda gençlerimizi yetiştirirsek bir '
-          'sonraki sefer için hazırlıklı ve güçlü oluruz."\n\n'
-          'Günümüzde gelişmiş okullarımız ve bu kurumlara anlam katan '
-          'değerli öğretmenlerimiz var. Öğretmenlerimiz, büyük bir '
-          'gayret ve heyecanla bizleri yarınlara hazırlıyor. Biz '
-          'eğitimcilerin en temel görevi, gençlerimizin geleceğine '
-          'değer katmaktır. Sizlerin de aynı azimle derslerinize '
-          'odaklandığınızı bilmek, bizim için en büyük motivasyon '
-          'kaynağıdır. Şunu unutmamalıyız ki; bir ülkenin geleceği, '
-          'gençliğin zihinsel ve ruhsal gelişimi kadar aydınlık '
-          'olabilir.\n\n'
-          'İç Dünyanın Derinliği\n\n'
-          'Bugün teknolojik imkânlarımız, konforlu evlerimiz ve şık '
-          'giysilerimiz olabilir. Ancak ihmal etmememiz gereken bir '
-          'diğer unsur da iç dünyamızdır.\n\n'
-          'Zamanında bir bilge, son derece şık giyinmiş bir gençle '
-          'karşılaşır. Ona tarih ve dünya kültürleri hakkında sorular '
-          'sorar; fakat gencin bu konularda hiçbir fikri yoktur. Bilge '
-          'adam, gencin zihinsel birikimini ölçmek adına herkesçe '
-          'bilinen klasik kitapları okuyup okumadığını sorar. Gencin '
-          'kitaplardan da habersiz olduğunu görünce şu tarihi tespiti '
-          'yapar:\n'
-          '— "Muhteşem bir saray! Fakat ne yazık ki içinde bilgiye dair '
-          'hiçbir şey yok, bomboş..."\n\n'
-          'Geleceğimiz ve umudumuz; bu toprakların kültürüyle beslenip '
-          'büyüyen gençliktir. Gençlerin donanımlı olması, bilimin ve '
-          'nitelikli kitapların rehberliğinde yetişmesi hem kendi '
-          'yaşamları hem de ülkemizin geleceği açısından çok '
-          'önemlidir.\n\n'
-          'Okuma eylemi sadece okul duvarları arasına sıkıştırılamaz; '
-          'yaşam boyu süren nitelikli bir alışkanlıktır. Okuma '
-          'alışkanlığı kazanmak için gösterilen her çaba, gelecekte inşa '
-          'edeceğiniz başarı sarayına konulmuş sağlam bir tuğladır.\n\n'
-          'Gerçek kitap dostları için okumak; nefes kadar hayati, su '
-          'kadar bereketli ve ekmek kadar kutsaldır. Edebiyat '
-          'dünyamızda iz bırakmış bir yazarımızın şu sözü, kitap '
-          'sevgisinin ulaştığı noktayı açıkça gösterir:\n'
-          '"Bana işkence etmek isteyenler, bulunduğum odadaki kitapları '
-          've kalemleri yok etsinler; bu kadarı yeterlidir."\n\n'
-          'Kendi ayakları üzerinde duran, adalet ve hoşgörü anlayışıyla '
-          'etrafını aydınlatan güçlü bir gelecek hayal ediyorsak; '
-          'kitaba, okumaya ve öğrenmeye gereken zamanı ayırmak '
-          'zorundayız. Geleceğin öncü şahsiyetleri ve liderleri, hiç '
-          'şüphesiz bugün okuyanların arasından çıkacaktır.\n\n'
-          '(Cumali Sever)',
-      questions: [
-        {
-          'question':
-              'Yazıya göre dünyayı asıl biçimlendiren güç kalem ve kitaptır.',
-          'answers': ['Doğru', 'Yanlış'],
-          'correct': 0,
-        },
-        {
-          'question':
-              'Yazıya göre halk, düşman haberini alınca hiç endişelenmeden '
-              'sakin kalmıştır.',
-          'answers': ['Doğru', 'Yanlış'],
-          'correct': 1,
-        },
-        {
-          'question':
-              'Bilge adam, felaketin nedeninin okuyan insan sayısının '
-              'azlığı olduğunu söylemiştir.',
-          'answers': ['Doğru', 'Yanlış'],
-          'correct': 0,
-        },
-        {
-          'question':
-              'Şık giyinen genç, tarih ve dünya kültürleri sorularına '
-              'kolayca cevap vermiştir.',
-          'answers': ['Doğru', 'Yanlış'],
-          'correct': 1,
-        },
-        {
-          'question':
-              'Yazara göre okuma alışkanlığı sadece okul yıllarıyla sınırlı '
-              'değil, yaşam boyu süren bir alışkanlıktır.',
-          'answers': ['Doğru', 'Yanlış'],
-          'correct': 0,
-        },
-        {
-          'question':
-              'Yazıya göre bir ülkenin geleceği, gençliğin zihinsel '
-              'gelişiminden bağımsızdır.',
-          'answers': ['Doğru', 'Yanlış'],
-          'correct': 1,
-        },
-      ],
+      level: 'ortaokul',
+      content: _ortaokulLiseContent,
+      questions: _ortaokulLiseQuestions,
     ),
+    ReadingPassage(
+      id: 'f2-lise',
+      title: 'Dünyayı Değiştiren Asıl Güç',
+      topic: 'egitim',
+      level: 'lise',
+      content: _ortaokulLiseContent,
+      questions: _ortaokulLiseQuestions,
+    ),
+  ];
+
+  // Ortaokul ve Lise için hoca aynı metni verdi — hoca ileride ayrı bir
+  // Lise uyarlaması paylaşırsa yalnızca bu değişkeni ayırmak yeterli.
+  static const String _ortaokulLiseContent =
+      'Dünyayı zenginlikleriyle göz kamaştıran ve teknolojisiyle öne '
+      'çıkan ülkelerin yönettiğini düşünebiliriz. Dışarıdan '
+      'bakıldığında tablo böyle görünse de meselenin özüne '
+      'indiğimizde dünyayı biçimlendiren asıl gücün kalem ve kitap '
+      'olduğunu çok iyi biliriz. Bir ülkeyi ayakta tutan, onu '
+      'geleceğe güvenle taşıyan ve gerçek gücün kaynağını özetleyen '
+      'tarihi bir hikâye anlatılır:\n\n'
+      'Eski zamanlarda güçlü bir ordu, zengin yer altı kaynaklarına '
+      'sahip küçük bir ülkeye saldırmak üzere yola çıkmış. Halk '
+      'büyük bir endişe ve paniğe kapılmış. Kimi ülkeyi terk etmek '
+      'isterken kimi de "Düşman yakında burayı yerle bir edecek, '
+      'buna nasıl engel olacağız?" kaygısıyla çaresizce beklemiş. '
+      'Tam o sırada toplumun saygı duyduğu bilge biri ortaya çıkmış '
+      've gür bir sesle:\n'
+      '— "Okul yapın! Hiç durmayın, hemen okul yapın!" demiş.\n'
+      'Halk şaşkınlıkla itiraz etmiş:\n'
+      '— "Zaman mı var? Düşman kapımıza dayandı, okul yapmanın '
+      'sırası mı?"\n'
+      'Bilge adam acı bir tebessümle cevap vermiş:\n'
+      '— "İşte başımıza gelen bu felaket, okuyanlarımızın azlığından '
+      'kaynaklanıyor ya! Belki bu gelişlerinde düşmana engel '
+      'olamayız, fakat okullarımızda gençlerimizi yetiştirirsek bir '
+      'sonraki sefer için hazırlıklı ve güçlü oluruz."\n\n'
+      'Günümüzde gelişmiş okullarımız ve bu kurumlara anlam katan '
+      'değerli öğretmenlerimiz var. Öğretmenlerimiz, büyük bir '
+      'gayret ve heyecanla bizleri yarınlara hazırlıyor. Biz '
+      'eğitimcilerin en temel görevi, gençlerimizin geleceğine '
+      'değer katmaktır. Sizlerin de aynı azimle derslerinize '
+      'odaklandığınızı bilmek, bizim için en büyük motivasyon '
+      'kaynağıdır. Şunu unutmamalıyız ki; bir ülkenin geleceği, '
+      'gençliğin zihinsel ve ruhsal gelişimi kadar aydınlık '
+      'olabilir.\n\n'
+      'İç Dünyanın Derinliği\n\n'
+      'Bugün teknolojik imkânlarımız, konforlu evlerimiz ve şık '
+      'giysilerimiz olabilir. Ancak ihmal etmememiz gereken bir '
+      'diğer unsur da iç dünyamızdır.\n\n'
+      'Zamanında bir bilge, son derece şık giyinmiş bir gençle '
+      'karşılaşır. Ona tarih ve dünya kültürleri hakkında sorular '
+      'sorar; fakat gencin bu konularda hiçbir fikri yoktur. Bilge '
+      'adam, gencin zihinsel birikimini ölçmek adına herkesçe '
+      'bilinen klasik kitapları okuyup okumadığını sorar. Gencin '
+      'kitaplardan da habersiz olduğunu görünce şu tarihi tespiti '
+      'yapar:\n'
+      '— "Muhteşem bir saray! Fakat ne yazık ki içinde bilgiye dair '
+      'hiçbir şey yok, bomboş..."\n\n'
+      'Geleceğimiz ve umudumuz; bu toprakların kültürüyle beslenip '
+      'büyüyen gençliktir. Gençlerin donanımlı olması, bilimin ve '
+      'nitelikli kitapların rehberliğinde yetişmesi hem kendi '
+      'yaşamları hem de ülkemizin geleceği açısından çok '
+      'önemlidir.\n\n'
+      'Okuma eylemi sadece okul duvarları arasına sıkıştırılamaz; '
+      'yaşam boyu süren nitelikli bir alışkanlıktır. Okuma '
+      'alışkanlığı kazanmak için gösterilen her çaba, gelecekte inşa '
+      'edeceğiniz başarı sarayına konulmuş sağlam bir tuğladır.\n\n'
+      'Gerçek kitap dostları için okumak; nefes kadar hayati, su '
+      'kadar bereketli ve ekmek kadar kutsaldır. Edebiyat '
+      'dünyamızda iz bırakmış bir yazarımızın şu sözü, kitap '
+      'sevgisinin ulaştığı noktayı açıkça gösterir:\n'
+      '"Bana işkence etmek isteyenler, bulunduğum odadaki kitapları '
+      've kalemleri yok etsinler; bu kadarı yeterlidir."\n\n'
+      'Kendi ayakları üzerinde duran, adalet ve hoşgörü anlayışıyla '
+      'etrafını aydınlatan güçlü bir gelecek hayal ediyorsak; '
+      'kitaba, okumaya ve öğrenmeye gereken zamanı ayırmak '
+      'zorundayız. Geleceğin öncü şahsiyetleri ve liderleri, hiç '
+      'şüphesiz bugün okuyanların arasından çıkacaktır.\n\n'
+      '(Cumali Sever)';
+
+  static const List<Map<String, dynamic>> _ortaokulLiseQuestions = [
+    {
+      'question':
+          'Yazıya göre dünyayı asıl biçimlendiren güç kalem ve kitaptır.',
+      'answers': ['Doğru', 'Yanlış'],
+      'correct': 0,
+    },
+    {
+      'question':
+          'Yazıya göre halk, düşman haberini alınca hiç endişelenmeden '
+          'sakin kalmıştır.',
+      'answers': ['Doğru', 'Yanlış'],
+      'correct': 1,
+    },
+    {
+      'question':
+          'Bilge adam, felaketin nedeninin okuyan insan sayısının '
+          'azlığı olduğunu söylemiştir.',
+      'answers': ['Doğru', 'Yanlış'],
+      'correct': 0,
+    },
+    {
+      'question':
+          'Şık giyinen genç, tarih ve dünya kültürleri sorularına '
+          'kolayca cevap vermiştir.',
+      'answers': ['Doğru', 'Yanlış'],
+      'correct': 1,
+    },
+    {
+      'question':
+          'Yazara göre okuma alışkanlığı sadece okul yıllarıyla sınırlı '
+          'değil, yaşam boyu süren bir alışkanlıktır.',
+      'answers': ['Doğru', 'Yanlış'],
+      'correct': 0,
+    },
+    {
+      'question':
+          'Yazıya göre bir ülkenin geleceği, gençliğin zihinsel '
+          'gelişiminden bağımsızdır.',
+      'answers': ['Doğru', 'Yanlış'],
+      'correct': 1,
+    },
   ];
 }

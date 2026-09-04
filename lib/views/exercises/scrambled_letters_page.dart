@@ -7,7 +7,10 @@ import '../../widgets/completion_pop_scope.dart';
 class _Puzzle {
   final List<String> letters; // 3x3 karışık harfler
   final String answer;
-  const _Puzzle(this.letters, this.answer);
+  // 2. ipucunda gösterilen, kelimenin ne olduğunu anlatan tanım — harf
+  // vermez, sadece anlam ipucu verir.
+  final String clue;
+  const _Puzzle(this.letters, this.answer, this.clue);
 }
 
 // Öğrenci yazdığı cevabı büyük/küçük harf ve Türkçe İ/I farkına takılmadan
@@ -45,7 +48,6 @@ class _GlowLetterState extends State<_GlowLetter>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   Timer? _delayTimer;
-  Timer? _blinkTimer;
 
   @override
   void initState() {
@@ -54,24 +56,17 @@ class _GlowLetterState extends State<_GlowLetter>
       vsync: this,
       duration: const Duration(milliseconds: 550),
     );
+    // Harf sadece bir kere, sırayla gecikmeli olarak yıldız gibi parlayıp
+    // geliyor — tekrar yanıp sönme yok.
     _delayTimer = Timer(widget.delay, () {
       if (!mounted) return;
       _controller.forward();
-      // İlk parlama bitince, kutucuk cevaplanana kadar arada bir tekrar
-      // yanıp sönsün diye periyodik olarak aynı parlamayı tekrarlıyoruz —
-      // her harf kendi başlangıç gecikmesiyle faz dışı kaldığı için hepsi
-      // aynı anda değil, birbirinden bağımsız yanıp sönüyor.
-      _blinkTimer = Timer.periodic(const Duration(milliseconds: 2400), (_) {
-        if (!mounted) return;
-        _controller.forward(from: 0);
-      });
     });
   }
 
   @override
   void dispose() {
     _delayTimer?.cancel();
-    _blinkTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -82,37 +77,87 @@ class _GlowLetterState extends State<_GlowLetter>
       animation: _controller,
       builder: (context, child) {
         final v = _controller.value;
-        final fade = (v / 0.35).clamp(0.0, 1.0);
-        final glow = 1 - v; // 1 = az önce parladı, 0 = sakinledi
+        final fade = (v / 0.2).clamp(0.0, 1.0);
+        // Yıldız gibi ANİ parlayıp hızla sönsün diye eğri; 0'da tepe
+        // (en parlak), sonra hızla düşüyor — düz doğrusal solma değil.
+        final glow = (1 - v) * (1 - v);
+        final scale = 1.0 + 0.12 * glow;
         return Opacity(
           opacity: fade,
-          child: Container(
-            width: widget.cellSize,
-            height: widget.cellSize,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: widget.color.withValues(alpha: 0.1 + 0.35 * glow),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: widget.color.withValues(alpha: 0.4 + 0.6 * glow),
-                width: 1 + glow,
-              ),
-              boxShadow: glow > 0.05
-                  ? [
-                      BoxShadow(
-                        color: widget.color.withValues(alpha: 0.55 * glow),
-                        blurRadius: 14 * glow,
-                        spreadRadius: 2 * glow,
+          child: Transform.scale(
+            scale: scale,
+            child: SizedBox(
+              width: widget.cellSize,
+              height: widget.cellSize,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Color.lerp(
+                        widget.color.withValues(alpha: 0.1),
+                        const Color(0xFFFFF7CC),
+                        glow,
                       ),
-                    ]
-                  : null,
-            ),
-            child: Text(
-              widget.letter,
-              style: TextStyle(
-                fontSize: widget.fontSize,
-                fontWeight: FontWeight.bold,
-                color: widget.color,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Color.lerp(
+                          widget.color.withValues(alpha: 0.4),
+                          const Color(0xFFFFC633),
+                          glow,
+                        )!,
+                        width: 1 + glow,
+                      ),
+                      boxShadow: glow > 0.05
+                          ? [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFFFFC633,
+                                ).withValues(alpha: 0.7 * glow),
+                                blurRadius: 18 * glow,
+                                spreadRadius: 3 * glow,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      widget.letter,
+                      style: TextStyle(
+                        fontSize: widget.fontSize,
+                        fontWeight: FontWeight.bold,
+                        color: widget.color,
+                      ),
+                    ),
+                  ),
+                  if (glow > 0.15) ...[
+                    Positioned(
+                      top: -widget.cellSize * 0.14,
+                      right: -widget.cellSize * 0.14,
+                      child: Opacity(
+                        opacity: glow,
+                        child: Icon(
+                          Icons.star_rounded,
+                          size: widget.cellSize * 0.32 * glow + 4,
+                          color: const Color(0xFFFFC633),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -widget.cellSize * 0.1,
+                      left: -widget.cellSize * 0.1,
+                      child: Opacity(
+                        opacity: glow,
+                        child: Icon(
+                          Icons.star_rounded,
+                          size: widget.cellSize * 0.2 * glow + 3,
+                          color: const Color(0xFFFFC633),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -198,12 +243,37 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
   ];
   static const String _exampleAnswer = 'çanakkale';
 
+  // Harfler, 2. Bölüm'de parmakla çizerken her kutucuktan bir sonrakine
+  // komşu (yan yana/alt-üst/çapraz) gidilecek şekilde "yılan" deseniyle
+  // (satır 1 sola→sağa, satır 2 sağa→sola, satır 3 sola→sağa) yerleştirildi
+  // — kelimenin harf sırası, ızgarada hep bitişik kutucuklardan geçiyor.
   static const List<_Puzzle> _puzzles = [
-    _Puzzle(['J', 'E', 'L', 'K', 'İ', 'N', 'O', 'T', 'O'], 'teknoloji'),
-    _Puzzle(['L', 'İ', 'G', 'A', 'İ', 'T', 'B', 'E', 'Y'], 'galibiyet'),
-    _Puzzle(['P', 'E', 'K', 'H', 'A', 'N', 'Ü', 'T', 'Ü'], 'kütüphane'),
-    _Puzzle(['M', 'İ', 'T', 'N', 'E', 'Y', 'E', 'D', 'E'], 'medeniyet'),
-    _Puzzle(['T', 'E', 'K', 'T', 'İ', 'M', 'A', 'M', 'A'], 'matematik'),
+    _Puzzle(
+      ['T', 'E', 'K', 'L', 'O', 'N', 'O', 'J', 'İ'],
+      'teknoloji',
+      'Bilimin günlük hayatımıza kazandırdığı araç, makine ve yöntemlerin '
+          'tümüne verilen isim.',
+    ),
+    _Puzzle(
+      ['G', 'A', 'L', 'İ', 'B', 'İ', 'Y', 'E', 'T'],
+      'galibiyet',
+      'Bir yarışmayı, maçı ya da mücadeleyi kazanmaya verilen isim.',
+    ),
+    _Puzzle(
+      ['K', 'Ü', 'T', 'H', 'P', 'Ü', 'A', 'N', 'E'],
+      'kütüphane',
+      'Kitapların bir arada saklandığı ve okunabildiği yer.',
+    ),
+    _Puzzle(
+      ['M', 'E', 'D', 'İ', 'N', 'E', 'Y', 'E', 'T'],
+      'medeniyet',
+      'Bir toplumun ulaştığı kültürel ve teknik gelişmişlik düzeyi.',
+    ),
+    _Puzzle(
+      ['M', 'A', 'T', 'A', 'M', 'E', 'T', 'İ', 'K'],
+      'matematik',
+      'Sayılar, şekiller ve işlemlerle uğraşan bilim dalı.',
+    ),
   ];
 
   _Phase _phase = _Phase.intro;
@@ -814,9 +884,12 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
     );
   }
 
-  // İpucu kullanıldıkça cevabın baştan itibaren harfleri sırayla açılıyor;
-  // henüz açılmamış harfler alt çizgili boş kutucuk olarak duruyor.
+  // 3 ipucu farklı şeyler açar: 1. ipucu ilk harfi, 2. ipucu kelimenin ne
+  // olduğunu anlatan bir tanımı (harf vermez), 3. ipucu son harfi gösterir.
+  // Ortadaki harfler hiçbir zaman açılmaz — henüz açılmamış harfler alt
+  // çizgili boş kutucuk olarak duruyor.
   Widget _hintRow(String answer) {
+    final lastIndex = answer.length - 1;
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 4,
@@ -830,7 +903,10 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
               border: Border(bottom: BorderSide(color: _color, width: 2)),
             ),
             child: Text(
-              i < _hintsUsed ? answer[i].toUpperCase() : '',
+              ((i == 0 && _hintsUsed >= 1) ||
+                      (i == lastIndex && _hintsUsed >= 3))
+                  ? answer[i].toUpperCase()
+                  : '',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -839,6 +915,35 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
             ),
           ),
       ],
+    );
+  }
+
+  // 2. ipucunda gösterilen, kelimenin ne olduğunu anlatan tanım kutusu.
+  Widget _clueBox(String clue) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: _color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.lightbulb_outline, size: 16, color: _color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              clue,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _color,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1012,6 +1117,10 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
                   if (_hintsUsed > 0) ...[
                     const SizedBox(height: 16),
                     _hintRow(puzzle.answer),
+                  ],
+                  if (_hintsUsed >= 2) ...[
+                    const SizedBox(height: 12),
+                    _clueBox(puzzle.clue),
                   ],
                   if (_hintsUsed >= 1) ...[
                     const SizedBox(height: 12),

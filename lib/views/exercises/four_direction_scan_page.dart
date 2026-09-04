@@ -9,6 +9,37 @@ enum _Direction { leftToRight, rightToLeft, topToBottom, bottomToTop }
 
 enum _Phase { intro, warmup, transition, exercise }
 
+// Aktif kutucuğu, ızgaradaki hedef hücrenin merkezine (targetX/targetY,
+// 0..1 oranlı) yerleştirir — ama kutucuğun boyutunu SIKIŞTIRMAZ, kelime
+// uzunsa kutucuk kendi doğal boyutunda büyüyebilir. Ekran kenarından
+// taşmasın diye konum, kutucuğun gerçek boyutuna göre kenarlara çarpmadan
+// kırpılıyor (clamp).
+class _CenterAtDelegate extends SingleChildLayoutDelegate {
+  final double targetX;
+  final double targetY;
+  const _CenterAtDelegate(this.targetX, this.targetY);
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
+    return constraints.loosen();
+  }
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) {
+    final cx = targetX * size.width;
+    final cy = targetY * size.height;
+    final maxLeft = (size.width - childSize.width).clamp(0.0, double.infinity);
+    final maxTop = (size.height - childSize.height).clamp(0.0, double.infinity);
+    final left = (cx - childSize.width / 2).clamp(0.0, maxLeft);
+    final top = (cy - childSize.height / 2).clamp(0.0, maxTop);
+    return Offset(left, top);
+  }
+
+  @override
+  bool shouldRelayout(covariant _CenterAtDelegate oldDelegate) =>
+      oldDelegate.targetX != targetX || oldDelegate.targetY != targetY;
+}
+
 /// Klasör 3'ün üçüncü etkinliği: "Dört Yönlü Kelime Taraması". Sabit bir
 /// ızgara (4 sütun) üzerinde vurgulanan kutucuk sırayla dört farklı yönde
 /// geziniyor: önce soldan sağa, sayfa bitince sağdan sola, sonra yukarıdan
@@ -1011,14 +1042,12 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
     );
   }
 
-  // Kutucuklar küçük bir alana sıkışmasın, tüm ekranı kullansın diye
-  // hücre boyutu ekrana göre hesaplanıyor. Sadece o an sırası gelen
-  // hücre yanıp beliriyor; sırası geçince tamamen kayboluyor — diğer
-  // hücreler sıra kendilerine gelene kadar hep boş.
+  // Kutucuk, ızgaradaki hedef hücrenin konumuna yerleşiyor ama boyutu o
+  // hücreyle SINIRLANMIYOR — kelime uzunsa kutucuk kendi doğal boyutunda
+  // büyüyor, yazı boyutu hep sabit kalıyor (bkz. _CenterAtDelegate).
   Widget _buildGrid() {
     final activeIndex = _sweepIndices.isEmpty ? -1 : _sweepIndices[_sweepPos];
     final isWarmup = _phase == _Phase.warmup;
-    const spacing = 8.0;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(8),
@@ -1027,31 +1056,26 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final cellWidth =
-              (constraints.maxWidth - spacing * (_cols - 1)) / _cols;
-          final cellHeight =
-              (constraints.maxHeight - spacing * (_rows - 1)) / _rows;
-          final aspectRatio = cellWidth / cellHeight;
-          return GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: _cols,
-              childAspectRatio: aspectRatio,
-              crossAxisSpacing: spacing,
-              mainAxisSpacing: spacing,
-            ),
-            itemCount: _currentItems.length,
-            itemBuilder: (context, index) {
-              final isActive = index == activeIndex;
-              return AnimatedOpacity(
-                duration: const Duration(milliseconds: 90),
-                opacity: isActive ? 1 : 0,
-                child: AnimatedScale(
-                  duration: const Duration(milliseconds: 90),
-                  scale: isActive ? 1 : 0.8,
-                  child: Center(
+      child: activeIndex < 0
+          ? const SizedBox.expand()
+          : Stack(
+              children: [
+                CustomSingleChildLayout(
+                  delegate: _CenterAtDelegate(
+                    (activeIndex % _cols + 0.5) / _cols,
+                    (activeIndex ~/ _cols + 0.5) / _rows,
+                  ),
+                  child: TweenAnimationBuilder<double>(
+                    key: ValueKey('active-$activeIndex'),
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 140),
+                    builder: (context, value, child) => Opacity(
+                      opacity: value,
+                      child: Transform.scale(
+                        scale: 0.85 + 0.15 * value,
+                        child: child,
+                      ),
+                    ),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -1065,26 +1089,20 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
                           width: 1.5,
                         ),
                       ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          _currentItems[index],
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: isWarmup ? 42 : 22,
-                            fontWeight: FontWeight.bold,
-                            color: _color,
-                          ),
+                      child: Text(
+                        _currentItems[activeIndex],
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: isWarmup ? 42 : 22,
+                          fontWeight: FontWeight.bold,
+                          color: _color,
                         ),
                       ),
                     ),
                   ),
                 ),
-              );
-            },
-          );
-        },
-      ),
+              ],
+            ),
     );
   }
 }

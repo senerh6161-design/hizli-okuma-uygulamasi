@@ -365,11 +365,24 @@ class _NumberHuntPageState extends State<NumberHuntPage> {
             },
             child: const Text('Bitir'),
           ),
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _startRealGame();
+            },
+            icon: const Icon(Icons.replay, size: 18),
+            label: const Text('Tekrar Oyna'),
+            style: OutlinedButton.styleFrom(foregroundColor: _color),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               setState(() => _phase = _Phase.intro);
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _color,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Yeniden Başlat'),
           ),
         ],

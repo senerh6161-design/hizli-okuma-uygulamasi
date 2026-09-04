@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import '../../models/comprehension_data.dart';
 import '../../models/comprehension_data_folder2.dart';
 import '../../models/progress_manager.dart';
+import '../../models/settings_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/confetti_overlay.dart';
+import '../../widgets/reading_theme_picker.dart';
 import '../../widgets/word_definition_sheet.dart';
 import 'anagram_word_hunt_page.dart';
 import 'attention_question_page.dart';
@@ -149,138 +151,55 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
     ),
   ];
 
-  // Son Metin'den ÖNCE gösterilen, puansız antreman metni — Klasör 1'deki
-  // ile AYNI metin: hocanın "Hızlı Okumanın Alışkanlık Haline Gelmesi
-  // İçin Önemli On Madde" metninin TAMAMI (kitap s. 53-57). Kelimeler
-  // sayfanın üstünden soldan sağa doğru tek tek gelir; kutu dolunca yeni
-  // bir sayfa açılır, öğrenci metnin tamamını sayfa sayfa okur. Hız
-  // ÖLÇÜLMEZ, sadece ısınma amaçlıdır.
+  // Son Metin'den ÖNCE gösterilen, puansız antreman metni — hocanın
+  // verdiği "İlk Test ve Antreman Metni" belgesinin ilkokul uyarlaması
+  // ("Dünyayı Değiştiren Güç", bkz. [Folder2ReadingData]'daki Ön Metin
+  // İlkokul metniyle aynı içerik). Kelimeler sayfanın üstünden soldan
+  // sağa doğru tek tek gelir; kutu dolunca yeni bir sayfa açılır,
+  // öğrenci metnin tamamını sayfa sayfa okur. Hız ÖLÇÜLMEZ, sadece
+  // ısınma amaçlıdır.
   static const String _warmupText =
-      'HIZLI OKUMANIN ALIŞKANLIK HALİNE GELMESİ İÇİN ÖNEMLİ ON MADDE:\n\n'
-      '1. İlk zamanlar sadece göz hızını artırınız.\n'
-      'İlk zamanlar anlamaya odaklanmayınız. Yoksa hızınız istenilen '
-      'düzeye çıkmayabilir. Eski alışkanlıkları yıkmak tabii ki çok zor. '
-      'Dolayısıyla asla önyargılı olmayınız. Bir de başaracağınıza olan '
-      'inanç çok yüksek olsun. Şunu da unutmayınız ki: "Ben '
-      'başaramayacağım galiba." diye işe başlayanla "Ben bu işi '
-      'başaracağım." diye başlayanın elde edecekleri sonuç asla aynı '
-      'olmayacaktır. Zihnimizde şöyle bir düşünce baloncuğu '
-      'oluşturalım: "Her şeye rağmen çalışacağım. Başarana kadar '
-      'vazgeçmeyeceğim!" Emin olun ki insanların çoğu, kaybettikleri '
-      'için başarısız olmazlar. İnsanların çoğunun başarısız olmasının '
-      'nedeni, yaptıkları işi yarıda bırakıp pes etmeleri, o işi '
-      'neticelendirmemeleridir. Bir işi yarıda bırakmak, onu hiç '
-      'yapmamakla eş değer olduğu gibi insan için zaman, enerji ve '
-      'özgüven kaybına da sebep olur.\n\n'
-      '2. Egzersizleri her gün uygulayınız.\n'
-      'Gözlerimiz ve beynimiz, hızlı görmeye ve odaklanmaya alışıncaya '
-      'kadar, göz-beyin arasındaki uyum hızını en az iki katına '
-      'çıkarana kadar, egzersizleri her gün, en az 3-4 hafta boyunca '
-      'aralıksız yapmalı.\n\n'
-      '3. Sözcükleri içten ve dıştan seslendirmeyiniz!\n'
-      'İçten okumanın ya da dudakla okumanın sesli okumadan pek de '
-      'farkı yoktur. İç sesi tamamen yok edemeyiz belki; ama en aza '
-      'indirmemiz gerekir. Bu kazanım da, kitaptaki etkinlikleri '
-      'verilen sayıda ve sürelerde yapmaya bağlı olarak zamanla '
-      'oluşacaktır. Seslendirerek 1 dakikada okuyacağımız kelime '
-      'sayısı sınırlıdır. Sesli olarak anlaşılabilir bir şekilde '
-      'okuyacağımız sözcük sayısı 250-300 kelime arasındadır. Daha '
-      'fazlası okunsa da anlaşılmaz; ama sessiz okumanın sınırı '
-      'kişiden kişiye değişir. Örneğin hızlı okuma tekniğini öğrenmiş '
-      'bir öğrenci dakikada 400-800 kelime okuyabilir.\n\n'
-      '4. Sözcük hazinenizi her gün bir kelime de olsa geliştiriniz.\n'
-      'Eğer bir öğrenci bir kitap kurduysa ve sözcük hazinesi çok '
-      'zenginse bu okuma oranı gitgide artacaktır. Yeteneğine, almış '
-      'olduğu eğitime, kitap okuma alışkanlığına ve kendini sürekli '
-      'geliştirmesine bağlı olarak bu 1 dakikada okunan kelime sayısı, '
-      'daha da yükselecektir. Yani sözcükleri içten seslendirme '
-      'oranımızı ne kadar azaltırsak o kadar hızlı okumaya başlarız. '
-      'Ne kadar çok sözcük bilirsek o kadar az seslendirme yaparız. '
-      'Çünkü genelde seslendirdiğimiz kelimeler, ilk kez '
-      'karşılaştığımız kelimelerdir. Şu bir gerçek ki beynimiz, bir '
-      'salisede bilindik bir kelimeyi algılayabilmektedir. O zaman '
-      'yapacağımız önemli işlerden biri de bilindik kelime sayısını '
-      'artırmak olmalıdır. Bu muhteşem potansiyeli kullanabilmek, '
-      'gözümüzün bu muhteşem hızından faydalanabilmek için sık sık '
-      'kitap okumalı, ara ara sözlük taraması yaparak sözcük '
-      'bilgimizi geliştirmeliyiz. Aslında hızlı okuma sürecinde '
-      'günlük 20 kelimenin anlamını öğrensek bir ayda 600 kelime '
-      'yapar ki, bu da müthiş bir sonuçtur.\n\n'
-      '5. Sözcükleri gruplandırarak okuyunuz.\n'
-      'Tek tek sözcüklere değil, sözcük gruplarına odaklanarak '
-      'okumalı. Bunun alışkanlık haline gelmesi için egzersizleri '
-      'yaparken ilk zamanlar anlama odaklanmamalı. Israrla '
-      'egzersizleri yapmaya devam etmeli. Kelimeleri bir nesne, '
-      'paragrafları da bir hediye kutusu varsayarsak şöyle bir örnek '
-      'verebiliriz: Kutunun içindeki hediyeyi bir bütün olarak '
-      'görürüz. Parçalara pek de takılmayız. O hediyeyi anlamlı kılan '
-      'da zaten o bütünlüktür. Kelimeler de bir cümlenin, paragrafın '
-      'hatta bir yazının anlamlı parçalarıdır. Bir kelimenin cümle '
-      'içinde anlamı değişebilir. Dolayısıyla cümle içindeki bulunan '
-      'kelimeleri ne kadar hızlı okursak anlam hediyesine o kadar '
-      'çabuk ulaşırız. Bu konuyla ilgili örnekleri ve açıklamaları '
-      'etkinlikler bölümünde bulabilirsiniz.\n\n'
-      '6. Geriye dönük değil, ileriye dönük okuyunuz.\n'
-      'Geriye dönüşleri azaltmalı ve sıfıra indirmeli. Bir kelimeyi, '
-      'cümleyi sık sık geriye dönerek tekrar okumak, özgüven '
-      'eksikliğini doğurur. Bunu aşmanın yolu, tüm dikkatimizi '
-      'okuduğumuz yazıya vermektir. Okuduğumuz parçayla adeta '
-      'iletişime geçmeli, bize ne anlatmaya çalıştığını kavramaya '
-      'çalışmalıyız. Dikkatimizi parçada yoğunlaştırmak için yazıyı '
-      'okumadan önce kendimize sorular sorarak dikkatimizi '
-      'canlandırabiliriz. "Yazar bana ne anlatmaya çalışıyor?" "Bu '
-      'metinden ne sonuç çıkarabilirim?" Hatta okuduğumuz paragraf '
-      'sorularını sıkıcılıktan kurtarmak için paragrafa başlamadan '
-      'önce "Hey dostum, senin derdin ne?" diyerek işi biraz da '
-      'espriye vurarak dikkatimize uyandırabiliriz. Bu tip sorularla '
-      'okumaya başladığımızda dikkatimiz, daha canlı olacak ve bir '
-      'cümleyi, bir metni tekrar tekrar okumuş olmaktan ve zaman '
-      'kaybından kurtulmuş olacağız. Şu bir gerçek ki, hedefine '
-      'varmış, başarıya ulaşmış tüm insanların hayatlarını '
-      'gözlemlediğimizde "Her ne iş yapıyorsan o işi, hayatın o işe '
-      'bağlıymışçasına yap." ilkesini tüm çalışmalarında '
-      'kullandıklarını görüyoruz.\n\n'
-      '7. İlk zamanlar her satırı en fazla üç veya dört duruşta '
-      'okuyunuz.\n'
-      'Egzersizleri sabırla uygulayarak odaklanma hızımızı artırmalı '
-      've bir satırdaki duruş sayımızı düşürmek için gayret etmeliyiz. '
-      'Unutmayalım ki, her gün yapılan bir davranış daha kolay ve '
-      'daha hızlı yapılarak alışkanlık haline gelir. Ve şunu da '
-      'unutmayalım ki, biz koşmayı öğrenmeden önce yürümeyi öğrendik. '
-      'Yıllarca tek tek kelimelerle okumaya alışmış olan gözümüzün bu '
-      'alışkanlığını yıkmak, zaman alabilir. Biraz zamana, biraz '
-      'sabırla çalışmaya ve daha çok kendimize inanmaya ihtiyacımız '
-      'olacaktır.\n\n'
-      '8. Dikkatinizi sadece ve sadece okuduğunuz parçaya odaklayınız.\n'
-      'Dağınık dikkat, yapılan işte görünmesine rağmen zihnin '
-      'yapılandan uzaklaşarak daldan dala konması, konudan konuya '
-      'atlamasıdır. Eğer bu okunan bir kitap ise gözler ile '
-      'düşüncenin aynı doğrultuda olmaması demektir. Bunun önüne '
-      'geçmek için okurken belirli aralıklarla kendimize soru '
-      'yöneltebiliriz. "Düşüncem ile okuduklarım aynı doğrultuda mı?" '
-      'Cevabınız evet ise hızınızı hiç düşürmeden cümlenin, '
-      'paragrafın ve metnin ana düşüncesine odaklanarak okumanızı '
-      'sürdürün. Sözcüklere değil, anlama ve düşünceye yoğunlaşın.\n\n'
-      '9. Kararlı ve istikrarlı çalışınız.\n'
-      'Kayayı delen damlacıkların kuvveti değil sürekliliğidir. İlk '
-      'zamanlar anlama oranı düşse de, kararlılıkla okumaya devam '
-      'ederseniz okuma hızınız en az iki katına çıkacaktır. Kültür '
-      'birikimi ve kitap okuma alışkanlığınıza göre de hızınız ve '
-      'anlama oranınızın giderek arttığını gördükçe kendiniz bile '
-      'ulaştığınız seviyeye şaşıracaksınız. İşte başarının altın '
-      'kuralı: Tüm dikkatini, yaptığın işte topla. Okuyorsan sadece '
-      've sadece okuduğunu düşünmelisin ve tüm dikkatini okuduğun '
-      'yazıya vermelisin. Anlam hazinelerinin anahtarı budur.\n\n'
-      '10. Yani hızlı okumak için kısaca üç şey gerekli:\n'
-      '1. İnanarak ISRARLA çalışmak\n'
-      '2. İnanarak ISRARLA çalışmak\n'
-      '3. İnanarak ISRARLA çalışmak\n'
-      'Hızlı okumak için olmazsa olmaz iki madde:\n'
-      '1. Kendine inanmak ve güvenmek\n'
-      '2. Daha iyisini yapabileceğini düşünmek ve çalışmak\n'
-      'Daha iyisi için gayret ediniz ve daha iyisini gerçekleştirene '
-      'kadar vazgeçmeyiniz, pes etmeyiniz, yılmayınız ve lütfen bir '
-      'daha deneyiniz!';
+      'Dünyayı güçlü orduların ve zengin ülkelerin yönettiğini '
+      'düşünebiliriz. Oysa gerçek güç ne parada ne de silahtadır. '
+      'Dünyayı asıl yöneten güç; kalemdir, kitaptır ve bilgidir. Bunu '
+      'anlatan çok güzel bir hikâye vardır:\n\n'
+      'Eski zamanlarda güçlü bir ordu, zengin bir ülkeye saldırmak '
+      'için yola çıkmış. Ülke halkı büyük bir korkuya kapılmış. Kimi '
+      'kaçmaya çalışmış, kimi de "Şimdi ne yapacağız?" diye ağlamış. '
+      'Tam o sırada bilge bir adam öne çıkmış ve gür bir sesle: — '
+      '"Hemen bir okul yapın!" diye bağırmış. Halk şaşkınlıkla: — '
+      '"Şimdi okul yapmanın sırası mı? Düşman kapımıza dayandı!" diye '
+      'itiraz etmiş. Bilge adam üzüntüyle gülümsemiş: — "İşte bu '
+      'felaket, okumadığımız ve öğrenmediğimiz için başımıza '
+      'geliyor! Belki bu saldırıyı durduramayız ama okul yaparsak '
+      'gelecekte kendimizi bilgi ile koruyabiliriz." demiş.\n\n'
+      'Bugün harika okullarımız ve bize her şeyi öğreten '
+      'öğretmenlerimiz var. Onlar, bizim daha iyi bir geleceğe '
+      'hazırlanmamız için gece gündüz çalışıyorlar. Biz eğitimcilerin '
+      'en büyük görevi, sizi geleceğe en iyi şekilde hazırlamaktır. '
+      'Sizlerin gayretle ders çalıştığını görmek de bizlere büyük '
+      'bir mutluluk veriyor.\n\n'
+      'Bazen evlerimiz, kıyafetlerimiz ya da okullarımız çok süslü '
+      'olabilir. Peki ya zihnimiz? Bir gün bilge bir adam, çok şık '
+      'giyinmiş bir gençle karşılaşmış. Bilge adam gence dünya '
+      'tarihi hakkında sorular sormuş ama genç hiçbir soruya cevap '
+      'verememiş. Ardından tanınmış kitapları okuyup okumadığını '
+      'sormuş. Gencin hiç kitap okumadığını anlayınca bilge adam '
+      'şöyle demiş: — "Çok yazık… Dışı saray gibi muhteşem '
+      'görünüyor, ancak içi bomboş!"\n\n'
+      'Sevgili öğrencilerimiz,\n'
+      'Bizim en büyük güvencemiz sizlersiniz. Bilgiyle yetişmeniz '
+      'hem kendi geleceğiniz hem de ülkemiz için çok önemlidir. '
+      'Öğrenmek sadece okulda bitmez; ömür boyu devam eden güzel '
+      'bir yolculuktur. Kitap okumak nefes almak gibidir. Gerçek bir '
+      'kitapsever için kitaplar su ve ekmek kadar değerlidir. Ünlü '
+      'bir yazar şöyle der: — "Bana ceza vermek istiyorsanız, '
+      'odamdaki kitapları ve kalemleri elimden alın; bu bana '
+      'yeter."\n\n'
+      'Güçlü, adil ve mutlu bir ülke olmak istiyorsak kitaba, '
+      'okumaya ve öğrenmeye hak ettiği değeri vermeliyiz. Çünkü '
+      'geleceğin güçlü liderleri, bugün çok okuyan çocukların '
+      'arasından çıkacaktır!\n\n(Cumali Sever)';
   // Kimine yavaş, kimine hızlı gelebilir diye öğrenci kendi hızını seçiyor.
   static const List<String> _warmupSpeedLabels = ['Yavaş', 'Orta', 'Hızlı'];
   static const List<int> _warmupWordMsBySpeed = [550, 350, 200];
@@ -1268,19 +1187,33 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
                 ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.amber.shade100,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$_elapsedSeconds sn',
-                style: TextStyle(
-                  color: Colors.amber.shade900,
-                  fontWeight: FontWeight.bold,
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () =>
+                      showReadingThemePicker(context, () => setState(() {})),
+                  icon: const Icon(Icons.palette_outlined),
+                  tooltip: 'Metin rengini değiştir',
+                  visualDensity: VisualDensity.compact,
                 ),
-              ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$_elapsedSeconds sn',
+                    style: TextStyle(
+                      color: Colors.amber.shade900,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1311,14 +1244,14 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: SettingsManager.readingBackgroundColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: SettingsManager.readingBorderColor),
               ),
               child: buildInteractiveText(
                 context,
                 passage.content,
-                accentColor: const Color(0xFF2563EB),
+                accentColor: SettingsManager.readingAccentColor,
               ),
             ),
           ),
@@ -1335,7 +1268,7 @@ class _Folder2SessionPageState extends State<Folder2SessionPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
+              backgroundColor: SettingsManager.readingAccentColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),

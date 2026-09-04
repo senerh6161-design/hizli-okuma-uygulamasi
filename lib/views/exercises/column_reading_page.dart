@@ -1,27 +1,21 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
+import '../../models/settings_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
-
-class _Page {
-  final List<String> left;
-  final List<String> right;
-  const _Page(this.left, this.right);
-  int get totalLines => left.length + right.length;
-}
+import '../../widgets/reading_theme_picker.dart';
 
 enum _Phase { intro, warmup, transition, reading }
 
-/// Klasör 3'ün yedinci etkinliği: "Sütun Takibi". Kitaptaki çok sütunlu,
-/// yukarıdan aşağıya okunan metin sayfalarının karşılığı (kitapta
-/// "Gökkuşağı Tadında Bir Hayat" gibi metinler bu düzende veriliyor) —
-/// Eş/Zıt Anlamlı Kelimeler etkinliğindeki nokta/yanıp sönme mekaniğiyle
-/// aynı mantık, ama kelime kutucukları yerine gerçek bir metin var: sol
-/// sütun yukarıdan aşağıya, sonra sağ sütun yukarıdan aşağıya izleniyor.
-/// Önce kısa bir antreman, sonra "Hızlı Okumanın Alışkanlık Haline
-/// Gelmesi İçin Önemli On Madde" metninin tamamı bu şekilde okunuyor.
+/// Klasör 3'ün yedinci etkinliği: "Kelime Takibi". Antreman Metni'ndeki
+/// (folder1/folder2/folder3 oturumlarındaki) gibi düz, doğal akan bir
+/// metin — sütun kutucukları veya sıçrayan bir işaretçi YOK. Sayfadaki
+/// TÜM kelimeler baştan itibaren görünür durumda; sadece o an sırası
+/// gelen kelime büyüyüp renkleniyor, geri kalanı sönük gri duruyor. Önce
+/// kısa bir antreman, sonra "Hızlı Okumanın Alışkanlık Haline Gelmesi
+/// İçin Önemli On Madde" metninin tamamı sayfa sayfa bu şekilde okunuyor.
 class ColumnReadingPage extends StatefulWidget {
   const ColumnReadingPage({super.key});
 
@@ -32,12 +26,14 @@ class ColumnReadingPage extends StatefulWidget {
 class _ColumnReadingPageState extends State<ColumnReadingPage> {
   static const Color _color = Color(0xFF4338CA);
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
-  static const List<int> _stepMsBySpeed = [900, 600, 350];
+  static const List<int> _stepMsBySpeed = [550, 350, 200];
   int _speedLevel = 1;
 
-  static const int _wordsPerLine = 2;
-  static const int _linesPerColumn = 10;
-  static const int _warmupLineCount = 8;
+  static const int _wordsPerPage = 50;
+  // 32 kelime metnin başından itibaren tam iki cümleyi kapsıyor (".Eski
+  // alışkanlıkları yıkmak tabii ki çok zor." ile bitiyor) — cümle
+  // ortasında kesilmesin diye özellikle bu sayı seçildi.
+  static const int _warmupWordCount = 32;
 
   // Hocanın onayıyla kullanılan tam metin (folder1/folder2 antreman
   // metniyle aynı) — "Hızlı Okumanın Alışkanlık Haline Gelmesi İçin
@@ -174,61 +170,30 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
       .where((w) => w.isNotEmpty)
       .toList();
 
-  late final List<String> _allLines = _buildLines(_allWords, _wordsPerLine);
+  late final List<List<String>> _pages = _paginate(_allWords, _wordsPerPage);
+  late final List<String> _warmupWords = _allWords
+      .take(_warmupWordCount)
+      .toList();
 
-  static List<String> _buildLines(List<String> words, int perLine) {
-    final lines = <String>[];
-    for (int i = 0; i < words.length; i += perLine) {
-      final end = i + perLine > words.length ? words.length : i + perLine;
-      lines.add(words.sublist(i, end).join(' '));
-    }
-    return lines;
-  }
-
-  late final List<_Page> _pages = _buildPages(_allLines);
-
-  // Okuma sırası satır satır (o satırın solu, sonra sağı) olduğu için
-  // satırlar sayfa içinde de bu sıraya göre sol/sağ sütuna dağıtılıyor —
-  // yoksa sağ sütun metnin çok ilerisinden bir parçayı gösterip sırayı
-  // bozardı.
-  List<_Page> _buildPages(List<String> lines) {
-    final linesPerPage = _linesPerColumn * 2;
-    final pages = <_Page>[];
-    for (int i = 0; i < lines.length; i += linesPerPage) {
-      final end = i + linesPerPage > lines.length
-          ? lines.length
-          : i + linesPerPage;
-      final pageLines = lines.sublist(i, end);
-      final left = <String>[];
-      final right = <String>[];
-      for (int j = 0; j < pageLines.length; j++) {
-        if (j.isEven) {
-          left.add(pageLines[j]);
-        } else {
-          right.add(pageLines[j]);
-        }
+  // Sayfa hedef kelime sayısına ulaşınca hemen kesilmiyor — cümle
+  // ortasında kalmasın diye o cümlenin sonuna (. ! ? :) kadar devam
+  // ediyor. Çok uzun bir cümle varsa da sayfa aşırı büyümesin diye bir
+  // üst sınırda yine de bölünüyor.
+  static List<List<String>> _paginate(List<String> words, int targetPerPage) {
+    final pages = <List<String>>[];
+    var current = <String>[];
+    final sentenceEnd = RegExp(r'[.!?:]$');
+    for (final word in words) {
+      current.add(word);
+      final reachedTarget = current.length >= targetPerPage;
+      final hardLimit = current.length >= (targetPerPage * 1.6).round();
+      if (hardLimit || (reachedTarget && sentenceEnd.hasMatch(word))) {
+        pages.add(current);
+        current = [];
       }
-      pages.add(_Page(left, right));
     }
+    if (current.isNotEmpty) pages.add(current);
     return pages;
-  }
-
-  // Antreman da asıl egzersizle aynı sol/sağ sütun düzenini kullanıyor —
-  // satırlar aynı sol-sağ-sol-sağ sırasıyla iki sütuna dağıtılıyor.
-  late final _Page _warmupPage = _buildWarmupPage();
-
-  _Page _buildWarmupPage() {
-    final lines = _allLines.take(_warmupLineCount).toList();
-    final left = <String>[];
-    final right = <String>[];
-    for (int j = 0; j < lines.length; j++) {
-      if (j.isEven) {
-        left.add(lines[j]);
-      } else {
-        right.add(lines[j]);
-      }
-    }
-    return _Page(left, right);
   }
 
   _Phase _phase = _Phase.intro;
@@ -236,21 +201,15 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
   bool _isPaused = false;
 
   int _pageIndex = 0;
-  int _activeStep = 0;
-  Timer? _stepTimer;
-  bool _blinkOn = true;
-  Timer? _blinkTimer;
+  int _activeStep = 0; // o an sırası gelen (büyüyüp renklenen) kelime
+  Timer? _wordTimer;
   int _elapsedSec = 0;
   Timer? _elapsedTimer;
   bool _warmupDone = false;
 
-  _Page get _currentPage =>
-      _phase == _Phase.warmup ? _warmupPage : _pages[_pageIndex];
-
   @override
   void dispose() {
-    _stepTimer?.cancel();
-    _blinkTimer?.cancel();
+    _wordTimer?.cancel();
     _elapsedTimer?.cancel();
     super.dispose();
   }
@@ -261,29 +220,40 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
       _activeStep = 0;
       _warmupDone = false;
     });
-    _startStepping();
+    _scheduleWarmupWord();
   }
 
   void _replayWarmup() {
-    _stepTimer?.cancel();
-    _blinkTimer?.cancel();
+    _wordTimer?.cancel();
     setState(() {
       _activeStep = 0;
       _warmupDone = false;
     });
-    _startStepping();
+    _scheduleWarmupWord();
+  }
+
+  void _scheduleWarmupWord() {
+    _wordTimer?.cancel();
+    _wordTimer = Timer(Duration(milliseconds: _stepMsBySpeed[_speedLevel]), () {
+      if (!mounted) return;
+      if (_activeStep >= _warmupWords.length - 1) {
+        setState(() => _warmupDone = true);
+        return;
+      }
+      setState(() => _activeStep++);
+      _scheduleWarmupWord();
+    });
   }
 
   void _finishWarmup() {
-    _stepTimer?.cancel();
-    _blinkTimer?.cancel();
+    _wordTimer?.cancel();
     setState(() => _phase = _Phase.transition);
   }
 
   void _startReading() {
-    _pageIndex = 0;
     setState(() {
       _phase = _Phase.reading;
+      _pageIndex = 0;
       _activeStep = 0;
       _elapsedSec = 0;
     });
@@ -292,65 +262,50 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
       if (!mounted) return;
       setState(() => _elapsedSec++);
     });
-    _startStepping();
+    _scheduleReadingWord();
   }
 
-  void _startStepping() {
-    _blinkTimer?.cancel();
-    _blinkTimer = Timer.periodic(const Duration(milliseconds: 450), (_) {
+  // Sayfadaki son kelimeye gelince kısa bir bekleme sonrası yeni bir
+  // sayfa açılıp kaldığı yerden devam ediyor — son sayfa bitince metnin
+  // tamamı okunmuş oluyor. Metin baştan beri TAMAMI görünür durumda,
+  // sadece o an sırası gelen kelime büyüyüp renkleniyor.
+  void _scheduleReadingWord() {
+    _wordTimer?.cancel();
+    final currentPage = _pages[_pageIndex];
+    _wordTimer = Timer(Duration(milliseconds: _stepMsBySpeed[_speedLevel]), () {
       if (!mounted) return;
-      setState(() => _blinkOn = !_blinkOn);
-    });
-    _scheduleStep();
-  }
-
-  void _scheduleStep() {
-    _stepTimer?.cancel();
-    _stepTimer = Timer(Duration(milliseconds: _stepMsBySpeed[_speedLevel]), () {
-      if (!mounted) return;
-      final total = _currentPage.totalLines;
-      if (_activeStep >= total - 1) {
-        _onPageDone();
-      } else {
-        setState(() => _activeStep++);
-        _scheduleStep();
-      }
-    });
-  }
-
-  void _onPageDone() {
-    _stepTimer?.cancel();
-    if (_phase == _Phase.warmup) {
-      _blinkTimer?.cancel();
-      setState(() => _warmupDone = true);
-      return;
-    }
-    if (_pageIndex < _pages.length - 1) {
-      Future.delayed(const Duration(milliseconds: 900), () {
-        if (!mounted) return;
-        setState(() {
-          _pageIndex++;
-          _activeStep = 0;
+      if (_activeStep >= currentPage.length - 1) {
+        if (_pageIndex >= _pages.length - 1) {
+          _finishAll();
+          return;
+        }
+        Future.delayed(const Duration(milliseconds: 900), () {
+          if (!mounted) return;
+          setState(() {
+            _pageIndex++;
+            _activeStep = 0;
+          });
+          _scheduleReadingWord();
         });
-        _scheduleStep();
-      });
-    } else {
-      _finishAll();
-    }
+        return;
+      }
+      setState(() => _activeStep++);
+      _scheduleReadingWord();
+    });
   }
 
   void _changeSpeed(int level) {
-    _stepTimer?.cancel();
-    setState(() {
-      _speedLevel = level;
-      _activeStep = 0;
-    });
-    _scheduleStep();
+    _wordTimer?.cancel();
+    setState(() => _speedLevel = level);
+    if (_phase == _Phase.warmup) {
+      _scheduleWarmupWord();
+    } else if (_phase == _Phase.reading) {
+      _scheduleReadingWord();
+    }
   }
 
   void _pauseGame() {
-    _stepTimer?.cancel();
-    _blinkTimer?.cancel();
+    _wordTimer?.cancel();
     _elapsedTimer?.cancel();
     setState(() => _isPaused = true);
   }
@@ -361,12 +316,11 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
       if (!mounted) return;
       setState(() => _elapsedSec++);
     });
-    _startStepping();
+    _scheduleReadingWord();
   }
 
   void _finishAll() {
-    _stepTimer?.cancel();
-    _blinkTimer?.cancel();
+    _wordTimer?.cancel();
     _elapsedTimer?.cancel();
     _hasCompletedOnce = true;
 
@@ -375,7 +329,7 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
 
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
-      type: 'Sütun Takibi',
+      type: 'Kelime Takibi',
       result: '${_pages.length} sayfa · $_elapsedSec sn',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
@@ -462,7 +416,7 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('📖 Sütun Takibi')),
+        appBar: AppBar(title: const Text('📖 Kelime Takibi')),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -507,7 +461,7 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Text(
-                    'Etkinlik 7 · Sütun Takibi',
+                    'Etkinlik 7 · Kelime Takibi',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
@@ -532,11 +486,10 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
                       ),
                       child: const Text(
                         'Amaç: Dikey göz hareketlerini hızlandırmak ve '
-                        'gözümüzü sütun sütun okumaya alıştırmak.\n\n'
-                        'Yöntem: Metin, kitaptaki gibi sütunlara '
-                        'bölünmüş. Önce sol sütunu yukarıdan aşağıya, '
-                        'sonra sağ sütunu yukarıdan aşağıya, yanıp '
-                        'sönen satırı takip ederek okuyacağız.',
+                        'gözümüzü hızlıca kelime kelime okumaya '
+                        'alıştırmak.\n\nYöntem: Metnin tamamı önümüzde '
+                        'duracak; sırası gelen kelime büyüyüp renklenecek, '
+                        'biz de onu takip ederek sırayla okuyacağız.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
@@ -694,7 +647,7 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: _columnBody(_warmupPage),
+            child: _buildWordFlow(_warmupWords, _activeStep, fontSize: 22),
           ),
         ),
         const SizedBox(height: 16),
@@ -831,6 +784,13 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  IconButton(
+                    onPressed: () =>
+                        showReadingThemePicker(context, () => setState(() {})),
+                    icon: const Icon(Icons.palette_outlined),
+                    tooltip: 'Metin rengini değiştir',
+                    visualDensity: VisualDensity.compact,
+                  ),
                   Container(
                     margin: const EdgeInsets.only(right: 6),
                     padding: const EdgeInsets.symmetric(
@@ -864,11 +824,16 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: SettingsManager.readingBackgroundColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: SettingsManager.readingBorderColor),
               ),
-              child: _columnBody(page),
+              child: _buildWordFlow(
+                page,
+                _activeStep,
+                fontSize: 18,
+                activeColor: SettingsManager.readingAccentColor,
+              ),
             ),
           ),
         ],
@@ -876,94 +841,56 @@ class _ColumnReadingPageState extends State<ColumnReadingPage> {
     );
   }
 
-  // Sol sütun yukarıdan aşağıya, sonra sağ sütun yukarıdan aşağıya —
-  // eş/zıt anlamlı kelimeler etkinliğindeki gibi nokta sadece ilk
-  // satırda, ondan sonra aktif satır yanıp sönerek belli oluyor.
-  // Satır satır ilerliyor: önce o satırın solu, sonra sağı, sonra bir alt
-  // satıra geçiyor — asla yukarı zıplamıyor (sol sütunu bitirip sağ
-  // sütunun tepesine dönmek yerine).
-  Widget _columnBody(_Page page, {double fontSize = 17}) {
-    final maxRows = page.left.length > page.right.length
-        ? page.left.length
-        : page.right.length;
-    final leftSteps = <int>[];
-    final rightSteps = <int>[];
-    int step = 0;
-    for (int r = 0; r < maxRows; r++) {
-      if (r < page.left.length) {
-        leftSteps.add(step);
-        step++;
-      }
-      if (r < page.right.length) {
-        rightSteps.add(step);
-        step++;
-      }
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(child: _columnLines(page.left, leftSteps, fontSize: fontSize)),
-        if (page.right.isNotEmpty) ...[
-          const SizedBox(width: 16),
-          Expanded(
-            child: _columnLines(page.right, rightSteps, fontSize: fontSize),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _columnLines(
-    List<String> lines,
-    List<int> steps, {
+  // Metnin TAMAMI baştan beri görünür — normal bir metin gibi doğal
+  // olarak alt satıra geçiyor. Sadece o an sırası gelen kelime büyüyüp
+  // renkleniyor, geri kalan kelimeler sönük gri duruyor. Her kelime AYRI
+  // bir Wrap öğesi ve büyüme AnimatedScale (Transform) ile yapılıyor —
+  // font boyutu değil ölçek değiştiği için kelimenin ayırdığı yer
+  // ASLA büyümüyor, dolayısıyla etraftaki metin kaymıyor/kaçmıyor.
+  Widget _buildWordFlow(
+    List<String> pageWords,
+    int activeIndex, {
     required double fontSize,
+    Color? activeColor,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final highlightColor = activeColor ?? _color;
+    final wrap = Wrap(
+      alignment: WrapAlignment.start,
+      // Büyüyen kelime komşu kelimelere değmesin diye aralar bilerek
+      // geniş tutuluyor.
+      spacing: 18,
+      runSpacing: 14,
       children: [
-        for (int i = 0; i < lines.length; i++)
-          Expanded(child: _lineRow(lines[i], steps[i], fontSize)),
-      ],
-    );
-  }
-
-  Widget _lineRow(String text, int step, double fontSize) {
-    final isActive = step == _activeStep;
-    final showDot = isActive && _activeStep == 0;
-    final lit = isActive && _blinkOn;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: fontSize * 0.8,
-          child: showDot
-              ? Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _color,
-                  ),
-                )
-              : null,
-        ),
-        Expanded(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
+        for (int i = 0; i < pageWords.length; i++)
+          AnimatedScale(
+            scale: i == activeIndex ? 1.3 : 1.0,
+            duration: const Duration(milliseconds: 160),
+            alignment: Alignment.center,
             child: Text(
-              text,
+              pageWords[i],
               style: TextStyle(
                 fontSize: fontSize,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                color: isActive
-                    ? (lit ? _color : _color.withValues(alpha: 0.45))
-                    : const Color(0xFF334155),
+                fontWeight: i == activeIndex
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+                color: i == activeIndex ? highlightColor : Colors.grey.shade400,
               ),
             ),
           ),
-        ),
       ],
+    );
+    // Kısa sayfalarda (ör. antreman) içerik kutunun tepesinde sıkışıp
+    // altında boş alan kalmasın diye dikey ortalanıyor; uzun sayfalarda
+    // taşarsa yine kaydırılabiliyor.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Align(alignment: Alignment.topLeft, child: wrap),
+          ),
+        );
+      },
     );
   }
 }

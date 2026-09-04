@@ -49,16 +49,13 @@ class _DashedRectPainter extends CustomPainter {
       oldDelegate.color != color;
 }
 
-enum _Phase {
-  intro,
-  tur1,
-  tur2,
-  tur3,
-  tur4Intro,
-  tur4Numbers,
-  tur4NumbersAnswer,
-  tur4Letters,
-  tur4LettersAnswer,
+enum _Phase { intro, tur1, tur2, tur3, tur4Intro, tur4 }
+
+class _CountChallenge {
+  final String target;
+  final List<String> sequence;
+  final int correctCount;
+  const _CountChallenge(this.target, this.sequence, this.correctCount);
 }
 
 /// Klasör 3'ün sekizinci etkinliği: "Odaklanma Kutucukları". Kitaptaki
@@ -156,59 +153,31 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     _Cell('OSMN', '78121'),
   ];
 
-  // 4. Tur: oyunlaştırılmış sayma — hedef, kaç kez geçtiği belli, aralara
-  // farklı sayı/harfler serpiştirilmiş.
-  static const String _tur4NumberTarget = '224';
-  static const List<String> _tur4NumberSequence = [
-    '224',
-    '317',
-    '542',
-    '224',
-    '908',
-    '671',
-    '224',
-    '415',
-    '733',
-    '224',
-    '256',
-    '890',
-    '124',
-    '667',
-    '224',
-    '381',
-    '509',
-    '743',
-    '224',
-    '162',
-    '398',
-  ];
-  static const int _tur4NumberCorrectCount = 6;
+  // 4. Tur: oyunlaştırılmış sayma — bir hedef sayı/harf kodu kaç kere
+  // geçiyor, öğrenci kutuları kendisi tarayıp sayıyor (yanıp sönme yok).
+  // 10 soru: sırayla sayı ve harf kodu hedefleri, sabit tohumla üretilmiş.
+  static List<_CountChallenge> _buildChallenges() {
+    final numberPool = _tur1Cells.map((c) => c.top).toList();
+    final letterPool = _tur3Cells.map((c) => c.top).toList();
+    final rand = Random(224);
+    final challenges = <_CountChallenge>[];
+    for (int i = 0; i < 10; i++) {
+      final pool = i.isOdd ? letterPool : numberPool;
+      final shuffledPool = [...pool]..shuffle(rand);
+      final target = shuffledPool.first;
+      final distractors = shuffledPool.skip(1).toList();
+      final correctCount = 3 + rand.nextInt(4);
+      final totalCount = correctCount + 10 + rand.nextInt(4);
+      final sequence = <String>[
+        for (int j = 0; j < correctCount; j++) target,
+        ...distractors.take(totalCount - correctCount),
+      ]..shuffle(rand);
+      challenges.add(_CountChallenge(target, sequence, correctCount));
+    }
+    return challenges;
+  }
 
-  static const String _tur4LetterTarget = 'SKRY';
-  static const List<String> _tur4LetterSequence = [
-    'MRMR',
-    'SKRY',
-    'BTMN',
-    'DŞNC',
-    'SKRY',
-    'NCPF',
-    'KNTN',
-    'TŞRT',
-    'SKRY',
-    'DMTS',
-    'CİHN',
-    'BGRA',
-    'SKRY',
-    'DNGE',
-    'TRST',
-    'ERZM',
-    'KTPH',
-    'SKRY',
-    'DATA',
-    'MAKF',
-    'OSMN',
-  ];
-  static const int _tur4LetterCorrectCount = 5;
+  final List<_CountChallenge> _challenges = _buildChallenges();
 
   _Phase _phase = _Phase.intro;
   bool _hasCompletedOnce = false;
@@ -219,8 +188,13 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
   bool _blinkOn = true;
   Timer? _blinkTimer;
 
+  static const int _tur4SearchSeconds = 8;
+  int _tur4Index = 0;
   int _tur4CountSelected = 0;
   bool _tur4Answered = false;
+  bool _tur4Searching = true;
+  int _tur4SecondsLeft = _tur4SearchSeconds;
+  Timer? _tur4RevealTimer;
 
   int _totalMistakes = 0;
 
@@ -228,6 +202,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
   void dispose() {
     _sweepTimer?.cancel();
     _blinkTimer?.cancel();
+    _tur4RevealTimer?.cancel();
     super.dispose();
   }
 
@@ -235,8 +210,6 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     _Phase.tur1 => _tur1Cells.length,
     _Phase.tur2 => _tur2Cells.length,
     _Phase.tur3 => _tur3Cells.length,
-    _Phase.tur4Numbers => _tur4NumberSequence.length,
-    _Phase.tur4Letters => _tur4LetterSequence.length,
     _ => 0,
   };
 
@@ -275,9 +248,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     setState(() => _speedLevel = level);
     if (_phase == _Phase.tur1 ||
         _phase == _Phase.tur2 ||
-        _phase == _Phase.tur3 ||
-        _phase == _Phase.tur4Numbers ||
-        _phase == _Phase.tur4Letters) {
+        _phase == _Phase.tur3) {
       _scheduleSweep();
     }
   }
@@ -307,32 +278,44 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
         _startTur(_Phase.tur3);
       case _Phase.tur3:
         setState(() => _phase = _Phase.tur4Intro);
-      case _Phase.tur4Numbers:
-        setState(() {
-          _phase = _Phase.tur4NumbersAnswer;
-          _tur4Answered = false;
-          _tur4CountSelected = 0;
-        });
-      case _Phase.tur4Letters:
-        setState(() {
-          _phase = _Phase.tur4LettersAnswer;
-          _tur4Answered = false;
-          _tur4CountSelected = 0;
-        });
       default:
         break;
     }
   }
 
-  void _startTur4Numbers() {
-    _startTur(_Phase.tur4Numbers);
+  void _startTur4() {
+    setState(() {
+      _phase = _Phase.tur4;
+      _tur4Index = 0;
+      _tur4Answered = false;
+      _tur4CountSelected = 0;
+    });
+    _scheduleTur4Reveal();
   }
 
-  void _submitTur4Answer(int selected, {required bool isLetters}) {
+  void _scheduleTur4Reveal() {
+    _tur4RevealTimer?.cancel();
+    setState(() {
+      _tur4Searching = true;
+      _tur4SecondsLeft = _tur4SearchSeconds;
+    });
+    _tur4RevealTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_tur4SecondsLeft <= 1) {
+        timer.cancel();
+        setState(() {
+          _tur4Searching = false;
+          _tur4SecondsLeft = 0;
+        });
+      } else {
+        setState(() => _tur4SecondsLeft--);
+      }
+    });
+  }
+
+  void _submitTur4Answer(int selected) {
     if (_tur4Answered) return;
-    final correct = isLetters
-        ? _tur4LetterCorrectCount
-        : _tur4NumberCorrectCount;
+    final correct = _challenges[_tur4Index].correctCount;
     setState(() {
       _tur4CountSelected = selected;
       _tur4Answered = true;
@@ -345,10 +328,15 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     }
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (!mounted) return;
-      if (isLetters) {
+      if (_tur4Index >= _challenges.length - 1) {
         _finishAll();
       } else {
-        _startTur(_Phase.tur4Letters);
+        setState(() {
+          _tur4Index++;
+          _tur4Answered = false;
+          _tur4CountSelected = 0;
+        });
+        _scheduleTur4Reveal();
       }
     });
   }
@@ -490,30 +478,8 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
         );
       case _Phase.tur4Intro:
         return _buildTur4Intro();
-      case _Phase.tur4Numbers:
-        return _buildCountSweep(
-          key: const ValueKey('tur4n'),
-          sequence: _tur4NumberSequence,
-          target: _tur4NumberTarget,
-        );
-      case _Phase.tur4NumbersAnswer:
-        return _buildCountAnswer(
-          target: _tur4NumberTarget,
-          correctCount: _tur4NumberCorrectCount,
-          isLetters: false,
-        );
-      case _Phase.tur4Letters:
-        return _buildCountSweep(
-          key: const ValueKey('tur4l'),
-          sequence: _tur4LetterSequence,
-          target: _tur4LetterTarget,
-        );
-      case _Phase.tur4LettersAnswer:
-        return _buildCountAnswer(
-          target: _tur4LetterTarget,
-          correctCount: _tur4LetterCorrectCount,
-          isLetters: true,
-        );
+      case _Phase.tur4:
+        return _buildTur4Question();
     }
   }
 
@@ -731,13 +697,13 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
                     color: _color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Text(
+                  child: const Text(
                     '3 Turu tamamladık! Şimdi 4. Tur\'da bir oyun '
-                    'oynayacağız: önce "$_tur4NumberTarget" sayısını, '
-                    'sonra "$_tur4LetterTarget" kodunu takip edeceğiz — '
-                    'kaç kere geldiğini sayacağız!',
+                    'oynayacağız: her soruda bir hedef sayı ya da harf '
+                    'kodu göreceğiz, kutuları kendimiz tarayıp kaç kere '
+                    'geçtiğini sayacağız. 10 soru var!',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: _color,
                       fontWeight: FontWeight.w600,
@@ -749,7 +715,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton.icon(
-                    onPressed: _startTur4Numbers,
+                    onPressed: _startTur4,
                     icon: const Icon(Icons.play_arrow),
                     label: const Text(
                       'BAŞLA',
@@ -775,63 +741,82 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     );
   }
 
-  Widget _buildCountSweep({
-    required Key key,
-    required List<String> sequence,
-    required String target,
-  }) {
+  List<int> _answerOptionsFor(_CountChallenge challenge) {
+    final options = <int>{challenge.correctCount};
+    final rand = Random(challenge.correctCount + challenge.target.length);
+    while (options.length < 4) {
+      final candidate = (challenge.correctCount - 2 + rand.nextInt(5)).clamp(
+        1,
+        12,
+      );
+      options.add(candidate);
+    }
+    return options.toList()..sort();
+  }
+
+  Widget _buildTur4Question() {
+    final challenge = _challenges[_tur4Index];
     return KeyedSubtree(
-      key: key,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: _color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '4. Tur · "$target" kaç kere geliyor?',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
-                ),
-              ),
-              buildPauseButton(color: _color, onPressed: _pauseGame),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _speedChipRow(),
-          const SizedBox(height: 12),
-          Expanded(
-            child: _grid([for (final s in sequence) _Cell(s)], countMode: true),
-          ),
-        ],
+      key: ValueKey('tur4-$_tur4Index'),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child: _tur4Searching
+            ? _buildTur4Search(challenge)
+            : _buildTur4Answer(challenge),
       ),
     );
   }
 
-  Widget _buildCountAnswer({
-    required String target,
-    required int correctCount,
-    required bool isLetters,
-  }) {
-    final options = <int>{correctCount};
-    final rand = Random(correctCount + target.length);
-    while (options.length < 4) {
-      final candidate = (correctCount - 2 + rand.nextInt(5)).clamp(1, 12);
-      options.add(candidate);
-    }
-    final sortedOptions = options.toList()..sort();
+  Widget _buildTur4Search(_CountChallenge challenge) {
+    return Column(
+      key: const ValueKey('search'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: _color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            'Soru ${_tur4Index + 1}/${_challenges.length} · '
+            '"${challenge.target}" kaç kere geçiyor?',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: _grid(
+            [for (final s in challenge.sequence) _Cell(s)],
+            countMode: true,
+            blinkEnabled: false,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '🔎 Kutucukları tara ve say...',
+                style: TextStyle(fontWeight: FontWeight.bold, color: _color),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$_tur4SecondsLeft sn sonra cevap seçenekleri gelecek',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTur4Answer(_CountChallenge challenge) {
+    final sortedOptions = _answerOptionsFor(challenge);
     return LayoutBuilder(
+      key: const ValueKey('answer'),
       builder: (context, constraints) {
         return SingleChildScrollView(
           child: ConstrainedBox(
@@ -842,7 +827,14 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
               children: [
                 Center(
                   child: Text(
-                    '"$target"',
+                    'Soru ${_tur4Index + 1}/${_challenges.length}',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    '"${challenge.target}"',
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -860,13 +852,13 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
                   const SizedBox(height: 12),
                   Center(
                     child: Text(
-                      _tur4CountSelected == correctCount
+                      _tur4CountSelected == challenge.correctCount
                           ? '🎉 Harikasın, doğru!'
-                          : '📖 Doğrusu: $correctCount',
+                          : '📖 Doğrusu: ${challenge.correctCount}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: _tur4CountSelected == correctCount
+                        color: _tur4CountSelected == challenge.correctCount
                             ? const Color(0xFF16A34A)
                             : const Color(0xFFE11D48),
                       ),
@@ -880,7 +872,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
                   alignment: WrapAlignment.center,
                   children: [
                     for (final option in sortedOptions)
-                      _countAnswerButton(option, correctCount, isLetters),
+                      _countAnswerButton(option, challenge.correctCount),
                   ],
                 ),
               ],
@@ -891,7 +883,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     );
   }
 
-  Widget _countAnswerButton(int option, int correctCount, bool isLetters) {
+  Widget _countAnswerButton(int option, int correctCount) {
     final answered = _tur4Answered;
     final isSelected = _tur4CountSelected == option && answered;
     final isCorrectOption = option == correctCount;
@@ -911,9 +903,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
       width: 64,
       height: 64,
       child: OutlinedButton(
-        onPressed: answered
-            ? null
-            : () => _submitTur4Answer(option, isLetters: isLetters),
+        onPressed: answered ? null : () => _submitTur4Answer(option),
         style: OutlinedButton.styleFrom(
           backgroundColor: bg,
           side: BorderSide(color: border, width: 2),
@@ -934,7 +924,11 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     );
   }
 
-  Widget _grid(List<_Cell> cells, {bool countMode = false}) {
+  Widget _grid(
+    List<_Cell> cells, {
+    bool countMode = false,
+    bool blinkEnabled = true,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
         const spacing = 8.0;
@@ -955,7 +949,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
           itemCount: cells.length,
           itemBuilder: (context, index) {
             final cell = cells[index];
-            final isActive = index == _activeIndex;
+            final isActive = blinkEnabled && index == _activeIndex;
             final lit = isActive && _blinkOn;
             final isMiddleColumn = index % _cols == 1;
             return Stack(
