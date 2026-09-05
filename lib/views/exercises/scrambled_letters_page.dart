@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 class _Puzzle {
   final List<String> letters; // 3x3 karışık harfler
@@ -222,7 +223,16 @@ class ScrambledLettersPage extends StatefulWidget {
 }
 
 class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
-  static const Color _color = Color(0xFF0D9488);
+  Color _color = const Color(0xFF0D9488);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF0D9488),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const int _basePoints = 50;
   static const int _hintPenalty = 10;
   static const int _maxHints = 3;
@@ -589,7 +599,21 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🔤 Karışık Harfler')),
+        appBar: AppBar(
+          title: const Text('🔤 Karışık Harfler'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: AnimatedSwitcher(
@@ -626,7 +650,7 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Etkinlik 4 · 1. Bölüm · Karışık Harfler',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -675,7 +699,7 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
@@ -755,7 +779,7 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
                     color: _color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Text(
+                  child: Text(
                     '1. Bölümü tamamladık! Şimdi aynı 5 bulmaca tekrar '
                     'gelecek ama bu sefer kelimeyi yazmayacağız — '
                     'harfleri doğru sırayla parmağınla çizerek '
@@ -907,7 +931,7 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
                       (i == lastIndex && _hintsUsed >= 3))
                   ? answer[i].toUpperCase()
                   : '',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: _color,
@@ -930,12 +954,12 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.lightbulb_outline, size: 16, color: _color),
+          Icon(Icons.lightbulb_outline, size: 16, color: _color),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               clue,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: _color,
@@ -1048,7 +1072,7 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
                         child: Text(
                           '${_bolumIndex + 1}. Bölüm · Soru '
                           '${_questionIndex + 1}/${_puzzles.length}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: _color,
                           ),
@@ -1056,7 +1080,7 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
                       ),
                       Text(
                         'Puan: $_totalScore',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           color: _color,
@@ -1195,7 +1219,7 @@ class _ScrambledLettersPageState extends State<ScrambledLettersPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: _color, width: 2),
+                          borderSide: BorderSide(color: _color, width: 2),
                         ),
                       ),
                     ),

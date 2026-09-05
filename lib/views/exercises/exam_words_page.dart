@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
 import '../../widgets/word_definition_sheet.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 /// Sınavlarda çıkma ihtimali yüksek kelimelerin serbest gözatma listesi.
 /// Süre baskısı yok — öğrenci istediği zaman açıp göz gezdirebilir,
 /// dokununca TDK'dan anlamını görebilir.
-class ExamWordsPage extends StatelessWidget {
+class ExamWordsPage extends StatefulWidget {
   const ExamWordsPage({super.key});
 
-  static const Color _color = Color(0xFFB45309);
+  @override
+  State<ExamWordsPage> createState() => _ExamWordsPageState();
+}
+
+class _ExamWordsPageState extends State<ExamWordsPage> {
+  Color _color = const Color(0xFFB45309);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFFB45309),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
 
   static const List<String> _page1 = [
     'Anlam',
@@ -416,6 +431,18 @@ class ExamWordsPage extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () => showExerciseSettingsSheet(
+              context,
+              currentColor: _color,
+              colorOptions: _colorPalette,
+              onColorChanged: (c) => setState(() => _color = c),
+            ),
+            icon: const Icon(Icons.more_vert_rounded),
+            tooltip: 'Ayarlar',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

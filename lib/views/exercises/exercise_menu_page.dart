@@ -98,17 +98,28 @@ class ExerciseMenuPage extends StatelessWidget {
                         children: [
                           Text(
                             'Oturumu Başlat',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                           SizedBox(height: 2),
                           Text(
                             'Ön metin → 10 etkinlik → son metin → D/Y → hız + dikkat puanı',
-                            style: TextStyle(color: Colors.white70, fontSize: 12),
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ],
                 ),
               ),
@@ -157,7 +168,10 @@ class ExerciseMenuPage extends StatelessWidget {
                   badgeColor: Color(0xFF2563EB),
                   icon: Icons.speed,
                   color: const Color(0xFF2563EB),
-                  page: LevelPage(schoolLevel: SchoolLevelConfig.levels[1], showSchoolLevelInTitle: false),
+                  page: LevelPage(
+                    schoolLevel: SchoolLevelConfig.levels[1],
+                    showSchoolLevelInTitle: false,
+                  ),
                 ),
                 _buildGridCard(
                   context,
@@ -168,7 +182,10 @@ class ExerciseMenuPage extends StatelessWidget {
                   icon: Icons.donut_large,
                   color: Colors.deepPurple,
                   page: const CircularSequencePage(
-                    availableModes: [CircularMode.numbers12, CircularMode.numbers20],
+                    availableModes: [
+                      CircularMode.numbers12,
+                      CircularMode.numbers20,
+                    ],
                     appBarTitle: '🔄 Dairesel Sıralama (Sayılar)',
                   ),
                 ),
@@ -326,10 +343,7 @@ class ExerciseMenuPage extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => page),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (_) => page));
         },
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -346,7 +360,10 @@ class ExerciseMenuPage extends StatelessWidget {
                     child: Icon(icon, color: color, size: 24),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: badgeColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
@@ -376,10 +393,7 @@ class ExerciseMenuPage extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),
@@ -394,7 +408,11 @@ class ExerciseMenuPage extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF2563EB)),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: Color(0xFF2563EB),
+                  ),
                 ],
               ),
             ],

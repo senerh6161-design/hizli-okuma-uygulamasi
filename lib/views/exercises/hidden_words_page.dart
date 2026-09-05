@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
+import '../../widgets/confetti_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 class _WordLine {
   final String text;
@@ -24,7 +26,16 @@ class HiddenWordsPage extends StatefulWidget {
 }
 
 class _HiddenWordsPageState extends State<HiddenWordsPage> {
-  static const Color _color = Color(0xFFDB2777);
+  Color _color = const Color(0xFFDB2777);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFFDB2777),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const int _pointsPerWord = 10;
   static const int _linesPerPage = 8;
 
@@ -257,6 +268,49 @@ class _HiddenWordsPageState extends State<HiddenWordsPage> {
     'kitap',
     'kilim',
     'halı',
+    'ketçap',
+    'araba',
+    'camii',
+    'peynir',
+    'reçel',
+    'bal',
+    'çorba',
+    'pilav',
+    'salata',
+    'meyve',
+    'sebze',
+    'armut',
+    'kiraz',
+    'karpuz',
+    'limon',
+    'portakal',
+    'muz',
+    'çilek',
+    'üzüm',
+    'sene',
+    'nezaket',
+    'çap',
+    'kara',
+    'bayram',
+    'pınar',
+    'akit',
+    'nem',
+    'emlak',
+    'akvaryum',
+    'var',
+    'gümüş',
+    'ter',
+    'terim',
+    'namaz',
+    'az',
+    'kalite',
+    'tevazu',
+    'eva',
+    'zurna',
+    'makine',
+    'kin',
+    'mefes',
+    'efes',
   };
 
   int get _pageCount => (_lines.length / _linesPerPage).ceil();
@@ -274,12 +328,12 @@ class _HiddenWordsPageState extends State<HiddenWordsPage> {
   int _elapsedSec = 0;
   Timer? _timer;
   bool _hasCompletedOnce = false;
+  bool _started = false;
   String? _checkMessage;
   Timer? _checkMessageTimer;
 
-  @override
-  void initState() {
-    super.initState();
+  void _startGame() {
+    setState(() => _started = true);
     _startTimer();
   }
 
@@ -348,6 +402,7 @@ class _HiddenWordsPageState extends State<HiddenWordsPage> {
         _checkMessage = null;
       });
       SoundManager.playCorrect();
+      showConfetti(context);
       if (isBonus) _showCheckMessage('Ekstra kelime! +10 puan 🎉');
       return;
     }
@@ -373,13 +428,18 @@ class _HiddenWordsPageState extends State<HiddenWordsPage> {
     });
   }
 
+  // Harf aralıkları (ör. "sen" ile "nezaket") çakışabiliyor — sonradan
+  // bulunan kelime öncekiyle ortak harfleri de kapsıyorsa, o harfler eski
+  // rengiyle takılı kalmasın diye en SON bulunan kelimenin rengi kazanıyor
+  // (bu yüzden döngü ilk eşleşmede DÖNMÜYOR, en son eşleşeni tutuyor).
   Color? _colorForIndex(int lineIndex, int i) {
+    Color? result;
     for (final entry in _foundRanges.entries) {
       if (!entry.key.startsWith('$lineIndex:')) continue;
       final r = entry.value;
-      if (i >= r[0] && i <= r[1]) return _foundColors[entry.key];
+      if (i >= r[0] && i <= r[1]) result = _foundColors[entry.key];
     }
-    return null;
+    return result;
   }
 
   void _nextPage() {
@@ -428,7 +488,7 @@ class _HiddenWordsPageState extends State<HiddenWordsPage> {
             const SizedBox(height: 8),
             Text(
               'Puan: $_score · Süre: $_elapsedSec sn',
-              style: const TextStyle(
+              style: TextStyle(
                 color: _color,
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
@@ -513,182 +573,277 @@ class _HiddenWordsPageState extends State<HiddenWordsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final startLine = _pageIndex * _linesPerPage;
-    final endLine = ((_pageIndex + 1) * _linesPerPage).clamp(0, _lines.length);
-
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🔍 Saklı Kelimeler')),
+        appBar: AppBar(
+          title: const Text('🔍 Saklı Kelimeler'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
+          child: _started ? _buildGame() : _buildIntro(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIntro() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Etkinlik 2 · Saklı Kelimeler',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _color,
+                    ),
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 16),
+                    const Center(
+                      child: Text('🔍', style: TextStyle(fontSize: 72)),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 14,
+                        vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: _color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
+                        color: const Color(0xFFFCE7F3),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: _color, width: 1.2),
                       ),
-                      child: Text(
-                        'Sayfa ${_pageIndex + 1}/$_pageCount',
-                        style: const TextStyle(
+                      child: const Text.rich(
+                        TextSpan(
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF831843),
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'Amaç: ',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(
+                              text:
+                                  'Göz ve zihin odaklanmasını artırmak, iç '
+                                  'içe geçmiş kelimeleri yakalayabilmek.\n',
+                            ),
+                            TextSpan(
+                              text: 'Yöntem: ',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(
+                              text:
+                                  'Her satırın harfleri boşluksuz — içinde '
+                                  'gizli gerçek kelimeler var. Bulduğun '
+                                  'kelimenin harflerine sırayla dokun, her '
+                                  'kelime 10 puan!',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: _startGame,
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text(
+                        'BAŞLA',
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: _color,
+                          fontSize: 16,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _color,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  _badge('⭐ $_score puan', Colors.amber.shade800),
-                  const SizedBox(width: 6),
-                  _badge('⏱ ${_elapsedSec}sn', Colors.blueGrey),
-                ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGame() {
+    final startLine = _pageIndex * _linesPerPage;
+    final endLine = ((_pageIndex + 1) * _linesPerPage).clamp(0, _lines.length);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  'Sayfa ${_pageIndex + 1}/$_pageCount',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
+                ),
               ),
-              if (_pageIndex == 0) ...[
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
+            ),
+            const SizedBox(width: 6),
+            _badge('⭐ $_score puan', Colors.amber.shade800),
+            const SizedBox(width: 6),
+            _badge('⏱ ${_elapsedSec}sn', Colors.blueGrey),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                for (int li = startLine; li < endLine; li++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _buildLineRow(li),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_selected.isNotEmpty) ...[
+          Row(
+            children: [
+              Expanded(
+                child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFCE7F3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _color, width: 1.2),
+                    color: _color.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: _color.withValues(alpha: 0.25)),
                   ),
-                  child: const Text.rich(
-                    TextSpan(
-                      style: TextStyle(fontSize: 12, color: Color(0xFF831843)),
-                      children: [
-                        TextSpan(
-                          text: 'Amaç: ',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        TextSpan(
-                          text:
-                              'Göz ve zihin odaklanmasını artırmak, iç içe '
-                              'geçmiş kelimeleri yakalayabilmek.\n',
-                        ),
-                        TextSpan(
-                          text: 'Yöntem: ',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        TextSpan(
-                          text:
-                              'Her satırın harfleri boşluksuz — içinde '
-                              'gizli gerçek kelimeler var. Bulduğun '
-                              'kelimenin harflerine sırayla dokun, her '
-                              'kelime 10 puan!',
-                        ),
-                      ],
+                  child: Text(
+                    'Seçili: ${_currentSelectionText()}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade700,
                     ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 10),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      for (int li = startLine; li < endLine; li++)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _buildLineRow(li),
-                        ),
-                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              if (_selected.isNotEmpty) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Seçili: ${_currentSelectionText()}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: _clearSelection,
-                      child: const Text('Temizle'),
-                    ),
-                    const SizedBox(width: 4),
-                    ElevatedButton(
-                      onPressed: _checkSelection,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _color,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        'Kontrol Et',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-              ],
-              if (_checkMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    _checkMessage!,
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFB45309),
-                    ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: _clearSelection,
+                child: const Text('Temizle'),
+              ),
+              const SizedBox(width: 4),
+              ElevatedButton(
+                onPressed: _checkSelection,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _color,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-              _buildFoundList(),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: _nextPage,
-                  icon: Icon(
-                    _pageIndex < _pageCount - 1
-                        ? Icons.arrow_forward
-                        : Icons.flag_rounded,
-                  ),
-                  label: Text(
-                    _pageIndex < _pageCount - 1 ? 'SONRAKİ SAYFA' : 'BİTİR',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _color,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
+                child: const Text(
+                  'Kontrol Et',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 6),
+        ],
+        if (_checkMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              _checkMessage!,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFB45309),
+              ),
+            ),
+          ),
+        _buildFoundList(),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: _nextPage,
+            icon: Icon(
+              _pageIndex < _pageCount - 1
+                  ? Icons.arrow_forward
+                  : Icons.flag_rounded,
+            ),
+            label: Text(
+              _pageIndex < _pageCount - 1 ? 'SONRAKİ SAYFA' : 'BİTİR',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _color,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 

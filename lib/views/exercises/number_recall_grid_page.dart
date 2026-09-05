@@ -5,14 +5,33 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
-enum _Phase { intro, bolum2Intro, flash, grid, bolum3Intro, bolum3 }
+enum _Phase {
+  intro,
+  ready,
+  bolum2Intro,
+  flash,
+  grid,
+  bolum3Intro,
+  bolum3Warmup,
+  bolum3Ready,
+  bolum3Reveal,
+  bolum3Quiz,
+}
 
 class _TripletRow {
   final String left;
   final String center;
   final String right;
   const _TripletRow(this.left, this.center, this.right);
+}
+
+// 3. Bölüm'ün sayma quiz'inde sorulan tek bir soru: "X kaç defa kullanıldı?"
+class _CountQuestion {
+  final String number;
+  final int correctCount;
+  const _CountQuestion(this.number, this.correctCount);
 }
 
 // 3. Bölüm'de sütunları ayıran dikey kesikli çizgiler.
@@ -51,7 +70,11 @@ class _VerticalDashedLinesPainter extends CustomPainter {
 /// her ikisinde de aynı 9 sayı sabit kalıyor, sadece yerleri karışıyor.
 /// 3. Bölüm: kitaptaki 3 sütunlu sayfa gibi — her satırda ortadaki sayıya
 /// odaklanıp yan taraftaki BENZER görünüşlü (aynı rakamlar, farklı sırada)
-/// sayıları da yakalamaya çalışıyoruz. Puansız, süre ölçülür.
+/// sayıları da yakalamaya çalışıyoruz. Önce bir antreman: satırlar sırayla
+/// yanıp söner, ortadaki sayının altında odak noktası belirir. Sonra asıl
+/// tur: satırlar sırayla ekrana gelir (bazı sayılar birden fazla kez
+/// tekrar eder), hepsi göründükten sonra "X kaç defa kullanıldı?" diye
+/// 10 soru sorulur. Puansız, süre ölçülür.
 class NumberRecallGridPage extends StatefulWidget {
   const NumberRecallGridPage({super.key});
 
@@ -60,7 +83,16 @@ class NumberRecallGridPage extends StatefulWidget {
 }
 
 class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
-  static const Color _color = Color(0xFFDC2626);
+  Color _color = const Color(0xFFDC2626);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFFDC2626),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const int _roundCount = 20;
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
   static const List<int> _flashMsBySpeed = [1500, 1000, 600];
@@ -96,6 +128,21 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
     _TripletRow('231', '213', '312'),
   ];
 
+  // Sayma quiz'inde sorulacak 10 sayı ve satırlar arasında kaçar kez
+  // tekrar edecekleri (hepsi birden fazla kez kullanılıyor).
+  static const Map<String, int> _quizTargetCounts = {
+    '43': 3,
+    '124': 2,
+    '78': 3,
+    '356': 2,
+    '291': 3,
+    '62': 2,
+    '705': 3,
+    '39': 2,
+    '481': 3,
+    '17': 2,
+  };
+
   final Random _random = Random();
   _Phase _phase = _Phase.intro;
   bool _hasCompletedOnce = false;
@@ -103,6 +150,8 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
   bool _isDemoRound = false;
   int _currentBolum = 1;
   int _speedLevel = 1;
+  static const int _demoRoundCount = 10;
+  int _demoRoundIndex = 0;
 
   List<String> _gridNumbers = [];
   String? _lastTarget;
@@ -120,12 +169,30 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
   int _bolum3ElapsedSec = 0;
   Timer? _bolum3Ticker;
 
+  // 3. Bölüm antremanı: satır satır yanıp sönme.
+  int _warmupRowIndex = -1;
+  Timer? _bolum3WarmupTimer;
+
+  // 3. Bölüm asıl turu: satır satır ekrana gelme + sayma quiz'i.
+  List<_TripletRow> _bolum3QuizRows = [];
+  int _revealRowCount = 0;
+  Timer? _revealTimer;
+  final ScrollController _revealScrollController = ScrollController();
+  List<_CountQuestion> _quizQuestions = [];
+  int _quizIndex = 0;
+  int _quizCorrect = 0;
+  int? _quizSelectedAnswer;
+  bool _quizAnswered = false;
+
   @override
   void dispose() {
     _answerTimer?.cancel();
     _tickTimer?.cancel();
     _flashTimer?.cancel();
     _bolum3Ticker?.cancel();
+    _bolum3WarmupTimer?.cancel();
+    _revealTimer?.cancel();
+    _revealScrollController.dispose();
     super.dispose();
   }
 
@@ -152,6 +219,12 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
   List<String> _poolForCurrentBolum() =>
       _currentBolum == 1 ? _numbersMixed : _numbersThreeDigit;
 
+  // Antreman turunda hız her zaman sabit ve yavaş — bu tur öğretici,
+  // öğrencinin hızına göre değişmemeli.
+  static const int _demoFlashMs = 2200;
+  static const int _demoRevealDelayMs = 1300;
+  static const int _demoRevealHoldMs = 1800;
+
   void _startRound() {
     _answerTimer?.cancel();
     _tickTimer?.cancel();
@@ -169,17 +242,20 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
       _selectedIndex = null;
       _answered = false;
     });
-    _flashTimer = Timer(
-      Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
-      () {
-        if (!mounted) return;
+    final flashMs = _isDemoRound ? _demoFlashMs : _flashMsBySpeed[_speedLevel];
+    _flashTimer = Timer(Duration(milliseconds: flashMs), () {
+      if (!mounted) return;
+      if (_isDemoRound) {
+        _startDemoReveal();
+      } else {
         _startAnswerWindow();
-      },
-    );
+      }
+    });
   }
 
   void _startDemoRound() {
     _isDemoRound = true;
+    _demoRoundIndex = 0;
     _startRound();
   }
 
@@ -188,7 +264,35 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
     _tickTimer?.cancel();
     _flashTimer?.cancel();
     _isDemoRound = false;
-    _startRound();
+    setState(() => _phase = _Phase.ready);
+  }
+
+  // Antreman turunda öğrenci aramıyor/dokunmuyor — biz doğru kutuyu
+  // yavaşça kendimiz gösteriyoruz, sonra otomatik gerçek turlara geçiyoruz.
+  void _startDemoReveal() {
+    setState(() {
+      _phase = _Phase.grid;
+      _selectedIndex = null;
+      _answered = false;
+    });
+    _answerTimer = Timer(const Duration(milliseconds: _demoRevealDelayMs), () {
+      if (!mounted) return;
+      setState(() {
+        _selectedIndex = _targetIndex;
+        _answered = true;
+      });
+      SoundManager.playCorrect();
+      Future.delayed(const Duration(milliseconds: _demoRevealHoldMs), () {
+        if (!mounted) return;
+        if (_demoRoundIndex < _demoRoundCount - 1) {
+          setState(() => _demoRoundIndex++);
+          _startRound();
+        } else {
+          _isDemoRound = false;
+          setState(() => _phase = _Phase.ready);
+        }
+      });
+    });
   }
 
   void _startAnswerWindow() {
@@ -216,7 +320,18 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
 
   void _resumeGame() {
     setState(() => _isPaused = false);
-    if (_phase == _Phase.flash) {
+    if (_isDemoRound) {
+      // Antreman turu basit tekrar-göster mantığında — kaldığı yerden
+      // devam etmek yerine o adımı baştan gösteriyoruz, yeterince kısa.
+      if (_phase == _Phase.flash) {
+        _flashTimer = Timer(const Duration(milliseconds: _demoFlashMs), () {
+          if (!mounted) return;
+          _startDemoReveal();
+        });
+      } else if (_phase == _Phase.grid && !_answered) {
+        _startDemoReveal();
+      }
+    } else if (_phase == _Phase.flash) {
       _flashTimer = Timer(
         Duration(milliseconds: _flashMsBySpeed[_speedLevel]),
         () {
@@ -289,15 +404,153 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
     }
   }
 
-  void _startBolum3() {
+  // Antreman: 3. Bölüm satırları teker teker (orijinal 14 satır, tekrarsız)
+  // yanıp söner — öğrenci sağ/sol komşu sayılara bakmaya alışır.
+  void _startBolum3Warmup() {
+    _bolum3WarmupTimer?.cancel();
+    setState(() {
+      _phase = _Phase.bolum3Warmup;
+      _warmupRowIndex = -1;
+    });
+    int i = -1;
+    _bolum3WarmupTimer = Timer.periodic(const Duration(milliseconds: 700), (
+      timer,
+    ) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      i++;
+      if (i >= _tripletRows.length) {
+        timer.cancel();
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) setState(() => _phase = _Phase.bolum3Ready);
+        });
+        return;
+      }
+      setState(() => _warmupRowIndex = i);
+    });
+  }
+
+  void _skipBolum3Warmup() {
+    _bolum3WarmupTimer?.cancel();
+    setState(() => _phase = _Phase.bolum3Ready);
+  }
+
+  // Bazı sayıları (_quizTargetCounts) birden fazla kez tekrarlayan asıl
+  // satır listesini kurar ve karıştırır.
+  List<_TripletRow> _buildBolum3QuizRows() {
+    final rows = [..._tripletRows];
+    for (final row in _tripletRows) {
+      final extra = (_quizTargetCounts[row.center] ?? 1) - 1;
+      for (int k = 0; k < extra; k++) {
+        rows.add(row);
+      }
+    }
+    rows.shuffle(_random);
+    return rows;
+  }
+
+  List<_CountQuestion> _buildQuizQuestions() {
+    final qs =
+        _quizTargetCounts.entries
+            .map((e) => _CountQuestion(e.key, e.value))
+            .toList()
+          ..shuffle(_random);
+    return qs;
+  }
+
+  List<int> _answerOptionsFor(int correct) {
+    final options = <int>{correct};
+    for (final delta in [-2, -1, 1, 2, 3]) {
+      if (options.length >= 4) break;
+      final v = correct + delta;
+      if (v >= 1) options.add(v);
+    }
+    return options.toList()..shuffle(_random);
+  }
+
+  // Satırlar teker teker ekrana gelir; hepsi bittiğinde sayma quiz'i başlar.
+  void _startBolum3Reveal() {
+    _bolum3QuizRows = _buildBolum3QuizRows();
+    _quizQuestions = _buildQuizQuestions();
+    _revealTimer?.cancel();
     _bolum3Ticker?.cancel();
     setState(() {
-      _phase = _Phase.bolum3;
+      _phase = _Phase.bolum3Reveal;
+      _revealRowCount = 0;
       _bolum3ElapsedSec = 0;
     });
     _bolum3Ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _bolum3ElapsedSec++);
+    });
+    int i = 0;
+    _revealTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (i >= _bolum3QuizRows.length) {
+        timer.cancel();
+        Future.delayed(const Duration(milliseconds: 700), _startBolum3Quiz);
+        return;
+      }
+      setState(() => _revealRowCount = i + 1);
+      i++;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_revealScrollController.hasClients) {
+          _revealScrollController.animateTo(
+            _revealScrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    });
+  }
+
+  void _skipBolum3Reveal() {
+    _revealTimer?.cancel();
+    _startBolum3Quiz();
+  }
+
+  void _startBolum3Quiz() {
+    _revealTimer?.cancel();
+    setState(() {
+      _phase = _Phase.bolum3Quiz;
+      _quizIndex = 0;
+      _quizCorrect = 0;
+      _quizSelectedAnswer = null;
+      _quizAnswered = false;
+    });
+  }
+
+  void _answerQuiz(int chosen) {
+    if (_quizAnswered) return;
+    final q = _quizQuestions[_quizIndex];
+    final isCorrect = chosen == q.correctCount;
+    setState(() {
+      _quizAnswered = true;
+      _quizSelectedAnswer = chosen;
+      if (isCorrect) _quizCorrect++;
+    });
+    if (isCorrect) {
+      SoundManager.playCorrect();
+    } else {
+      SoundManager.playGentleTap();
+    }
+    Future.delayed(const Duration(milliseconds: 1100), () {
+      if (!mounted) return;
+      if (_quizIndex < _quizQuestions.length - 1) {
+        setState(() {
+          _quizIndex++;
+          _quizAnswered = false;
+          _quizSelectedAnswer = null;
+        });
+      } else {
+        _finishBolum3();
+      }
     });
   }
 
@@ -322,7 +575,8 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
       type: 'Nerede Gördüm? (Sayılar)',
       result:
           '$_correctCount/$totalRounds doğru · $_totalScore puan · '
-          '3. Bölüm ${_bolum3ElapsedSec}sn',
+          '3. Bölüm: $_quizCorrect/${_quizQuestions.length} doğru '
+          '(${_bolum3ElapsedSec}sn)',
     );
 
     showDialog(
@@ -338,6 +592,11 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
             const SizedBox(height: 4),
             Text(
               'Toplam puan: $_totalScore 🎉',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '3. Bölüm sayma quiz\'i: $_quizCorrect/${_quizQuestions.length} doğru',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             if (unlocked.isNotEmpty) ...[
@@ -407,7 +666,21 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🔍 Nerede Gördüm?')),
+        appBar: AppBar(
+          title: const Text('🔍 Nerede Gördüm?'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -416,6 +689,7 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                 duration: const Duration(milliseconds: 250),
                 child: switch (_phase) {
                   _Phase.intro => _buildIntro(),
+                  _Phase.ready => _buildReady(),
                   _Phase.bolum2Intro => _buildBolum2Intro(),
                   _Phase.flash || _Phase.grid => _buildRound(
                     key: ValueKey(
@@ -423,7 +697,10 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                     ),
                   ),
                   _Phase.bolum3Intro => _buildBolum3Intro(),
-                  _Phase.bolum3 => _buildBolum3(),
+                  _Phase.bolum3Warmup => _buildBolum3Warmup(),
+                  _Phase.bolum3Ready => _buildBolum3Ready(),
+                  _Phase.bolum3Reveal => _buildBolum3Reveal(),
+                  _Phase.bolum3Quiz => _buildBolum3Quiz(),
                 },
               ),
               if (_isPaused)
@@ -446,6 +723,25 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
           'sayılar karışık — aynı 9 sayı hep aynı, sadece yerleri '
           'karışıyor. Başlamadan önce puansız bir antreman turu var.',
       onStart: _startGame,
+    );
+  }
+
+  Widget _buildReady() {
+    return _buildIntroScreen(
+      badge: 'Etkinlik 6 · 1. Bölüm',
+      emoji: '🎯',
+      instruction:
+          'Antremanı tamamladık! Şimdi sıra sende — dikkat et, bir sayı '
+          'kısaca gösterilecek, sonra karede NEREDE olduğunu hızlıca '
+          'bulup dokunacaksın. Hazır mısın?',
+      onStart: () {
+        setState(() {
+          _roundIndex = 0;
+          _totalScore = 0;
+          _correctCount = 0;
+        });
+        _startRound();
+      },
     );
   }
 
@@ -487,7 +783,7 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                   ),
                   child: Text(
                     badge,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
                     ),
@@ -514,7 +810,7 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.info_outline_rounded,
                             color: _color,
                             size: 20,
@@ -523,7 +819,7 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                           Expanded(
                             child: Text(
                               instruction,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: _color,
                                 fontWeight: FontWeight.w600,
@@ -627,12 +923,9 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                 ),
                 child: Text(
                   _isDemoRound
-                      ? '🎓 Antreman Turu'
+                      ? '🎓 Antreman Turu ${_demoRoundIndex + 1}/$_demoRoundCount'
                       : '$_currentBolum. Bölüm · Tur ${_roundIndex + 1}/$_roundCount',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
               Row(
@@ -640,7 +933,7 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                 children: [
                   Text(
                     _isDemoRound ? 'Puansız' : 'Puan: $_totalScore',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: _color,
@@ -664,8 +957,10 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
               ),
               child: Text(
                 _phase == _Phase.flash
-                    ? 'Önce sana bir sayı göstereceğiz...'
-                    : 'Şimdi sıra sende! Nerede olduğunu bul.',
+                    ? 'Önce sana bir sayı göstereceğiz, dikkatlice bak...'
+                    : (_answered
+                          ? 'İşte burada! Sayı buradaymış.'
+                          : 'Şimdi nerede olduğunu sana göstereceğiz...'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
@@ -678,7 +973,7 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
           const SizedBox(height: 10),
           _speedChipRow(),
           const SizedBox(height: 10),
-          if (_phase == _Phase.grid)
+          if (_phase == _Phase.grid && !_isDemoRound)
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
@@ -697,7 +992,7 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
               child: _phase == _Phase.flash
                   ? Text(
                       _gridNumbers[_targetIndex],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.bold,
                         color: _color,
@@ -721,7 +1016,7 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _color,
-                side: const BorderSide(color: _color),
+                side: BorderSide(color: _color),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -762,7 +1057,9 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
             }
           }
           return GestureDetector(
-            onTap: _answered ? null : () => _answerRound(index),
+            onTap: (_answered || _isDemoRound)
+                ? null
+                : () => _answerRound(index),
             child: Container(
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -792,6 +1089,39 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
   }
 
   Widget _buildBolum3Intro() {
+    return _buildBolum3CenteredScreen(
+      emoji: '👁️',
+      badge: 'Etkinlik 6 · 3. Bölüm',
+      instruction:
+          'İki bölümü de bitirdik! Şimdi 3. Bölüm: her satırda 3 sayı var. '
+          'Ortadaki sayıya odaklan ve gözünü oynatmadan yanındaki sayılara '
+          'da bakmaya çalış — dikkat et, yandaki sayılar ortadakiyle AYNI '
+          'rakamlardan oluşuyor ama sırası farklı, kolayca '
+          'karıştırabilirsin! Önce bunu bir antremanla göstereceğiz, sonra '
+          'sayılar sırayla ekrana gelecek ve bazı sayıların kaç kez '
+          'kullanıldığını sana soracağız.',
+      onStart: _startBolum3Warmup,
+    );
+  }
+
+  Widget _buildBolum3Ready() {
+    return _buildBolum3CenteredScreen(
+      emoji: '🎯',
+      badge: 'Etkinlik 6 · 3. Bölüm',
+      instruction:
+          'Antremanı tamamladık! Şimdi sayılar sırayla ekrana gelecek, '
+          'dikkatlice bak. Hepsi geldikten sonra bazı sayıların kaç kez '
+          'kullanıldığını sana soracağız. Hazır mısın?',
+      onStart: _startBolum3Reveal,
+    );
+  }
+
+  Widget _buildBolum3CenteredScreen({
+    required String emoji,
+    required String badge,
+    required String instruction,
+    required VoidCallback onStart,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
@@ -801,8 +1131,8 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Center(
-                  child: Text('👁️', style: TextStyle(fontSize: 64)),
+                Center(
+                  child: Text(emoji, style: const TextStyle(fontSize: 64)),
                 ),
                 const SizedBox(height: 16),
                 Container(
@@ -814,8 +1144,8 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
-                    'Etkinlik 6 · 3. Bölüm',
+                  child: Text(
+                    badge,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
@@ -833,12 +1163,8 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                     color: _color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Text(
-                    'İki bölümü de bitirdik! Şimdi 3. Bölüm: her satırda 3 '
-                    'sayı var. Ortadaki sayıya odaklan ve gözünü oynatmadan '
-                    'yanındaki sayılara da bakmaya çalış — dikkat et, '
-                    'yandaki sayılar ortadakiyle AYNI rakamlardan oluşuyor '
-                    'ama sırası farklı, kolayca karıştırabilirsin!',
+                  child: Text(
+                    instruction,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -852,7 +1178,7 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton.icon(
-                    onPressed: _startBolum3,
+                    onPressed: onStart,
                     icon: const Icon(Icons.play_arrow),
                     label: const Text(
                       'BAŞLA',
@@ -878,7 +1204,187 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
     );
   }
 
-  Widget _buildBolum3() {
+  // Satır widget'ı — antreman ve reveal aşamalarında ortak kullanılır.
+  // `highlighted` true ise satır vurgulanır ve ortadaki sayının altında
+  // odak noktası (nokta) belirir.
+  // Sağ/sol sayılar tüm ekran genişliğine yayılmasın diye 3 sütun bu
+  // sabit genişlikte, ortalanmış bir kutu içinde tutuluyor — böylece
+  // birbirine daha yakın görünüyorlar.
+  static const double _tripletContentWidth = 220.0;
+
+  Widget _tripletRowWidget(_TripletRow row, {bool highlighted = false}) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+      decoration: BoxDecoration(
+        color: highlighted ? _color.withValues(alpha: 0.12) : null,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                row.left,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    row.center,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: _color,
+                    ),
+                  ),
+                  if (highlighted) ...[
+                    const SizedBox(height: 3),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: _color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                row.right,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBolum3Warmup() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: _color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            '🎓 Antreman · 3. Bölüm',
+            style: TextStyle(fontWeight: FontWeight.bold, color: _color),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.amber.shade50,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.amber.shade300),
+          ),
+          child: Text(
+            'Sağındaki ve solundaki sayıları fark et!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.amber.shade900,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Kaydırma yok — sayfa ne kadar sığıyorsa satırlar o kadar
+        // yükseklikte sıkıştırılıp tek ekrana sığdırılıyor.
+        Expanded(
+          child: Center(
+            child: SizedBox(
+              width: _tripletContentWidth,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final rowHeight =
+                      (constraints.maxHeight / _tripletRows.length).clamp(
+                        26.0,
+                        56.0,
+                      );
+                  return Stack(
+                    children: [
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _VerticalDashedLinesPainter(
+                            color: _color.withValues(alpha: 0.35),
+                          ),
+                        ),
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          for (int i = 0; i < _tripletRows.length; i++)
+                            SizedBox(
+                              height: rowHeight,
+                              child: _tripletRowWidget(
+                                _tripletRows[i],
+                                highlighted: i == _warmupRowIndex,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 44,
+          child: OutlinedButton.icon(
+            onPressed: _skipBolum3Warmup,
+            icon: const Icon(Icons.skip_next_rounded),
+            label: const Text(
+              'ANTREMANI GEÇ',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _color,
+              side: BorderSide(color: _color),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBolum3Reveal() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -891,8 +1397,8 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
                 color: _color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text(
-                '3. Bölüm · Benzer Sayılar',
+              child: Text(
+                '3. Bölüm · Sayılar Geliyor...',
                 style: TextStyle(fontWeight: FontWeight.bold, color: _color),
               ),
             ),
@@ -913,88 +1419,212 @@ class _NumberRecallGridPageState extends State<NumberRecallGridPage> {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.amber.shade50,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.amber.shade300),
+          ),
+          child: Text(
+            'Sayılar sırayla geliyor, dikkatlice bak — birazdan bazı '
+            'sayıların kaç kez göründüğünü soracağız!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.amber.shade900,
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
         Expanded(
           child: SingleChildScrollView(
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _VerticalDashedLinesPainter(
-                      color: _color.withValues(alpha: 0.35),
-                    ),
-                  ),
-                ),
-                Column(
+            controller: _revealScrollController,
+            child: Center(
+              child: SizedBox(
+                width: _tripletContentWidth,
+                child: Stack(
                   children: [
-                    for (final row in _tripletRows)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                row.left,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Text(
-                                row.center,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.bold,
-                                  color: _color,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Text(
-                                row.right,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ),
-                          ],
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _VerticalDashedLinesPainter(
+                          color: _color.withValues(alpha: 0.35),
                         ),
                       ),
+                    ),
+                    Column(
+                      children: [
+                        for (int i = 0; i < _revealRowCount; i++)
+                          _tripletRowWidget(_bolum3QuizRows[i]),
+                      ],
+                    ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: _finishBolum3,
-            icon: const Icon(Icons.check_circle_outline),
+          height: 44,
+          child: OutlinedButton.icon(
+            onPressed: _skipBolum3Reveal,
+            icon: const Icon(Icons.skip_next_rounded),
             label: const Text(
-              'BİTİRDİM!',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              'GEÇ',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _color,
-              foregroundColor: Colors.white,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _color,
+              side: BorderSide(color: _color),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildBolum3Quiz() {
+    final q = _quizQuestions[_quizIndex];
+    final options = _answerOptionsFor(q.correctCount);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: _color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Soru ${_quizIndex + 1}/${_quizQuestions.length}',
+                style: TextStyle(fontWeight: FontWeight.bold, color: _color),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '⏱ ${_bolum3ElapsedSec}sn',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber.shade800,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🔢', style: TextStyle(fontSize: 48)),
+                const SizedBox(height: 16),
+                Text.rich(
+                  TextSpan(
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
+                    children: [
+                      const TextSpan(text: '"'),
+                      TextSpan(
+                        text: q.number,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: _color,
+                        ),
+                      ),
+                      const TextSpan(text: '" kaç defa kullanıldı?'),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (final opt in options)
+                      _quizOptionButton(opt, q.correctCount),
+                  ],
+                ),
+                if (_quizAnswered) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _quizSelectedAnswer == q.correctCount
+                        ? '✅ Doğru!'
+                        : '❌ Doğrusu: ${q.correctCount}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: _quizSelectedAnswer == q.correctCount
+                          ? const Color(0xFF16A34A)
+                          : const Color(0xFFDC2626),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _quizOptionButton(int value, int correct) {
+    Color bg = _color.withValues(alpha: 0.08);
+    Color border = _color.withValues(alpha: 0.3);
+    Color fg = _color;
+    if (_quizAnswered) {
+      if (value == correct) {
+        bg = const Color(0xFF16A34A).withValues(alpha: 0.14);
+        border = const Color(0xFF16A34A);
+        fg = const Color(0xFF16A34A);
+      } else if (value == _quizSelectedAnswer) {
+        bg = const Color(0xFFE11D48).withValues(alpha: 0.14);
+        border = const Color(0xFFE11D48);
+        fg = const Color(0xFFE11D48);
+      }
+    }
+    return SizedBox(
+      width: 64,
+      height: 56,
+      child: OutlinedButton(
+        onPressed: _quizAnswered ? null : () => _answerQuiz(value),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: bg,
+          side: BorderSide(color: border, width: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: Text(
+          '$value',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: fg,
+          ),
+        ),
+      ),
     );
   }
 }

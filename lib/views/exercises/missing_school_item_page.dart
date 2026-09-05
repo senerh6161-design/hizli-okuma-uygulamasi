@@ -6,6 +6,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Phase { intro, preview, playing }
 
@@ -29,7 +30,16 @@ class MissingSchoolItemPage extends StatefulWidget {
 }
 
 class _MissingSchoolItemPageState extends State<MissingSchoolItemPage> {
-  static const Color _color = Color(0xFF0D9488);
+  Color _color = const Color(0xFF0D9488);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF0D9488),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
   static const List<int> _roundTimeMsBySpeed = [8000, 5500, 3500];
   static const int _roundCount = 12;
@@ -302,7 +312,21 @@ class _MissingSchoolItemPageState extends State<MissingSchoolItemPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🎒 Eksik Kelimeyi Bul')),
+        appBar: AppBar(
+          title: const Text('🎒 Eksik Kelimeyi Bul'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: OrientationBuilder(
@@ -380,7 +404,7 @@ class _MissingSchoolItemPageState extends State<MissingSchoolItemPage> {
                 color: _color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text(
+              child: Text(
                 'Önizleme · Kelimeleri Ezberle',
                 style: TextStyle(fontWeight: FontWeight.bold, color: _color),
               ),
@@ -409,7 +433,7 @@ class _MissingSchoolItemPageState extends State<MissingSchoolItemPage> {
             color: _color.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Row(
+          child: Row(
             children: [
               Icon(Icons.info_outline_rounded, color: _color, size: 20),
               SizedBox(width: 8),
@@ -447,7 +471,7 @@ class _MissingSchoolItemPageState extends State<MissingSchoolItemPage> {
                     ),
                     child: Text(
                       item,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                         color: _color,
@@ -481,7 +505,7 @@ class _MissingSchoolItemPageState extends State<MissingSchoolItemPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Etkinlik 8 · Eksik Kelimeyi Bul',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -509,7 +533,7 @@ class _MissingSchoolItemPageState extends State<MissingSchoolItemPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
@@ -679,10 +703,7 @@ class _MissingSchoolItemPageState extends State<MissingSchoolItemPage> {
                 ),
                 child: Text(
                   'Satır ${_roundIndex + 1}/$_roundCount',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
               Row(
@@ -690,7 +711,7 @@ class _MissingSchoolItemPageState extends State<MissingSchoolItemPage> {
                 children: [
                   Text(
                     'Puan: $_totalScore',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: _color,

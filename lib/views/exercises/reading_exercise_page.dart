@@ -7,10 +7,7 @@ import 'attention_questions_page.dart';
 class ReadingExercisePage extends StatefulWidget {
   final int level;
 
-  const ReadingExercisePage({
-    super.key,
-    required this.level,
-  });
+  const ReadingExercisePage({super.key, required this.level});
 
   @override
   State<ReadingExercisePage> createState() => _ReadingExercisePageState();
@@ -80,31 +77,25 @@ class _ReadingExercisePageState extends State<ReadingExercisePage> {
       wordIndex = 0;
     });
 
-    timer = Timer.periodic(
-      Duration(milliseconds: displayMilliseconds),
-      (_) {
-        if (!mounted) return;
-        setState(() {
-          wordIndex++;
-          wordsRead++;
-        });
-      },
-    );
+    timer = Timer.periodic(Duration(milliseconds: displayMilliseconds), (_) {
+      if (!mounted) return;
+      setState(() {
+        wordIndex++;
+        wordsRead++;
+      });
+    });
 
-    countdownTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) {
-        if (!mounted) return;
-        if (remainingSeconds > 1) {
-          setState(() {
-            remainingSeconds--;
-          });
-        } else {
-          stopExercise();
-          _showResult();
-        }
-      },
-    );
+    countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if (remainingSeconds > 1) {
+        setState(() {
+          remainingSeconds--;
+        });
+      } else {
+        stopExercise();
+        _showResult();
+      }
+    });
   }
 
   void stopExercise() {
@@ -176,10 +167,7 @@ class _ReadingExercisePageState extends State<ReadingExercisePage> {
           const SizedBox(width: 10),
           Text(title),
           const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -294,7 +282,10 @@ class _ReadingExercisePageState extends State<ReadingExercisePage> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.amber.shade100,
                             borderRadius: BorderRadius.circular(10),

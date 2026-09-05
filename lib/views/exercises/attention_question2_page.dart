@@ -4,6 +4,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Phase { intro, playing, bolum2Intro, bolum2 }
 
@@ -49,7 +50,16 @@ class AttentionQuestion2Page extends StatefulWidget {
 }
 
 class _AttentionQuestion2PageState extends State<AttentionQuestion2Page> {
-  static const Color _color = Color(0xFF16A34A);
+  Color _color = const Color(0xFF16A34A);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF16A34A),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const List<String> _optionLabels = ['A', 'B', 'C', 'D'];
   static const List<int> _roundTimeMsBySpeed = [12000, 8000, 5000];
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
@@ -482,7 +492,21 @@ class _AttentionQuestion2PageState extends State<AttentionQuestion2Page> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🧠 Dikkat Sorusu')),
+        appBar: AppBar(
+          title: const Text('🧠 Dikkat Sorusu'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -528,7 +552,7 @@ class _AttentionQuestion2PageState extends State<AttentionQuestion2Page> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Etkinlik 3 · Dikkat Sorusu',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -555,7 +579,7 @@ class _AttentionQuestion2PageState extends State<AttentionQuestion2Page> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
@@ -677,10 +701,7 @@ class _AttentionQuestion2PageState extends State<AttentionQuestion2Page> {
                 ),
                 child: Text(
                   'Soru ${_roundIndex + 1}/${_questions.length}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
               Row(
@@ -688,7 +709,7 @@ class _AttentionQuestion2PageState extends State<AttentionQuestion2Page> {
                 children: [
                   Text(
                     'Puan: $_totalScore',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: _color,
@@ -851,7 +872,7 @@ class _AttentionQuestion2PageState extends State<AttentionQuestion2Page> {
                     color: _color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Text(
+                  child: Text(
                     '1. Bölümü bitirdik! Şimdi 2. Bölüm: Karışık Harfler. '
                     'Her kutuda 3x3 karışık dizilmiş 9 harf var — bu '
                     'harflerle hangi kelimenin yazıldığını bulup yazacaksın. '
@@ -916,10 +937,7 @@ class _AttentionQuestion2PageState extends State<AttentionQuestion2Page> {
                 ),
                 child: Text(
                   '2. Bölüm · ${_scPuzzleIndex + 1}/${_scrambledPuzzles.length}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
               Row(
@@ -927,7 +945,7 @@ class _AttentionQuestion2PageState extends State<AttentionQuestion2Page> {
                 children: [
                   Text(
                     'Puan: $_scTotalScore',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: _color,
@@ -988,7 +1006,7 @@ class _AttentionQuestion2PageState extends State<AttentionQuestion2Page> {
                               ),
                               child: Text(
                                 puzzle.letters[i],
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   color: _color,

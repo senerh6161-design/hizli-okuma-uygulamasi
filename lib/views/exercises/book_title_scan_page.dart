@@ -5,6 +5,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Phase { intro, antreman, quizIntro, quizSearch, quizAnswer }
 
@@ -27,15 +28,27 @@ class BookTitleScanPage extends StatefulWidget {
 }
 
 class _BookTitleScanPageState extends State<BookTitleScanPage> {
-  static const Color _color = Color(0xFFB45309);
+  Color _color = const Color(0xFF0D9488);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF0D9488),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF2563EB),
+    Color(0xFF7C3AED),
+    Color(0xFFB45309),
+  ];
   static const List<String> _speedLabels = [
     'Yavaş',
     'Orta',
     'Hızlı',
     'Çok Hızlı',
   ];
-  static const List<int> _stepMsBySpeed = [700, 480, 320, 200];
+  static const List<int> _stepMsBySpeed = [800, 600, 450, 320];
   static const int _cols = 2;
+  // Kutucuklar normal (okunaklı) boyutta kalsın diye 26 satırın tamamı tek
+  // ekrana küçültülerek sığdırılmıyor — bunun yerine sayfalara bölünüyor.
+  static const int _rowsPerPage = 7;
 
   // Kitaptaki Etkinlik 5, 1. ve 2. sayfa birleştirilmiş — 2 sütun, soldan
   // sağa okunuyor.
@@ -112,14 +125,14 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
 
   int _activeIndex = 0;
   Timer? _sweepTimer;
-  bool _blinkOn = true;
-  Timer? _blinkTimer;
+  int _bookPageIndex = 0;
 
   int _challengeIndex = 0;
   int _quizSelected = 0;
   bool _quizAnswered = false;
 
   int get _rows => max(_col1.length, _col2.length);
+  int get _totalBookPages => (_rows / _rowsPerPage).ceil();
 
   String? _cellText(int row, int col) {
     final list = col == 0 ? _col1 : _col2;
@@ -130,7 +143,6 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
   @override
   void dispose() {
     _sweepTimer?.cancel();
-    _blinkTimer?.cancel();
     super.dispose();
   }
 
@@ -138,11 +150,7 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
     setState(() {
       _phase = _Phase.antreman;
       _activeIndex = 0;
-      _blinkOn = true;
-    });
-    _blinkTimer = Timer.periodic(const Duration(milliseconds: 380), (_) {
-      if (!mounted) return;
-      setState(() => _blinkOn = !_blinkOn);
+      _bookPageIndex = 0;
     });
     _scheduleStep();
   }
@@ -157,10 +165,12 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
         if (!mounted) return;
         SoundManager.playTick();
         if (_activeIndex >= _totalCells - 1) {
-          _blinkTimer?.cancel();
           setState(() => _phase = _Phase.quizIntro);
         } else {
-          setState(() => _activeIndex++);
+          setState(() {
+            _activeIndex++;
+            _bookPageIndex = (_activeIndex ~/ _cols) ~/ _rowsPerPage;
+          });
           _scheduleStep();
         }
       },
@@ -177,16 +187,11 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
 
   void _pauseGame() {
     _sweepTimer?.cancel();
-    _blinkTimer?.cancel();
     setState(() => _isPaused = true);
   }
 
   void _resumeGame() {
     setState(() => _isPaused = false);
-    _blinkTimer = Timer.periodic(const Duration(milliseconds: 380), (_) {
-      if (!mounted) return;
-      setState(() => _blinkOn = !_blinkOn);
-    });
     _scheduleStep();
   }
 
@@ -194,7 +199,12 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
     setState(() {
       _phase = _Phase.quizSearch;
       _challengeIndex = 0;
+      _bookPageIndex = 0;
     });
+  }
+
+  void _goToBookPage(int page) {
+    setState(() => _bookPageIndex = page.clamp(0, _totalBookPages - 1));
   }
 
   void _goToAnswer() {
@@ -225,6 +235,7 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
         setState(() {
           _challengeIndex++;
           _phase = _Phase.quizSearch;
+          _bookPageIndex = 0;
         });
       }
     });
@@ -324,7 +335,21 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('📚 Kitap Adları Taraması')),
+        appBar: AppBar(
+          title: const Text('📚 Kitap Adları Taraması'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -402,7 +427,7 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Etkinlik 9 · Kitap Adları Taraması',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -429,13 +454,10 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Text.rich(
+                      child: Text.rich(
                         TextSpan(
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF78350F),
-                          ),
-                          children: [
+                          style: TextStyle(fontSize: 13, color: _color),
+                          children: const [
                             TextSpan(
                               text: 'Amaç: ',
                               style: TextStyle(fontWeight: FontWeight.bold),
@@ -516,7 +538,7 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
                   color: _color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text(
+                child: Text(
                   '🎓 Antreman · Kitap Adlarını Tara',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -524,6 +546,8 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
                 ),
               ),
             ),
+            const SizedBox(width: 8),
+            _badge('Sayfa ${_bookPageIndex + 1}/$_totalBookPages'),
             const SizedBox(width: 8),
             buildPauseButton(color: _color, onPressed: _pauseGame),
           ],
@@ -533,6 +557,24 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
         const SizedBox(height: 12),
         Expanded(child: _grid(blinkEnabled: true)),
       ],
+    );
+  }
+
+  Widget _badge(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: _color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: _color,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 
@@ -559,11 +601,12 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Text(
-                    'Antremanı tamamladık! Şimdi sayfayı serbestçe tarayıp '
-                    'bir kitap adının kaç kere geçtiğini bulacaksın — '
+                    'Antremanı tamamladık! Şimdi sayfaları gezip bir kitap '
+                    'adının kaç kere geçtiğini bulacaksın — ok '
+                    'butonlarıyla sayfalar arasında gidip gelebilirsin. '
                     '${_challenges.length} soru var!',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: _color,
                       fontWeight: FontWeight.w600,
@@ -617,11 +660,46 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
             'Soru ${_challengeIndex + 1}/${_challenges.length} · '
             '"${challenge.target}" kaç kere geçiyor?',
             maxLines: 2,
-            style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
+            style: TextStyle(fontWeight: FontWeight.bold, color: _color),
           ),
         ),
         const SizedBox(height: 12),
         Expanded(child: _grid(blinkEnabled: false)),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            OutlinedButton.icon(
+              onPressed: _bookPageIndex > 0
+                  ? () => _goToBookPage(_bookPageIndex - 1)
+                  : null,
+              icon: const Icon(Icons.chevron_left_rounded),
+              label: const Text('Önceki'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _color,
+                side: BorderSide(color: _color),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            _badge('Sayfa ${_bookPageIndex + 1}/$_totalBookPages'),
+            OutlinedButton.icon(
+              onPressed: _bookPageIndex < _totalBookPages - 1
+                  ? () => _goToBookPage(_bookPageIndex + 1)
+                  : null,
+              icon: const Icon(Icons.chevron_right_rounded),
+              label: const Text('Sonraki'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _color,
+                side: BorderSide(color: _color),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
@@ -677,7 +755,7 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
                   child: Text(
                     '"${challenge.target}"',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: _color,
@@ -766,26 +844,30 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
     );
   }
 
+  // Kaydırma yok — kutucuklar normal/okunaklı boyutta kalır, bir sayfaya
+  // sığan kadar satır gösterilir; geri kalanı _bookPageIndex ile sayfa
+  // sayfa (antremanda otomatik, soru bölümünde elle) gezilir.
   Widget _grid({required bool blinkEnabled}) {
     return LayoutBuilder(
       builder: (context, constraints) {
         const spacing = 8.0;
-        final rows = _rows;
+        final startRow = _bookPageIndex * _rowsPerPage;
+        final endRow = (startRow + _rowsPerPage).clamp(0, _rows);
+        final pageRowCount = endRow - startRow;
         final cellWidth =
             (constraints.maxWidth - spacing * (_cols - 1)) / _cols;
-        final rawCellHeight =
-            (constraints.maxHeight - spacing * (rows - 1)) / rows;
-        final cellHeight = rawCellHeight.clamp(40.0, 68.0);
-        final fits =
-            cellHeight * rows + spacing * (rows - 1) <=
-            constraints.maxHeight + 0.5;
+        final cellHeight =
+            ((constraints.maxHeight - spacing * (pageRowCount - 1)) /
+                    pageRowCount)
+                .clamp(64.0, 100.0);
 
-        Widget cellAt(int r, int c) {
+        Widget cellAt(int localR, int c) {
+          final r = startRow + localR;
           final text = _cellText(r, c);
           if (text == null) return SizedBox(width: cellWidth);
           final index = r * _cols + c;
           final isActive = blinkEnabled && index == _activeIndex;
-          final lit = isActive && _blinkOn;
+          final lit = isActive;
           return SizedBox(
             width: cellWidth,
             height: cellHeight,
@@ -793,31 +875,20 @@ class _BookTitleScanPageState extends State<BookTitleScanPage> {
           );
         }
 
-        final rowWidgets = <Widget>[
-          for (int r = 0; r < rows; r++)
-            Row(
-              children: [
-                for (int c = 0; c < _cols; c++) ...[
-                  if (c > 0) const SizedBox(width: spacing),
-                  cellAt(r, c),
-                ],
-              ],
-            ),
-        ];
-
-        final content = Column(
-          mainAxisAlignment: fits
-              ? MainAxisAlignment.spaceEvenly
-              : MainAxisAlignment.start,
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            for (int i = 0; i < rowWidgets.length; i++) ...[
-              if (i > 0 && !fits) const SizedBox(height: spacing),
-              rowWidgets[i],
-            ],
+            for (int localR = 0; localR < pageRowCount; localR++)
+              Row(
+                children: [
+                  for (int c = 0; c < _cols; c++) ...[
+                    if (c > 0) const SizedBox(width: spacing),
+                    cellAt(localR, c),
+                  ],
+                ],
+              ),
           ],
         );
-
-        return fits ? content : SingleChildScrollView(child: content);
       },
     );
   }

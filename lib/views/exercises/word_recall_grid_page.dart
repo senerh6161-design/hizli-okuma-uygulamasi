@@ -5,6 +5,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Phase { intro, bolum2Intro, flash, grid }
 
@@ -20,7 +21,16 @@ class WordRecallGridPage extends StatefulWidget {
 }
 
 class _WordRecallGridPageState extends State<WordRecallGridPage> {
-  static const Color _color = Color(0xFFDC2626);
+  Color _color = const Color(0xFFDC2626);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFFDC2626),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const int _roundCount = 20;
   // Bölüm 2 (sayılar) 20 turu ikiye bölünüyor: ilk 10 tur 1-9 arası,
   // sonraki 10 tur 11-19 arası — her ikisi de tam 9 sayı, 3x3 kareye
@@ -355,7 +365,21 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🔍 Nerede Gördüm?')),
+        appBar: AppBar(
+          title: const Text('🔍 Nerede Gördüm?'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -434,7 +458,7 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
                   ),
                   child: Text(
                     badge,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
                     ),
@@ -461,7 +485,7 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.info_outline_rounded,
                             color: _color,
                             size: 20,
@@ -470,7 +494,7 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
                           Expanded(
                             child: Text(
                               instruction,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: _color,
                                 fontWeight: FontWeight.w600,
@@ -576,10 +600,7 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
                   _isDemoRound
                       ? '🎓 Antreman Turu'
                       : '$_currentBolum. Bölüm · Tur ${_roundIndex + 1}/$_roundCount',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
               Row(
@@ -587,7 +608,7 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
                 children: [
                   Text(
                     _isDemoRound ? 'Puansız' : 'Puan: $_totalScore',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: _color,
@@ -653,7 +674,7 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
               child: _phase == _Phase.flash
                   ? Text(
                       _gridWords[_targetIndex],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.bold,
                         color: _color,
@@ -677,7 +698,7 @@ class _WordRecallGridPageState extends State<WordRecallGridPage> {
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _color,
-                side: const BorderSide(color: _color),
+                side: BorderSide(color: _color),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),

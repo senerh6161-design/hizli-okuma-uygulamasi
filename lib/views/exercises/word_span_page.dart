@@ -6,6 +6,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Phase { streamIntro, stream, scatterIntro, scatter, quizIntro, quiz }
 
@@ -33,7 +34,16 @@ class WordSpanPage extends StatefulWidget {
 
 class _WordSpanPageState extends State<WordSpanPage> {
   static const int _stageDurationSec = 60;
-  static const Color _color = Color(0xFFE11D48);
+  Color _color = const Color(0xFFE11D48);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFFE11D48),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
 
   // 2. etkinlikteki gibi "satırda beliren kelime" akışı — burada 1
@@ -532,7 +542,21 @@ class _WordSpanPageState extends State<WordSpanPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('📝 Görsel Genişlik · Kelime')),
+        appBar: AppBar(
+          title: const Text('📝 Görsel Genişlik · Kelime'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: OrientationBuilder(
@@ -647,7 +671,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
                   ),
                   child: Text(
                     badge,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
                     ),
@@ -674,7 +698,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.info_outline_rounded,
                             color: _color,
                             size: 20,
@@ -683,7 +707,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
                           Expanded(
                             child: Text(
                               instruction,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: _color,
                                 fontWeight: FontWeight.w600,
@@ -813,7 +837,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: _color,
-          side: const BorderSide(color: _color),
+          side: BorderSide(color: _color),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -839,7 +863,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
           ),
           child: Text(
             badge,
-            style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
+            style: TextStyle(fontWeight: FontWeight.bold, color: _color),
           ),
         ),
         Row(
@@ -918,7 +942,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
                               ),
                               child: Text(
                                 _currentLine[i],
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                   color: _color,
@@ -982,7 +1006,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.visible,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
                         color: _color,
@@ -1081,7 +1105,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
           const SizedBox(height: 16),
           Text(
             '"$_quizAskedWord"',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
               color: _color,
@@ -1101,7 +1125,7 @@ class _WordSpanPageState extends State<WordSpanPage> {
         children: [
           Text(
             '"$_quizAskedWord"',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.bold,
               color: _color,

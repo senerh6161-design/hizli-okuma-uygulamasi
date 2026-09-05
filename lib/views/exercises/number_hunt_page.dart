@@ -5,6 +5,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Phase { intro, playing, ready }
 
@@ -79,7 +80,16 @@ class NumberHuntPage extends StatefulWidget {
 }
 
 class _NumberHuntPageState extends State<NumberHuntPage> {
-  static const Color _color = Color(0xFF1D4ED8);
+  Color _color = const Color(0xFF1D4ED8);
+
+  static const List<Color> _themeColorPalette = [
+    Color(0xFF1D4ED8),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const int _numberCount = 30;
   static const int _demoNumberCount = 30;
   static const double _badgeSize = 40;
@@ -395,7 +405,21 @@ class _NumberHuntPageState extends State<NumberHuntPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🔍 Sayı Avı')),
+        appBar: AppBar(
+          title: const Text('🔍 Sayı Avı'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _themeColorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -436,7 +460,7 @@ class _NumberHuntPageState extends State<NumberHuntPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Sayı Avı',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -463,7 +487,7 @@ class _NumberHuntPageState extends State<NumberHuntPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Row(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
@@ -549,7 +573,7 @@ class _NumberHuntPageState extends State<NumberHuntPage> {
                     color: _color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Şimdi sıra sende! Az önce izlediğin gibi, 1\'den '
                     '30\'a kadar sayıları sırasıyla ekranda arayıp '
                     'bulacaksın — bu sefer süre tutulacak, en kısa '
@@ -612,10 +636,7 @@ class _NumberHuntPageState extends State<NumberHuntPage> {
                     ? (_isDemo ? 'Antreman bitti!' : 'Tamamlandı!')
                     : '${_isDemo ? '🎓 İzle · ' : ''}'
                           'Sırada: $_nextTarget · $foundCount/$total',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: _color,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, color: _color),
               ),
             ),
             Row(

@@ -6,13 +6,19 @@ import '../services/tdk_service.dart';
 /// resmî sözlüğünden tanımı çekmeye çalışır (yükleniyor animasyonuyla).
 /// İnternet yoksa ya da TDK'de kelime bulunamazsa, cihazdaki küçük yerel
 /// sözlüğe düşer.
-void showWordDefinition(BuildContext context, String rawToken, {Color? accentColor}) {
+void showWordDefinition(
+  BuildContext context,
+  String rawToken, {
+  Color? accentColor,
+}) {
   final cleanWord = WordDictionary.cleanWord(rawToken);
   if (cleanWord.isEmpty) return;
 
   showModalBottomSheet(
     context: context,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
     builder: (_) => _WordDefinitionSheet(
       word: cleanWord,
       accentColor: accentColor ?? const Color(0xFF4F46E5),
@@ -21,31 +27,67 @@ void showWordDefinition(BuildContext context, String rawToken, {Color? accentCol
 }
 
 /// Bir metni tek tek dokunulabilir kelimeler hâlinde çizer. Bir kelimeye
-/// dokunulduğunda [showWordDefinition] açılır.
+/// dokunulduğunda [showWordDefinition] açılır. Metindeki boş satırlar
+/// (\n\n) paragraf sınırı sayılır — her paragraf kendi satırında ayrı
+/// başlar; böylece madde başlıkları/paragraflar tek bir akışa karışmaz
+/// (bkz. hoca geri bildirimi: "paragraf düzenine dikkat"). Kelimeler bir
+/// Text.rich içinde WidgetSpan olarak dizilir ve TextAlign.justify
+/// kullanılır — böylece metin sola değil, kitaptaki gibi HER İKİ YANA da
+/// yaslı görünür (satır sonundaki kelime boşlukları esner).
 Widget buildInteractiveText(
   BuildContext context,
   String content, {
   Color? accentColor,
   TextStyle? style,
 }) {
-  final tokens = content.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
   final color = accentColor ?? const Color(0xFF4F46E5);
-  return Wrap(
-    spacing: 5,
-    runSpacing: 10,
-    children: tokens.map((token) {
-      return GestureDetector(
-        onTap: () => showWordDefinition(context, token, accentColor: color),
-        child: Text(
-          token,
-          style: (style ?? const TextStyle(fontSize: 17, height: 1.6, color: Colors.black87)).copyWith(
-            decoration: TextDecoration.underline,
-            decorationStyle: TextDecorationStyle.dotted,
-            decorationColor: color.withValues(alpha: 0.35),
+  final effectiveStyle =
+      style ??
+      const TextStyle(fontSize: 17, height: 1.6, color: Colors.black87);
+  final paragraphs = content
+      .split(RegExp(r'\n\s*\n'))
+      .map((p) => p.trim())
+      .where((p) => p.isNotEmpty)
+      .toList();
+
+  Widget paragraphText(String paragraph) {
+    final tokens = paragraph
+        .split(RegExp(r'\s+'))
+        .where((t) => t.isNotEmpty)
+        .toList();
+    final spans = <InlineSpan>[];
+    for (int i = 0; i < tokens.length; i++) {
+      if (i > 0) spans.add(const TextSpan(text: ' '));
+      final token = tokens[i];
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.baseline,
+          baseline: TextBaseline.alphabetic,
+          child: GestureDetector(
+            onTap: () => showWordDefinition(context, token, accentColor: color),
+            child: Text(
+              token,
+              style: effectiveStyle.copyWith(
+                decoration: TextDecoration.underline,
+                decorationStyle: TextDecorationStyle.dotted,
+                decorationColor: color.withValues(alpha: 0.35),
+              ),
+            ),
           ),
         ),
       );
-    }).toList(),
+    }
+    return Text.rich(TextSpan(children: spans), textAlign: TextAlign.justify);
+  }
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (int i = 0; i < paragraphs.length; i++) ...[
+        if (i > 0) const SizedBox(height: 14),
+        paragraphText(paragraphs[i]),
+      ],
+    ],
   );
 }
 
@@ -95,7 +137,10 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
               Expanded(
                 child: Text(
                   widget.word,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               if (_loading)
@@ -106,14 +151,21 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
                 )
               else if (isFromTdk)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'TDK',
-                    style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.bold, fontSize: 11),
+                    style: TextStyle(
+                      color: Colors.green.shade800,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
             ],
@@ -122,7 +174,11 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
           if (_loading)
             Text(
               'Türk Dil Kurumu sözlüğünden aranıyor…',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontStyle: FontStyle.italic),
+              style: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+              ),
             )
           else if (isFromTdk)
             ..._tdkDefinitions!.take(3).toList().asMap().entries.map((e) {
@@ -131,7 +187,11 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   showNumber ? '${e.key + 1}. ${e.value}' : e.value,
-                  style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1.5,
+                    color: Colors.black87,
+                  ),
                 ),
               );
             })
@@ -139,7 +199,11 @@ class _WordDefinitionSheetState extends State<_WordDefinitionSheet> {
             Text(
               localDefinition ??
                   'Bu kelimenin tanımını bulamadık, ama harika bir kelime! Öğretmenine ya da ailene sorabilirsin. 😊',
-              style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.5,
+                color: Colors.black87,
+              ),
             ),
         ],
       ),

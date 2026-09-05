@@ -4,6 +4,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Phase { zigzagIntro, zigzag, wordBoxIntro, wordBox }
 
@@ -63,7 +64,16 @@ class ClassroomObjectsPage extends StatefulWidget {
 }
 
 class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
-  static const Color _color = Color(0xFF65A30D);
+  Color _color = const Color(0xFF65A30D);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF65A30D),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
 
   // Öğrenci takip edebilsin diye her iki bölümde de aktif satır/kutu
   // otomatik ilerliyor (altında zıplayan bir nokta ve hafif büyüyen bir
@@ -485,7 +495,21 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('👀 Göz Hızı')),
+        appBar: AppBar(
+          title: const Text('👀 Göz Hızı'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -555,7 +579,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
                   ),
                   child: Text(
                     badge,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
                     ),
@@ -583,7 +607,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.info_outline_rounded,
                             color: _color,
                             size: 20,
@@ -592,7 +616,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
                           Expanded(
                             child: Text(
                               instruction,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: _color,
                                 fontWeight: FontWeight.w600,
@@ -750,7 +774,7 @@ class _ClassroomObjectsPageState extends State<ClassroomObjectsPage> {
           ),
           child: Text(
             badge,
-            style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
+            style: TextStyle(fontWeight: FontWeight.bold, color: _color),
           ),
         ),
         Row(

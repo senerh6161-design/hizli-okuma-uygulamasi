@@ -144,24 +144,27 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
   // hazırlanır — Durdur'a erken basılırsa henüz görülmemiş kelimeler
   // "gösterilmiş" seçenek olarak çıkmaz.
   void _prepareRecallQuestions() {
-    final seenLongs = _seenRowIndices.map((i) => _sessionRows[i].long).toList()..shuffle(_random);
+    final seenLongs = _seenRowIndices.map((i) => _sessionRows[i].long).toList()
+      ..shuffle(_random);
     _recallShownWords = seenLongs.toSet();
     if (seenLongs.isEmpty) {
       _recallQuestions = [];
       return;
     }
-    final notSeenPool = _allRows
-        .where((r) => !seenLongs.contains(r.long))
-        .map((r) => r.long)
-        .toList()
-      ..shuffle(_random);
+    final notSeenPool =
+        _allRows
+            .where((r) => !seenLongs.contains(r.long))
+            .map((r) => r.long)
+            .toList()
+          ..shuffle(_random);
 
     final realSlotsPerQuestion = min(3, seenLongs.length);
     final questions = <_RecallQuestion>[];
     for (int i = 0; i < _recallQuestionCount; i++) {
       final notSeen = notSeenPool[i % notSeenPool.length];
       final reals = [
-        for (int j = 0; j < realSlotsPerQuestion; j++) seenLongs[(i + j) % seenLongs.length],
+        for (int j = 0; j < realSlotsPerQuestion; j++)
+          seenLongs[(i + j) % seenLongs.length],
       ];
       final options = [notSeen, ...reals]..shuffle(_random);
       questions.add(_RecallQuestion(options, notSeen));
@@ -280,7 +283,8 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
 
   void _finishAll() {
     _hasCompletedOnce = true;
-    final overallScore = (_recallCorrectCount / _recallQuestions.length * 100).round();
+    final overallScore = (_recallCorrectCount / _recallQuestions.length * 100)
+        .round();
     ProgressManager.recordAttentionScore(overallScore);
     final isGood = overallScore >= 60;
 
@@ -292,7 +296,8 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
 
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Uzayan Kelimeler',
-      result: '$_recallCorrectCount/${_recallQuestions.length} doğru · %$overallScore',
+      result:
+          '$_recallCorrectCount/${_recallQuestions.length} doğru · %$overallScore',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -305,23 +310,33 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Hafıza testi: $_recallCorrectCount / ${_recallQuestions.length} doğru'),
+            Text(
+              'Hafıza testi: $_recallCorrectCount / ${_recallQuestions.length} doğru',
+            ),
             Text('Puan: %$overallScore'),
             const SizedBox(height: 10),
-            const Text('Gösterilen kelimeler:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Gösterilen kelimeler:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 4),
             Text('• ${_recallShownWords.join("\n• ")}'),
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
-              const Text('🎉 Yeni Başarım Kazandın!',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const Text(
+                '🎉 Yeni Başarım Kazandın!',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: unlocked.map((a) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.amber.shade50,
                       borderRadius: BorderRadius.circular(10),
@@ -332,11 +347,14 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                       children: [
                         Icon(a.icon, size: 14, color: Colors.amber.shade800),
                         const SizedBox(width: 4),
-                        Text(a.title,
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.amber.shade900)),
+                        Text(
+                          a.title,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber.shade900,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -349,7 +367,10 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context); // dialogu kapat
-              Navigator.pop(context, true); // Klasör 1'e dön, tamamlandı olarak işaretle
+              Navigator.pop(
+                context,
+                true,
+              ); // Klasör 1'e dön, tamamlandı olarak işaretle
             },
             child: const Text('Bitir'),
           ),
@@ -370,18 +391,18 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-      appBar: AppBar(title: const Text('📏 Uzayan Kelimeler')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        // DURDUR'a basınca (ya da okuma bitince) hatırlama testine anlık
-        // bir kesmeyle değil, yumuşak bir geçişle geçilsin.
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 280),
-          child: _showRecall
-              ? _buildRecallView(key: const ValueKey('recall'))
-              : _buildReadingView(key: const ValueKey('reading')),
+        appBar: AppBar(title: const Text('📏 Uzayan Kelimeler')),
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          // DURDUR'a basınca (ya da okuma bitince) hatırlama testine anlık
+          // bir kesmeyle değil, yumuşak bir geçişle geçilsin.
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 280),
+            child: _showRecall
+                ? _buildRecallView(key: const ValueKey('recall'))
+                : _buildReadingView(key: const ValueKey('reading')),
+          ),
         ),
-      ),
       ),
     );
   }
@@ -403,7 +424,10 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                 _isReading
                     ? 'Tur: ${_pass + 1}/$_totalPasses'
                     : (_isPaused ? 'Duraklatıldı' : 'Hazır'),
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
+                ),
               ),
             ),
             Text(
@@ -415,7 +439,10 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
         const SizedBox(height: 14),
         Row(
           children: [
-            const Text('Hız: ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            const Text(
+              'Hız: ',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
             const SizedBox(width: 6),
             for (int i = 0; i < _speedLabels.length; i++) ...[
               if (i > 0) const SizedBox(width: 8),
@@ -434,7 +461,9 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
           child: Row(
             children: [
               Icon(
-                _isPaused ? Icons.pause_circle_outline_rounded : Icons.info_outline_rounded,
+                _isPaused
+                    ? Icons.pause_circle_outline_rounded
+                    : Icons.info_outline_rounded,
                 color: const Color(0xFF2563EB),
                 size: 20,
               ),
@@ -444,8 +473,12 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                   _isPaused
                       ? 'Duraklatıldı — kelimenin eklerine bakabilirsin. Devam et ya da testi başlat!'
                       : 'Kelime kökten başlayıp yan yana büyüyecek. İstediğin an hızını değiştirebilirsin. '
-                        'Sonunda hangi uzun kelimeleri gördüğün sorulacak, dikkatli oku!',
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
+                            'Sonunda hangi uzun kelimeleri gördüğün sorulacak, dikkatli oku!',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF1E3A8A),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -462,7 +495,10 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: Colors.grey.shade300),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                  ),
                 ],
               ),
               child: (_isReading || _isPaused)
@@ -470,7 +506,11 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                   : const Text(
                       'BAŞLAT\'a bas',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
                     ),
             ),
           ),
@@ -483,12 +523,17 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                 child: OutlinedButton.icon(
                   onPressed: _seenRowIndices.isEmpty ? null : _goToRecallNow,
                   icon: const Icon(Icons.quiz_outlined),
-                  label: const Text('ŞİMDİ TEST ET', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    'ŞİMDİ TEST ET',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2563EB),
                     side: const BorderSide(color: Color(0xFF2563EB)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
               ),
@@ -498,12 +543,17 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                 child: ElevatedButton.icon(
                   onPressed: _resumeReading,
                   icon: const Icon(Icons.play_arrow),
-                  label: const Text('DEVAM ET', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  label: const Text(
+                    'DEVAM ET',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
               ),
@@ -517,12 +567,17 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                   child: OutlinedButton.icon(
                     onPressed: _pauseReading,
                     icon: const Icon(Icons.pause),
-                    label: const Text('DURDUR', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'DURDUR',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red,
                       side: const BorderSide(color: Colors.red),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
@@ -533,12 +588,17 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                 child: ElevatedButton.icon(
                   onPressed: _isReading ? null : _startReading,
                   icon: const Icon(Icons.play_arrow),
-                  label: const Text('BAŞLAT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  label: const Text(
+                    'BAŞLAT',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
               ),
@@ -560,10 +620,16 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
     final children = <Widget>[];
     for (int i = 0; i < visibleCount; i++) {
       if (i > 0) {
-        children.add(const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4),
-          child: Icon(Icons.arrow_forward_rounded, color: Color(0xFF94A3B8), size: 20),
-        ));
+        children.add(
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              color: Color(0xFF94A3B8),
+              size: 20,
+            ),
+          ),
+        );
       }
       children.add(
         TweenAnimationBuilder<double>(
@@ -586,10 +652,7 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
     return SingleChildScrollView(
       controller: _familyScrollController,
       scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: children,
-      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: children),
     );
   }
 
@@ -602,7 +665,11 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
   Widget _speedChip(int level) {
     final selected = _speedLevel == level;
     return ChoiceChip(
-      avatar: Icon(_speedIcons[level], size: 18, color: selected ? Colors.white : const Color(0xFF2563EB)),
+      avatar: Icon(
+        _speedIcons[level],
+        size: 18,
+        color: selected ? Colors.white : const Color(0xFF2563EB),
+      ),
       label: Text(_speedLabels[level]),
       labelStyle: TextStyle(
         fontWeight: FontWeight.bold,
@@ -612,7 +679,9 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
       onSelected: (_) => setState(() => _speedLevel = level),
       selectedColor: const Color(0xFF2563EB),
       backgroundColor: const Color(0xFF2563EB).withValues(alpha: 0.08),
-      side: BorderSide(color: const Color(0xFF2563EB).withValues(alpha: selected ? 1 : 0.3)),
+      side: BorderSide(
+        color: const Color(0xFF2563EB).withValues(alpha: selected ? 1 : 0.3),
+      ),
     );
   }
 
@@ -650,7 +719,10 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
           ),
           child: Text(
             'Soru: ${_recallIndex + 1}/${_recallQuestions.length}',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2563EB),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -701,7 +773,11 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
                   child: Text(
                     word,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: textColor,
+                    ),
                   ),
                 ),
               );
@@ -711,5 +787,4 @@ class _GrowingWordsPageState extends State<GrowingWordsPage> {
       ],
     );
   }
-
 }

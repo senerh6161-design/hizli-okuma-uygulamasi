@@ -34,7 +34,7 @@ class _StroopItem {
   Color get displayColor => inkColor ?? _defaultInk;
 }
 
-enum _Phase { intro, clap, snap, bolum2Intro, round }
+enum _Phase { intro, clapReady, clap, snapReady, snap, bolum2Intro, round }
 
 class _SnapPair {
   final _StroopItem left;
@@ -45,11 +45,14 @@ class _SnapPair {
 
 /// Klasör 3'ün altıncı etkinliği: "Renk Uyumu". Hocanın verdiği sunumdaki
 /// Stroop tarzı renk-kelime bulmacasının karşılığı. 1. Bölüm çocukları
-/// fiziksel olarak katmak için: 1. Tur'da tek kart gelip renk kelimeyle
-/// uyumluysa alkışlanıyor, 2. Tur'da iki kart gelip hangisi uyumluysa o
-/// elin parmakları şıklatılıyor. 2. Bölüm'de ise ekrandaki ızgarada
-/// (kutucuk sayısı gittikçe artarak: 2 → 4 → 6 → 8) rengiyle uyuşmayan
-/// kelimeler dokunularak bulunuyor.
+/// fiziksel olarak katmak için: önce bir yönerge ekranıyla ellerini alkış
+/// pozisyonuna hazırlıyor, 1. Tur'da tek kart gelip renk kelimeyle
+/// uyumluysa alkışlanıyor; ardından yeni bir yönerge ekranıyla parmak
+/// şıklatmaya geçiliyor, 2. Tur'da iki kart gelip hangisi uyumluysa o
+/// elin parmakları şıklatılıyor. Tur bitince hızını beğenmeyen tekrar
+/// deneyebiliyor (bkz. [_showSpeedRetryPrompt]). 2. Bölüm'de ise
+/// ekrandaki ızgarada (kutucuk sayısı gittikçe artarak: 2 → 4 → 6 → 8)
+/// rengiyle uyuşmayan kelimeler dokunularak bulunuyor.
 class ColorWordMatchPage extends StatefulWidget {
   const ColorWordMatchPage({super.key});
 
@@ -58,7 +61,80 @@ class ColorWordMatchPage extends StatefulWidget {
 }
 
 class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
-  static const Color _color = Color(0xFFEA580C);
+  // Varsayılan toz pembe — öğretmen isterse aşağıdaki paletten değiştirebilir
+  // (bkz. _showPalettePicker). const DEĞİL çünkü artık çalışma sırasında
+  // değişebiliyor. Canlı pembe (EC4899) üstündeki beyaz/kırmızı yazılar
+  // yeterince belirgin olmadığı için soluklaştırılmıştı, ama bu kez metin
+  // (Amaç/Yöntem vb.) okunamayacak kadar soluk kaldı — daha doygun ama
+  // hâlâ koyu olmayan bir toz pembeye ayarlandı.
+  Color _color = const Color(0xFFDB2777);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFFDB2777), // toz pembe (varsayılan)
+    Color(0xFFEA580C), // turuncu (eski varsayılan)
+    Color(0xFF0D9488), // teal
+    Color(0xFF7C3AED), // mor
+    Color(0xFF2563EB), // mavi
+    Color(0xFF16A34A), // yeşil
+  ];
+
+  void _showPalettePicker() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Tema Rengi',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 14,
+              runSpacing: 14,
+              children: [
+                for (final option in _colorPalette)
+                  InkWell(
+                    onTap: () {
+                      setState(() => _color = option);
+                      Navigator.pop(context);
+                    },
+                    borderRadius: BorderRadius.circular(30),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: option,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width: _color == option ? 3 : 0,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: option.withValues(alpha: 0.4),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                      child: _color == option
+                          ? const Icon(Icons.check, color: Colors.white)
+                          : null,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   // Her turdaki kutucuk sayısı gittikçe artıyor: önce 2, sonra 4, 6, en
   // son 8.
@@ -80,8 +156,8 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
   ];
 
   // 1. Bölüm · 1. Tur: tek kart geliyor, renk kelimeyle uyumluysa hep
-  // birlikte alkışlıyoruz. 30 kart — 15'i uyumlu, 15'i uyumsuz, hep aynı
-  // sırada tekrar etmeyecek şekilde karışık.
+  // birlikte alkışlıyoruz. 60 kart — yaklaşık yarısı uyumlu, yarısı
+  // uyumsuz, hep aynı sırada tekrar etmeyecek şekilde karışık.
   static const List<_StroopItem> _clapCards = [
     _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
     _StroopItem(_ColorName.sari, Color(0xFF0070C0)),
@@ -113,16 +189,196 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
     _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
     _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
     _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.sari, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.yesil, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
+    _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFF00B050)),
+    _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+    _StroopItem(_ColorName.mavi, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.sari, Color(0xFF00B050)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.sari, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+    _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
+    _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.yesil, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.sari, Color(0xFF00B050)),
+    _StroopItem(_ColorName.kirmizi, Color(0xFF00B050)),
+    _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+    _StroopItem(_ColorName.mavi, Color(0xFFFF0000)),
+    _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+    _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
   ];
 
   // 1. Bölüm · 2. Tur: iki kart yan yana geliyor, hangisi uyumluysa o
-  // elin parmaklarını şıklatıyoruz. 30 çift, her birinde SADECE bir taraf
+  // elin parmaklarını şıklatıyoruz. 60 çift, her birinde SADECE bir taraf
   // gerçekten uyumlu (correctIsRight) — hangi tarafın doğru olduğu da
   // karışık sırayla değişiyor.
   static const List<_SnapPair> _snapPairs = [
     _SnapPair(
       _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
       _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFF00B050)),
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.sari, Color(0xFF0070C0)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFF00B050)),
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.sari, Color(0xFF00B050)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.yesil, Color(0xFFFF0000)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF0070C0)),
+      _StroopItem(_ColorName.mavi, Color(0xFF0070C0)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFFC400)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.mavi, Color(0xFFFFC400)),
+      _StroopItem(_ColorName.sari, Color(0xFFFFC400)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFF00B050)),
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      true,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.yesil, Color(0xFF00B050)),
+      _StroopItem(_ColorName.mavi, Color(0xFF00B050)),
+      false,
+    ),
+    _SnapPair(
+      _StroopItem(_ColorName.kirmizi, Color(0xFFFF0000)),
+      _StroopItem(_ColorName.sari, Color(0xFFFF0000)),
       false,
     ),
     _SnapPair(
@@ -457,12 +713,19 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
       setState(() => _clapCardIndex++);
       _scheduleClapSnapStep();
     } else {
-      setState(() {
-        _phase = _Phase.snap;
-        _snapPairIndex = 0;
-      });
-      _scheduleClapSnapStep();
+      // Şıklatmaya direkt geçmek yerine önce yeni bir yönerge ekranı
+      // gösteriyoruz — bkz. _startSnap.
+      _clapSnapTimer?.cancel();
+      setState(() => _phase = _Phase.snapReady);
     }
+  }
+
+  void _startSnap() {
+    setState(() {
+      _phase = _Phase.snap;
+      _snapPairIndex = 0;
+    });
+    _scheduleClapSnapStep();
   }
 
   void _nextSnapPair() {
@@ -471,8 +734,46 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
       _scheduleClapSnapStep();
     } else {
       _clapSnapTimer?.cancel();
-      setState(() => _phase = _Phase.bolum2Intro);
+      _elapsedTimer?.cancel();
+      _showSpeedRetryPrompt();
     }
+  }
+
+  // 1. Bölüm'ün alkış+şıklatma turları bitince gösterilen "hızını
+  // beğendin mi" sorusu — istemezse en baştan (alkıştan) tekrar dener,
+  // isterse 2. Bölüm'e geçer.
+  void _showSpeedRetryPrompt() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('⚡ Alkış ve Şıklatma Bitti!'),
+        content: const Text(
+          'Hızını beğendin mi? İstersen tekrar deneyebilir, istersen '
+          '2. Bölüm\'e geçebilirsin.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() => _phase = _Phase.clapReady);
+            },
+            child: const Text('Tekrar Dene'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() => _phase = _Phase.bolum2Intro);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _color,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('2. Bölüme Geç'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _startGame() {
@@ -646,9 +947,11 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
                 duration: const Duration(milliseconds: 250),
                 child: switch (_phase) {
                   _Phase.intro => _buildIntro(),
+                  _Phase.clapReady => _buildClapReady(),
                   _Phase.clap => _buildClapRound(
                     key: ValueKey('clap-$_clapCardIndex'),
                   ),
+                  _Phase.snapReady => _buildSnapReady(),
                   _Phase.snap => _buildSnapRound(
                     key: ValueKey('snap-$_snapPairIndex'),
                   ),
@@ -677,22 +980,33 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    'Etkinlik 6 · Renk Uyumu',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        'Etkinlik 6 · Renk Uyumu',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: _color,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _showPalettePicker,
+                      icon: const Icon(Icons.palette_outlined),
+                      tooltip: 'Tema rengini değiştir',
                       color: _color,
                     ),
-                  ),
+                  ],
                 ),
                 Column(
                   mainAxisSize: MainAxisSize.min,
@@ -706,11 +1020,11 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFEDD5),
+                        color: _color.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: _color, width: 1.5),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Amaç: Gözümüzün ve dikkatimizin hızını '
                         'artırmak.\n\nYöntem: Önce 1. Bölüm\'de kartların '
                         'renginin kelimeyle uyumlu olup olmadığını '
@@ -718,10 +1032,7 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
                         'Sonra 2. Bölüm\'de rengiyle uyumlu olmayan '
                         'kelimeleri ekrana dokunarak bulacağız!',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF7C2D12),
-                        ),
+                        style: TextStyle(fontSize: 13, color: _color),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -737,7 +1048,7 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Text(
+                      child: Text(
                         '1. Bölüm\'de alkış ve parmak şıklatma turları, '
                         '2. Bölüm\'de dokunarak bulma turları var!',
                         textAlign: TextAlign.center,
@@ -756,7 +1067,8 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
-                      onPressed: _startBolum1,
+                      onPressed: () =>
+                          setState(() => _phase = _Phase.clapReady),
                       icon: const Icon(Icons.play_arrow),
                       label: const Text(
                         'BAŞLA',
@@ -844,6 +1156,138 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
     );
   }
 
+  // 1. Tur'a (alkış) başlamadan önceki hazırlık yönergesi.
+  Widget _buildClapReady() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(child: Text('👏', style: TextStyle(fontSize: 64))),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _color.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    'Ellerini alkış pozisyonunda tut! Renk, kelimeyle '
+                    'uyumlu olduğunda hep birlikte alkışlayacağız. Hazır '
+                    'olduğunda başlayalım!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: _startBolum1,
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text(
+                      'BAŞLA',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _color,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 2. Tur'a (parmak şıklatma) geçmeden önceki hazırlık yönergesi.
+  Widget _buildSnapReady() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(child: Text('🤟', style: TextStyle(fontSize: 64))),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _color.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    'Şimdi parmaklarımızı şıklatacağız! İki karttan '
+                    'hangisi rengiyle uyumluysa o elin parmaklarını '
+                    'şıklatacağız. Hazır olduğunda başlayalım!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: _startSnap,
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text(
+                      'BAŞLA',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _color,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // 1. Bölüm · 1. Tur: tek kart — renk kelimeyle uyumluysa hep birlikte
   // alkışlıyoruz. Öğretmen kontrolünde "Sonraki Kart" ile ilerliyor.
   Widget _buildClapRound({required Key key}) {
@@ -868,27 +1312,39 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
                 child: Text(
                   '1. Bölüm · 1. Tur · Kart ${_clapCardIndex + 1}/'
                   '${_clapCards.length}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.amber.shade300),
-                ),
-                child: Text(
-                  '⏱ $_elapsedSec sn',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.amber.shade800,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    onPressed: _showPalettePicker,
+                    icon: const Icon(Icons.palette_outlined),
+                    tooltip: 'Tema rengini değiştir',
+                    visualDensity: VisualDensity.compact,
+                    color: _color,
                   ),
-                ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.amber.shade300),
+                    ),
+                    child: Text(
+                      '⏱ $_elapsedSec sn',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber.shade800,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -899,26 +1355,35 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFEDD5),
+              color: _color,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: _color, width: 1.5),
             ),
             child: Column(
               children: [
-                const Text(
-                  '👏 Renk, kelimeyle UYUMLUYSA hep birlikte alkışlayalım!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF7C2D12),
+                Text.rich(
+                  TextSpan(
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    children: [
+                      const TextSpan(text: '👏 Renk, kelimeyle '),
+                      const TextSpan(
+                        text: 'UYUMLUYSA',
+                        style: TextStyle(color: Color(0xFFFDE047)),
+                      ),
+                      const TextSpan(text: ' hep birlikte alkışlayalım!'),
+                    ],
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
-                Text(
+                const Text(
                   'Bir kartı kaçırsan da üzülme, hemen sıradaki renge odaklan!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: Colors.brown.shade700),
+                  style: TextStyle(fontSize: 12, color: Colors.white70),
                 ),
               ],
             ),
@@ -1005,27 +1470,39 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
                 child: Text(
                   '1. Bölüm · 2. Tur · Kart ${_snapPairIndex + 1}/'
                   '${_snapPairs.length}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.amber.shade300),
-                ),
-                child: Text(
-                  '⏱ $_elapsedSec sn',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.amber.shade800,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    onPressed: _showPalettePicker,
+                    icon: const Icon(Icons.palette_outlined),
+                    tooltip: 'Tema rengini değiştir',
+                    visualDensity: VisualDensity.compact,
+                    color: _color,
                   ),
-                ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.amber.shade300),
+                    ),
+                    child: Text(
+                      '⏱ $_elapsedSec sn',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber.shade800,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1042,15 +1519,35 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
             ),
             child: Column(
               children: [
-                const Text(
-                  '🤟 Hangi kart uyumluysa o elimizin parmaklarını '
-                  'şıklatalım! Sol uyumluysa sol el, sağ uyumluysa sağ el.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF7C2D12),
+                Text.rich(
+                  TextSpan(
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF7C2D12),
+                    ),
+                    children: const [
+                      TextSpan(text: '🤟 Hangi kart '),
+                      TextSpan(
+                        text: 'uyumluysa',
+                        style: TextStyle(color: Color(0xFFDC2626)),
+                      ),
+                      TextSpan(
+                        text: ' o elimizin parmaklarını şıklatalım! Sol ',
+                      ),
+                      TextSpan(
+                        text: 'uyumluysa',
+                        style: TextStyle(color: Color(0xFFDC2626)),
+                      ),
+                      TextSpan(text: ' sol el, sağ '),
+                      TextSpan(
+                        text: 'uyumluysa',
+                        style: TextStyle(color: Color(0xFFDC2626)),
+                      ),
+                      TextSpan(text: ' sağ el.'),
+                    ],
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -1145,7 +1642,7 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
                     'bulacağız — ${_rounds.length} tur var, hazır '
                     'olduğunda başlayalım!',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: _color,
                       fontWeight: FontWeight.w600,
@@ -1203,10 +1700,7 @@ class _ColorWordMatchPageState extends State<ColorWordMatchPage> {
                 ),
                 child: Text(
                   '2. Bölüm · Tur ${_roundIndex + 1}/${_rounds.length}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
               Row(

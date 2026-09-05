@@ -6,8 +6,10 @@ import '../../models/settings_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/reading_theme_picker.dart';
+import '../../widgets/exercise_settings_sheet.dart';
+import '../../widgets/confetti_overlay.dart';
 
-enum _Phase { intro, playing }
+enum _Phase { intro, warmup, ready, playing }
 
 class _SentenceWord {
   final String label; // düğümde görünen hâli
@@ -17,9 +19,10 @@ class _SentenceWord {
 }
 
 class _SentencePuzzle {
-  final List<_SentenceWord> words; // doğru sıradaki kelimeler
-  final int centerIndex; // ortada gösterilecek kelimenin index'i
-  const _SentencePuzzle({required this.words, required this.centerIndex});
+  final List<_SentenceWord> words; // doğru sıradaki kelimeler; ilk kelime
+  // (index 0) her zaman ortada gösterilir, öğrenciye başlangıç noktasını
+  // kolaylaştırmak için.
+  const _SentencePuzzle({required this.words});
 }
 
 /// Klasör 4'ün beşinci etkinliği: "Cümle Kur". Kitaptaki örnek gibi bir
@@ -35,11 +38,19 @@ class SentenceBuilderPage extends StatefulWidget {
 }
 
 class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
-  static const Color _color = Color(0xFF0D9488);
+  Color _color = const Color(0xFF0D9488);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF0D9488),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
 
   static const List<_SentencePuzzle> _puzzles = [
     _SentencePuzzle(
-      centerIndex: 1,
       words: [
         _SentenceWord('Her', 'Her'),
         _SentenceWord('İnsan', 'insan'),
@@ -56,7 +67,6 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
       ],
     ),
     _SentencePuzzle(
-      centerIndex: 0,
       words: [
         _SentenceWord('Düşünmek', 'Düşünmek'),
         _SentenceWord('Ve', 've'),
@@ -69,7 +79,6 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
       ],
     ),
     _SentencePuzzle(
-      centerIndex: 2,
       words: [
         _SentenceWord('Güçlü', 'Güçlü'),
         _SentenceWord('Bir karakter', 'bir karakter'),
@@ -82,7 +91,6 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
       ],
     ),
     _SentencePuzzle(
-      centerIndex: 0,
       words: [
         _SentenceWord('Bir', 'Bir'),
         _SentenceWord('Ülkenin', 'ülkenin'),
@@ -96,7 +104,6 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
       ],
     ),
     _SentencePuzzle(
-      centerIndex: 8,
       words: [
         _SentenceWord('Sahipsiz', 'Sahipsiz'),
         _SentenceWord('Olan', 'olan', caption: '(M. Akif)'),
@@ -111,7 +118,6 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
       ],
     ),
     _SentencePuzzle(
-      centerIndex: 6,
       words: [
         _SentenceWord('Dünün', 'Dünün'),
         _SentenceWord('Yarını', 'yarını,'),
@@ -143,14 +149,51 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
   int _totalScore = 0;
   int? _hintGlowIndex;
 
+  Timer? _warmupTimer;
+  int _warmupWordIndex = -1;
+
+  Timer? _celebrateTimer;
+  int _celebrateWordIndex = -1;
+
   @override
   void dispose() {
     _flashTimer?.cancel();
     _puzzleTicker?.cancel();
+    _warmupTimer?.cancel();
+    _celebrateTimer?.cancel();
     super.dispose();
   }
 
-  _SentencePuzzle get _puzzle => _puzzles[_puzzleIndex];
+  // İlk cümle antreman olarak kullanılır (uygulama kendi gösterir); asıl
+  // etkinlik geri kalan cümlelerle oynanır.
+  _SentencePuzzle get _warmupPuzzle => _puzzles.first;
+  List<_SentencePuzzle> get _playablePuzzles => _puzzles.sublist(1);
+  _SentencePuzzle get _puzzle => _playablePuzzles[_puzzleIndex];
+
+  void _startWarmup() {
+    setState(() {
+      _phase = _Phase.warmup;
+      _warmupWordIndex = -1;
+    });
+    _warmupTimer?.cancel();
+    int i = -1;
+    final total = _warmupPuzzle.words.length;
+    _warmupTimer = Timer.periodic(const Duration(milliseconds: 850), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      i++;
+      if (i >= total) {
+        timer.cancel();
+        Future.delayed(const Duration(milliseconds: 900), () {
+          if (mounted) setState(() => _phase = _Phase.ready);
+        });
+        return;
+      }
+      setState(() => _warmupWordIndex = i);
+    });
+  }
 
   void _startGame() {
     setState(() {
@@ -162,11 +205,9 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
   }
 
   void _startPuzzle() {
-    final puzzle = _puzzles[_puzzleIndex];
-    final indices = [
-      for (int i = 0; i < puzzle.words.length; i++)
-        if (i != puzzle.centerIndex) i,
-    ]..shuffle(Random(_puzzleIndex * 97 + 13));
+    final puzzle = _puzzle;
+    final indices = [for (int i = 1; i < puzzle.words.length; i++) i]
+      ..shuffle(Random(_puzzleIndex * 97 + 13));
     _flashTimer?.cancel();
     _puzzleTicker?.cancel();
     setState(() {
@@ -198,12 +239,37 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
       if (_nextIndex == _puzzle.words.length) {
         _puzzleTicker?.cancel();
         _totalScore += _puzzlePoints;
-        Future.delayed(const Duration(milliseconds: 1400), _advancePuzzle);
+        _celebrateAndAdvance();
       }
     } else {
       SoundManager.playGentleTap();
       _flashWrong(wordIndex);
     }
+  }
+
+  // Cümle tamamlanınca konfeti patlatır ve kurulan cümlenin kelimelerini
+  // sırayla bir kez yanıp söndürür, sonra bir sonraki cümleye geçer.
+  void _celebrateAndAdvance() {
+    showConfetti(context);
+    _celebrateTimer?.cancel();
+    int i = -1;
+    final total = _puzzle.words.length;
+    _celebrateTimer = Timer.periodic(const Duration(milliseconds: 260), (
+      timer,
+    ) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      i++;
+      if (i >= total) {
+        timer.cancel();
+        setState(() => _celebrateWordIndex = -1);
+        _advancePuzzle();
+        return;
+      }
+      setState(() => _celebrateWordIndex = i);
+    });
   }
 
   void _useHint() {
@@ -241,7 +307,7 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
 
   void _advancePuzzle() {
     if (!mounted) return;
-    if (_puzzleIndex < _puzzles.length - 1) {
+    if (_puzzleIndex < _playablePuzzles.length - 1) {
       setState(() => _puzzleIndex++);
       _startPuzzle();
     } else {
@@ -260,7 +326,7 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Cümle Kur',
-      result: '${_puzzles.length} cümle kuruldu · $_totalScore puan',
+      result: '${_playablePuzzles.length} cümle kuruldu · $_totalScore puan',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -274,13 +340,13 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${_puzzles.length} cümlenin hepsini doğru sırayla kurduk!',
+              '${_playablePuzzles.length} cümlenin hepsini doğru sırayla kurduk!',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             const SizedBox(height: 8),
             Text(
               'Toplam puan: $_totalScore',
-              style: const TextStyle(
+              style: TextStyle(
                 color: _color,
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
@@ -353,14 +419,33 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🧩 Cümle Kur')),
+        appBar: AppBar(
+          title: const Text('🧩 Cümle Kur'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 250),
-            child: _phase == _Phase.intro
-                ? _buildIntro()
-                : _buildPlaying(key: ValueKey('puzzle-$_puzzleIndex')),
+            child: switch (_phase) {
+              _Phase.intro => _buildIntro(),
+              _Phase.warmup => _buildWarmup(),
+              _Phase.ready => _buildReady(),
+              _Phase.playing => _buildPlaying(
+                key: ValueKey('puzzle-$_puzzleIndex'),
+              ),
+            },
           ),
         ),
       ),
@@ -386,7 +471,7 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Etkinlik 5 · Cümle Kur',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -413,7 +498,7 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Text.rich(
+                      child: Text.rich(
                         TextSpan(
                           style: TextStyle(fontSize: 13, color: _color),
                           children: [
@@ -425,7 +510,8 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
                               text:
                                   'Dağınık kelime kutucuklarını doğru '
                                   'sırayla birleştirerek anlamlı bir cümle '
-                                  'kurmak.\n',
+                                  'kurmak. Cümlenin ilk kelimesi her zaman '
+                                  'ortada olur.\n',
                             ),
                             TextSpan(
                               text: 'Yöntem: ',
@@ -433,7 +519,10 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
                             ),
                             TextSpan(
                               text:
-                                  'Kutucuklara doğru sırayla dokunarak '
+                                  'Önce ilk cümleyi biz gösteririz: '
+                                  'kelimeler sırayla yanıp söner, '
+                                  'dikkatlice takip et. Sonra sıra sende — '
+                                  'kutucuklara doğru sırayla dokunarak '
                                   'cümleyi baştan sona kur. Yanlış '
                                   'kutucuğa dokunursan kırmızı yanıp söner '
                                   '— doğrusunu bul ve devam et!',
@@ -450,7 +539,7 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
-                      onPressed: _startGame,
+                      onPressed: _startWarmup,
                       icon: const Icon(Icons.play_arrow),
                       label: const Text(
                         'BAŞLA',
@@ -477,12 +566,73 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
     );
   }
 
+  Widget _buildReady() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(child: Text('🎯', style: TextStyle(fontSize: 64))),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _color.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    'Antremanı tamamladık! Şimdi sıra sende — yapabilirsin! '
+                    'Kutucuklara doğru sırayla dokunarak cümleyi baştan '
+                    'sona kur.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: _startGame,
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text(
+                      'BAŞLA',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _color,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildPlaying({required Key key}) {
     final puzzle = _puzzle;
-    final built = [
-      for (int i = 0; i < _nextIndex; i++) puzzle.words[i].sentenceForm,
-    ].join(' ');
-    final n = _shuffledSurroundingIndices.length;
     final accent = SettingsManager.readingAccentColor;
     return KeyedSubtree(
       key: key,
@@ -502,8 +652,8 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'Cümle ${_puzzleIndex + 1}/${_puzzles.length}',
-                    style: const TextStyle(
+                    'Cümle ${_puzzleIndex + 1}/${_playablePuzzles.length}',
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
                     ),
@@ -524,67 +674,10 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
             ],
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            height: 380,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                const nodeW = 104.0;
-                const nodeH = 46.0;
-                final cx = constraints.maxWidth / 2;
-                final cy = constraints.maxHeight / 2;
-                final rx = (constraints.maxWidth / 2 - nodeW / 2 - 4).clamp(
-                  0.0,
-                  double.infinity,
-                );
-                final ry = (constraints.maxHeight / 2 - nodeH / 2 - 4).clamp(
-                  0.0,
-                  double.infinity,
-                );
-                Offset centerFor(int i) {
-                  final angle = -pi / 2 + i * (2 * pi / n);
-                  return Offset(cx + rx * cos(angle), cy + ry * sin(angle));
-                }
-
-                final centers = [for (int i = 0; i < n; i++) centerFor(i)];
-                return Stack(
-                  children: [
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _RadialLinesPainter(
-                          center: Offset(cx, cy),
-                          targets: centers,
-                          color: Colors.grey.shade300,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: cx - nodeW / 2,
-                      top: cy - nodeH / 2,
-                      width: nodeW,
-                      height: nodeH,
-                      child: _node(
-                        puzzle,
-                        puzzle.centerIndex,
-                        accent,
-                        isCenter: true,
-                      ),
-                    ),
-                    for (int i = 0; i < n; i++)
-                      Positioned(
-                        left: centers[i].dx - nodeW / 2,
-                        top: centers[i].dy - nodeH / 2,
-                        width: nodeW,
-                        height: nodeH,
-                        child: _node(
-                          puzzle,
-                          _shuffledSurroundingIndices[i],
-                          accent,
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
+          _radialStack(
+            surroundingIndices: _shuffledSurroundingIndices,
+            nodeBuilder: (wordIndex, isCenter) =>
+                _node(puzzle, wordIndex, accent, isCenter: isCenter),
           ),
           const SizedBox(height: 12),
           Container(
@@ -596,15 +689,46 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: accent.withValues(alpha: 0.3)),
             ),
-            child: Text(
-              built.isEmpty ? 'Cümleyi kurmaya başla...' : built,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: built.isEmpty ? Colors.grey.shade400 : accent,
-              ),
-            ),
+            child: _nextIndex == 0
+                ? Text(
+                    'Cümleyi kurmaya başla...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade400,
+                    ),
+                  )
+                : Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      for (int i = 0; i < _nextIndex; i++)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: _celebrateWordIndex == i ? 6 : 0,
+                            vertical: 2,
+                          ),
+                          decoration: _celebrateWordIndex == i
+                              ? BoxDecoration(
+                                  color: accent,
+                                  borderRadius: BorderRadius.circular(6),
+                                )
+                              : null,
+                          child: Text(
+                            puzzle.words[i].sentenceForm,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: _celebrateWordIndex == i
+                                  ? Colors.white
+                                  : accent,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -627,6 +751,145 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWarmup() {
+    final puzzle = _warmupPuzzle;
+    final accent = SettingsManager.readingAccentColor;
+    final surrounding = [for (int i = 1; i < puzzle.words.length; i++) i];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: _color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.visibility_rounded, color: _color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Antreman: Cümle kurallı bir şekilde yanıp sönecek, '
+                  'takip et!',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _color,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        _radialStack(
+          surroundingIndices: surrounding,
+          nodeBuilder: (wordIndex, isCenter) => _warmupNode(
+            puzzle,
+            wordIndex,
+            accent,
+            isCenter: isCenter,
+            isLit: wordIndex <= _warmupWordIndex,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 64),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: accent.withValues(alpha: 0.3)),
+          ),
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              for (
+                int i = 0;
+                i <= _warmupWordIndex && i < puzzle.words.length;
+                i++
+              )
+                Text(
+                  puzzle.words[i].sentenceForm,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: accent,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _radialStack({
+    required List<int> surroundingIndices,
+    required Widget Function(int wordIndex, bool isCenter) nodeBuilder,
+  }) {
+    final accent = SettingsManager.readingAccentColor;
+    final n = surroundingIndices.length;
+    return SizedBox(
+      height: 380,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const nodeW = 104.0;
+          const nodeH = 46.0;
+          final cx = constraints.maxWidth / 2;
+          final cy = constraints.maxHeight / 2;
+          final rx = (constraints.maxWidth / 2 - nodeW / 2 - 4).clamp(
+            0.0,
+            double.infinity,
+          );
+          final ry = (constraints.maxHeight / 2 - nodeH / 2 - 4).clamp(
+            0.0,
+            double.infinity,
+          );
+          Offset centerFor(int i) {
+            final angle = -pi / 2 + i * (2 * pi / n);
+            return Offset(cx + rx * cos(angle), cy + ry * sin(angle));
+          }
+
+          final centers = [for (int i = 0; i < n; i++) centerFor(i)];
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _RadialLinesPainter(
+                    center: Offset(cx, cy),
+                    targets: centers,
+                    boxHalfExtent: const Offset(nodeW / 2, nodeH / 2),
+                    color: accent.withValues(alpha: 0.35),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: cx - nodeW / 2,
+                top: cy - nodeH / 2,
+                width: nodeW,
+                height: nodeH,
+                child: nodeBuilder(0, true),
+              ),
+              for (int i = 0; i < n; i++)
+                Positioned(
+                  left: centers[i].dx - nodeW / 2,
+                  top: centers[i].dy - nodeH / 2,
+                  width: nodeW,
+                  height: nodeH,
+                  child: nodeBuilder(surroundingIndices[i], false),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -695,20 +958,81 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
                 word.label,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontWeight: FontWeight.bold, color: fg),
               ),
+              if (word.caption != null)
+                Text(
+                  word.caption!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontStyle: FontStyle.italic,
+                    color: fg.withValues(alpha: 0.8),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Antreman düğümü: dokunma yok, sadece sırası gelince rengi yanıp söner.
+  Widget _warmupNode(
+    _SentencePuzzle puzzle,
+    int wordIndex,
+    Color accent, {
+    required bool isCenter,
+    required bool isLit,
+  }) {
+    final word = puzzle.words[wordIndex];
+    Color bg = isCenter
+        ? accent.withValues(alpha: 0.15)
+        : SettingsManager.readingBackgroundColor;
+    Color border = isCenter ? accent : SettingsManager.readingBorderColor;
+    Color fg = const Color(0xFF0F172A);
+    if (isLit) {
+      bg = accent;
+      border = accent;
+      fg = Colors.white;
+    }
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: border, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              word.label,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold, color: fg),
             ),
             if (word.caption != null)
               Text(
                 word.caption!,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 9,
                   fontStyle: FontStyle.italic,
@@ -725,20 +1049,40 @@ class _SentenceBuilderPageState extends State<SentenceBuilderPage> {
 class _RadialLinesPainter extends CustomPainter {
   final Offset center;
   final List<Offset> targets;
+  final Offset boxHalfExtent; // tüm kutucukların yarı genişlik/yükseklik'i
   final Color color;
   const _RadialLinesPainter({
     required this.center,
     required this.targets,
+    required this.boxHalfExtent,
     required this.color,
   });
 
+  // Doğrunun, verilen yarı genişlik/yükseklikteki dikdörtgenin kenarını
+  // kestiği noktayı bulur — çizgi kutunun İÇİNDEN değil, kenarından başlar.
+  Offset _edgePoint(Offset origin, Offset direction) {
+    final ux = direction.dx.abs() < 0.0001 ? 0.0001 : direction.dx;
+    final uy = direction.dy.abs() < 0.0001 ? 0.0001 : direction.dy;
+    final t = min(boxHalfExtent.dx / ux.abs(), boxHalfExtent.dy / uy.abs());
+    return origin + direction * t;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    final linePaint = Paint()
       ..color = color
-      ..strokeWidth = 1.6;
+      ..strokeWidth = 2;
+    final dotPaint = Paint()..color = color;
     for (final target in targets) {
-      canvas.drawLine(center, target, paint);
+      final direction = target - center;
+      final length = direction.distance;
+      if (length < 0.001) continue;
+      final unit = direction / length;
+      final start = _edgePoint(center, unit);
+      final end = _edgePoint(target, -unit);
+      canvas.drawLine(start, end, linePaint);
+      canvas.drawCircle(start, 2.5, dotPaint);
+      canvas.drawCircle(end, 2.5, dotPaint);
     }
   }
 
@@ -746,5 +1090,6 @@ class _RadialLinesPainter extends CustomPainter {
   bool shouldRepaint(covariant _RadialLinesPainter oldDelegate) =>
       oldDelegate.center != center ||
       oldDelegate.targets != targets ||
+      oldDelegate.boxHalfExtent != boxHalfExtent ||
       oldDelegate.color != color;
 }

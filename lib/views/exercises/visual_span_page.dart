@@ -6,6 +6,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Phase { streamIntro, stream, scatterIntro, scatter, quizIntro, quiz }
 
@@ -35,7 +36,16 @@ class VisualSpanPage extends StatefulWidget {
 
 class _VisualSpanPageState extends State<VisualSpanPage> {
   static const int _stageDurationSec = 60;
-  static const Color _color = Color(0xFF0D9488);
+  Color _color = const Color(0xFF0D9488);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF0D9488),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
 
   // 1. Bölüm: satırdaki nesneler ne sıklıkta tek tek belirir — hız
@@ -557,7 +567,21 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('👁️ Görsel Genişlik')),
+        appBar: AppBar(
+          title: const Text('👁️ Görsel Genişlik'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -638,7 +662,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
                   ),
                   child: Text(
                     badge,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
                     ),
@@ -665,7 +689,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.info_outline_rounded,
                             color: _color,
                             size: 20,
@@ -674,7 +698,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
                           Expanded(
                             child: Text(
                               instruction,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: _color,
                                 fontWeight: FontWeight.w600,
@@ -805,7 +829,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: _color,
-          side: const BorderSide(color: _color),
+          side: BorderSide(color: _color),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -831,7 +855,7 @@ class _VisualSpanPageState extends State<VisualSpanPage> {
           ),
           child: Text(
             badge,
-            style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
+            style: TextStyle(fontWeight: FontWeight.bold, color: _color),
           ),
         ),
         Row(

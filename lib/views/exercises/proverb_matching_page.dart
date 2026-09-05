@@ -5,6 +5,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 class _ProverbPair {
   final String left;
@@ -16,11 +17,14 @@ enum _Phase { intro, warmup, ready, matching, bolum2Intro }
 
 /// Klasör 3'ün beşinci etkinliği: "Atasözü Eşleştirme". Hocanın verdiği
 /// sunumdaki atasözü yarım-birleştirme sayfalarının karşılığı — önce bir
-/// antreman ekranında mekaniğin nasıl çalıştığı 3 kez otomatik olarak
-/// gösteriliyor, sonra 1. Bölüm'de 5 sette (her sette 9 atasözü) öğrenci
-/// sol yarıya dokunup doğru sağ yarıyı bularak atasözünü tamamlıyor.
-/// 2. Bölüm'de aynı 5 set taraflar yer değiştirmiş halde tekrar geliyor
-/// (tamamlayan yarılar solda, başlangıçlar sağda) — bkz. [_bolumIndex].
+/// antreman ekranında mekaniğin nasıl çalıştığı ilk 3 set üzerinden
+/// otomatik olarak (öğrenci değil, uygulama) gösteriliyor, sonra
+/// 1. Bölüm'de 5 sette (her sette 9 atasözü) öğrenci sol yarıya dokunup
+/// doğru sağ yarıyı bularak atasözünü tamamlıyor — ilk 3 set zorunlu,
+/// 3. setin sonunda devam edip etmemek istediği soruluyor (bkz.
+/// [_showContinuePrompt]). 2. Bölüm'de aynı 5 set taraflar yer değiştirmiş
+/// halde tekrar geliyor (tamamlayan yarılar solda, başlangıçlar sağda) —
+/// bkz. [_bolumIndex].
 class ProverbMatchingPage extends StatefulWidget {
   const ProverbMatchingPage({super.key});
 
@@ -29,7 +33,16 @@ class ProverbMatchingPage extends StatefulWidget {
 }
 
 class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
-  static const Color _color = Color(0xFFDB2777);
+  Color _color = const Color(0xFFDB2777);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFFDB2777),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
 
   // Kutu içindeki yazı boyutu — en büyük seçenekte bile taşmasın diye
   // FittedBox ile birlikte kullanılıyor.
@@ -45,6 +58,11 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
   static const List<int> _warmupStepMsBySpeed = [1300, 850, 500];
   int _speedLevel = 1;
+  Timer? _warmupTimer;
+
+  // Gerçek oyunda (1. Bölüm) zorunlu set sayısı — bu kadarını bitirince
+  // devam edip etmemek istediği soruluyor (bkz. _showContinuePrompt).
+  static const int _requiredSets = 3;
 
   // Hocanın sunumundaki 5 set, her biri 9 atasözü (iki yarısı ayrı ayrı
   // sütunlarda karışık verilmiş) — buraya çözülmüş haliyle aktarıldı.
@@ -116,7 +134,6 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
   int _warmupSubStep = 0; // 0 = sol vurgulu, 1 = sağ da vurgulu + eşleşti
   int _warmupRepeatIndex = 0;
   List<int> _warmupRightOrder = const [];
-  Timer? _warmupTimer;
 
   int _setIndex = 0;
   // 0 = 1. Bölüm (sol=başlangıç, sağ=tamamlayan yarı), 1 = 2. Bölüm
@@ -281,6 +298,14 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
   }
 
   void _advanceSet() {
+    // 1. Bölüm'de zorunlu ilk _requiredSets set bitince, kalan setlere
+    // devam edip etmemek istediğini soruyoruz.
+    if (_bolumIndex == 0 &&
+        _setIndex == _requiredSets - 1 &&
+        _setIndex < _sets.length - 1) {
+      _showContinuePrompt();
+      return;
+    }
     if (_setIndex < _sets.length - 1) {
       _setIndex++;
       _loadPairs();
@@ -294,6 +319,49 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
     } else {
       _finishAll();
     }
+  }
+
+  // Zorunlu _requiredSets seti bitirince gösterilen "devam mı, burada mı
+  // bitirelim" yönergesi — istemezse kalan setlere ve 2. Bölüm'e hiç
+  // girmeden doğrudan etkinliği tamamlanmış sayıyoruz.
+  void _showContinuePrompt() {
+    _elapsedTimer?.cancel();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('🎯 3 Set Tamamlandı!'),
+        content: const Text(
+          'Zorunlu 3 seti bitirdin! Kalan setlere devam etmek ister '
+          'misin, yoksa burada bitirelim mi?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _finishAll();
+            },
+            child: const Text('Bitir'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _setIndex++;
+              _loadPairs();
+              _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+                if (!mounted) return;
+                setState(() => _elapsedSec++);
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _color,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Devam Et'),
+          ),
+        ],
+      ),
+    );
   }
 
   // 2. Bölüm: aynı 5 set tekrar geliyor ama sağ-sol yer değiştiriyor —
@@ -315,13 +383,22 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
     _elapsedTimer?.cancel();
     _hasCompletedOnce = true;
 
+    // _bolumIndex==0 iken erken bitirilmişse (3 zorunlu setten sonra
+    // "Bitir" seçildiyse) sadece o kadarı tamamlanmış olur; 2. Bölüm'ü de
+    // bitirmişse hepsi tamamlanmış demektir.
+    final completedSets = _bolumIndex == 0
+        ? _setIndex + 1
+        : _sets.length + _setIndex + 1;
+    final totalSets = _sets.length * 2;
+    final finishedEarly = completedSets < totalSets;
+
     const percent = 100;
     ProgressManager.recordAttentionScore(percent);
 
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Atasözü Eşleştirme',
-      result: '2 bölüm · ${_sets.length} set · $_mistakeCount hata',
+      result: '$completedSets/$totalSets set · $_mistakeCount hata',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -335,7 +412,9 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '2 bölümde de ${_sets.length} sette tüm atasözlerini eşleştirdik!',
+              finishedEarly
+                  ? 'Zorunlu setleri tamamladın, toplam $completedSets set çözdün!'
+                  : '2 bölümde de ${_sets.length} sette tüm atasözlerini eşleştirdik!',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             const SizedBox(height: 8),
@@ -413,7 +492,21 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('📖 Atasözü Eşleştirme')),
+        appBar: AppBar(
+          title: const Text('📖 Atasözü Eşleştirme'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -465,7 +558,7 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Etkinlik 5 · Atasözü Eşleştirme',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -512,7 +605,7 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
@@ -524,7 +617,9 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                             child: Text(
                               'Önce küçük bir antremanla mekaniği 3 kez '
                               'izleyeceğiz, sonra 5 set atasözümüz var, '
-                              'her sette 9 atasözü eşleştireceğiz!',
+                              'her sette 9 atasözü eşleştireceğiz! İlk 3 '
+                              'seti bitirmen yeterli — sonrasında devam '
+                              'etmek isteyip istemediğini soracağız.',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: _color,
@@ -535,8 +630,6 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _speedChipRow(),
                   ],
                 ),
                 Padding(
@@ -572,47 +665,9 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
     );
   }
 
-  Widget _speedChipRow() {
-    return Row(
-      children: [
-        Text(
-          'Hız: ',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.grey.shade600,
-          ),
-        ),
-        const SizedBox(width: 6),
-        for (int i = 0; i < _speedLabels.length; i++) ...[
-          if (i > 0) const SizedBox(width: 6),
-          ChoiceChip(
-            label: Text(_speedLabels[i]),
-            selected: _speedLevel == i,
-            onSelected: (_) {
-              if (_phase == _Phase.warmup) {
-                _changeWarmupSpeed(i);
-              } else {
-                setState(() => _speedLevel = i);
-              }
-            },
-            selectedColor: _color,
-            labelStyle: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: _speedLevel == i ? Colors.white : _color,
-            ),
-            backgroundColor: _color.withValues(alpha: 0.08),
-            side: BorderSide(
-              color: _color.withValues(alpha: _speedLevel == i ? 1 : 0.3),
-            ),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-          ),
-        ],
-      ],
-    );
-  }
-
+  // Antreman: artık uygulama otomatik çözmüyor — öğrenci gerçek
+  // egzersizdeki gibi sol tarafa dokunup doğru sağ yarıyı kendisi buluyor
+  // (bkz. _tapLeft/_tapRight'ın isWarmup dalı).
   // Antreman: mekaniği 3 kez otomatik gösteriyor — sol taraf sırayla
   // vurgulanıyor, sonra doğru sağ yarı bulunup ikisi de yeşile dönüyor.
   Widget _buildWarmup() {
@@ -627,13 +682,13 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
           ),
           child: Text(
             '🎓 Antreman · Tekrar ${_warmupRepeatIndex + 1}/$_warmupRepeats',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
+            style: TextStyle(fontWeight: FontWeight.bold, color: _color),
           ),
         ),
         const SizedBox(height: 8),
         const Text(
-          'Sol taraftaki başlangıca dokunacağız, sonra doğru tamamlayan '
-          'yarıyı sağdan bulacağız — izle!',
+          'Dikkatli izle! Sol taraftaki başlangıca dokunacağız, sonra '
+          'doğru tamamlayan yarıyı sağdan bulacağız.',
           style: TextStyle(fontSize: 13, color: Colors.grey),
         ),
         const SizedBox(height: 12),
@@ -701,6 +756,41 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
     );
   }
 
+  Widget _speedChipRow() {
+    return Row(
+      children: [
+        Text(
+          'Hız: ',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        const SizedBox(width: 6),
+        for (int i = 0; i < _speedLabels.length; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          ChoiceChip(
+            label: Text(_speedLabels[i]),
+            selected: _speedLevel == i,
+            onSelected: (_) => _changeWarmupSpeed(i),
+            selectedColor: _color,
+            labelStyle: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: _speedLevel == i ? Colors.white : _color,
+            ),
+            backgroundColor: _color.withValues(alpha: 0.08),
+            side: BorderSide(
+              color: _color.withValues(alpha: _speedLevel == i ? 1 : 0.3),
+            ),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ],
+    );
+  }
+
   // Antreman bitince doğrudan zamanlı gerçek sete atlamadan önce
   // gösterilen "artık sıra sende" yönerge ekranı.
   Widget _buildReady() {
@@ -725,11 +815,11 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                     color: _color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Şimdi sıra sende! Az önce izlediğin gibi, sol '
                     'taraftaki atasözü başlangıcına dokunup doğru '
                     'tamamlayan yarıyı sağdan bulacaksın — 5 set var, '
-                    'hazır olduğunda başlayalım!',
+                    'ilk 3\'ü zorunlu, hazır olduğunda başlayalım!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -793,7 +883,7 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                     color: _color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Text(
+                  child: Text(
                     '1. Bölümü tamamladık! Şimdi aynı 5 set tekrar '
                     'gelecek ama bu sefer taraflar yer değiştiriyor — '
                     'atasözünü tamamlayan yarılar solda, başlangıçlar '
@@ -860,10 +950,7 @@ class _ProverbMatchingPageState extends State<ProverbMatchingPage> {
                   '${_bolumIndex + 1}. Bölüm · Set ${_setIndex + 1}/'
                   '${_sets.length} · ${_solvedPairIndices.length}/'
                   '${pairs.length}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
               Row(

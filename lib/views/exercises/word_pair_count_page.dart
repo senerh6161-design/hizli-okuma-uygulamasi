@@ -5,6 +5,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Phase { intro, bolum2Intro, announcing, showing, answering }
 
@@ -30,7 +31,16 @@ class WordPairCountPage extends StatefulWidget {
 }
 
 class _WordPairCountPageState extends State<WordPairCountPage> {
-  static const Color _color = Color(0xFF0891B2);
+  Color _color = const Color(0xFF0891B2);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF0891B2),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
   static const List<int> _roundTimeMsBySpeed = [15000, 10000, 6000];
   // Hızlı ayar daha zor olduğu için doğru cevap daha çok puan kazandırıyor.
@@ -409,7 +419,21 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🔎 İkili Kelime Grubu Say')),
+        appBar: AppBar(
+          title: const Text('🔎 İkili Kelime Grubu Say'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -454,7 +478,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Etkinlik 5 · 1. Bölüm · İkili Kelime Grubu Say',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -484,7 +508,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
@@ -716,7 +740,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Etkinlik 5 · 2. Bölüm · Dikey Kelime Grupları',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -767,7 +791,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
@@ -989,10 +1013,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
                 ),
                 child: Text(
                   '${_bolumIndex + 1}. Bölüm · Tur ${_roundIndex + 1}/$_roundCount',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
               Row(
@@ -1000,7 +1021,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
                 children: [
                   Text(
                     'Puan: $_totalScore',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: _color,
@@ -1061,7 +1082,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
                   ),
                   Text(
                     _round.target,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: _color,
@@ -1135,7 +1156,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
           _bolumIndex == 0
               ? Text(
                   '"${_round.target}"',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: _color,
@@ -1143,7 +1164,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
                 )
               : _pairDisplay(
                   _round.target,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: _color,
@@ -1223,7 +1244,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
             _bolumIndex == 0
                 ? Text(
                     '"${_round.target}"',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: _color,
@@ -1231,7 +1252,7 @@ class _WordPairCountPageState extends State<WordPairCountPage> {
                   )
                 : _pairDisplay(
                     _round.target,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: _color,

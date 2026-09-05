@@ -4,10 +4,19 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Direction { leftToRight, rightToLeft, bottomToTop, topToBottom }
 
-enum _Phase { warmup, ready, exercise, bolum2Intro, bolum2Search, bolum2Answer }
+enum _Phase {
+  intro,
+  warmup,
+  ready,
+  exercise,
+  bolum2Intro,
+  bolum2Search,
+  bolum2Answer,
+}
 
 class _CountChallenge {
   final String target;
@@ -31,14 +40,23 @@ class ExamWordGroupScanPage extends StatefulWidget {
 }
 
 class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
-  static const Color _color = Color(0xFF9333EA);
+  Color _color = const Color(0xFF9333EA);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF9333EA),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const List<String> _speedLabels = [
     'Yavaş',
     'Orta',
     'Hızlı',
     'Çok Hızlı',
   ];
-  static const List<int> _stepMsBySpeed = [700, 480, 320, 200];
+  static const List<int> _stepMsBySpeed = [1000, 700, 480, 320];
   static const List<_Direction> _directions = [
     _Direction.leftToRight,
     _Direction.rightToLeft,
@@ -405,7 +423,7 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
     _CountChallenge('teşekkür ederim', 5),
   ];
 
-  _Phase _phase = _Phase.warmup;
+  _Phase _phase = _Phase.intro;
   bool _hasCompletedOnce = false;
   bool _isPaused = false;
   int _speedLevel = 1;
@@ -420,12 +438,6 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
   int _challengeIndex = 0;
   int _bolum2Selected = 0;
   bool _bolum2Answered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startWarmup());
-  }
 
   @override
   void dispose() {
@@ -719,7 +731,21 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('📝 Sınav Kelimeleri')),
+        appBar: AppBar(
+          title: const Text('📝 Sınav Kelimeleri'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -727,6 +753,7 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 child: switch (_phase) {
+                  _Phase.intro => _buildIntro(),
                   _Phase.warmup => _buildScan(
                     key: ValueKey('warmup-$_directionIndex'),
                   ),
@@ -810,7 +837,7 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
                               '${_directionLabels[_directionIndex]}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
                     ),
@@ -839,51 +866,128 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
               ],
             ],
           ),
-          if (isWarmup) ...[
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3E8FF),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _color, width: 1.2),
-              ),
-              child: const Text.rich(
-                TextSpan(
-                  style: TextStyle(fontSize: 12.5, color: Color(0xFF581C87)),
-                  children: [
-                    TextSpan(
-                      text: 'Amaç: ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    TextSpan(
-                      text:
-                          'Sınavda çıkan kelime gruplarıyla göze ritim '
-                          'kazandırmak.\n',
-                    ),
-                    TextSpan(
-                      text: 'Yöntem: ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    TextSpan(
-                      text:
-                          'Kelime gruplarının ortasına odaklanarak tek '
-                          'bakışta algılamaya çalış. Önce antremanı '
-                          'yapacağız, sonra sıra sende — 8 sayfayı da bu '
-                          'şekilde tarayacaksın!',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
           const SizedBox(height: 8),
           _speedChipRow(),
           const SizedBox(height: 12),
           Expanded(child: _grid()),
         ],
       ),
+    );
+  }
+
+  Widget _buildIntro() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Etkinlik 4 · Sınav Kelimeleri',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _color,
+                    ),
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 16),
+                    const Center(
+                      child: Text('📝', style: TextStyle(fontSize: 72)),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3E8FF),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: _color, width: 1.2),
+                      ),
+                      child: const Text.rich(
+                        TextSpan(
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF581C87),
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'Amaç: ',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(
+                              text:
+                                  'Sınavda çıkan kelime gruplarıyla göze '
+                                  'ritim kazandırmak.\n',
+                            ),
+                            TextSpan(
+                              text: 'Yöntem: ',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(
+                              text:
+                                  'Kelime gruplarının ortasına odaklanarak '
+                                  'tek bakışta algılamaya çalış. Önce '
+                                  'antremanı yapacağız, sonra sıra sende '
+                                  '— 8 sayfayı da bu şekilde '
+                                  'tarayacaksın!',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _speedChipRow(),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: _startWarmup,
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text(
+                        'ANTREMANA GEÇ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _color,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -909,7 +1013,7 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
                     color: _color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Antremanı tamamladık! Şimdi sıra sende — az önce '
                     'izlediğin gibi kutucuğu takip ederek 8 sayfayı da 4 '
                     'yönde tarayacaksın.',
@@ -981,7 +1085,7 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
                     'kere geçtiğini bulacaksın — ${_challenges.length} soru '
                     'var!',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: _color,
                       fontWeight: FontWeight.w600,
@@ -1034,7 +1138,7 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
           child: Text(
             'Soru ${_challengeIndex + 1}/${_challenges.length} · '
             '"${challenge.target}" kaç kere geçiyor?',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
+            style: TextStyle(fontWeight: FontWeight.bold, color: _color),
           ),
         ),
         const SizedBox(height: 10),
@@ -1128,7 +1232,7 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
                   child: Text(
                     '"${challenge.target}"',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: _color,
@@ -1228,9 +1332,6 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
         final rawCellHeight =
             (constraints.maxHeight - spacing * (rows - 1)) / rows;
         final cellHeight = rawCellHeight.clamp(34.0, 60.0);
-        final fits =
-            cellHeight * rows + spacing * (rows - 1) <=
-            constraints.maxHeight + 0.5;
 
         Widget cellAt(int r, int c) {
           final text = _cellText(r, c);
@@ -1250,29 +1351,31 @@ class _ExamWordGroupScanPageState extends State<ExamWordGroupScanPage> {
 
         final rowWidgets = <Widget>[
           for (int r = 0; r < rows; r++)
-            Row(
-              children: [
-                for (int c = 0; c < _cols; c++) ...[
-                  if (c > 0) const SizedBox(width: spacing),
-                  cellAt(r, c),
+            Padding(
+              padding: EdgeInsets.only(bottom: r < rows - 1 ? spacing : 0),
+              child: Row(
+                children: [
+                  for (int c = 0; c < _cols; c++) ...[
+                    if (c > 0) const SizedBox(width: spacing),
+                    cellAt(r, c),
+                  ],
                 ],
-              ],
+              ),
             ),
         ];
 
-        final content = Column(
-          mainAxisAlignment: fits
-              ? MainAxisAlignment.spaceEvenly
-              : MainAxisAlignment.start,
-          children: [
-            for (int i = 0; i < rowWidgets.length; i++) ...[
-              if (i > 0 && !fits) const SizedBox(height: spacing),
-              rowWidgets[i],
-            ],
-          ],
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: rowWidgets,
+              ),
+            ),
+          ),
         );
-
-        return fits ? content : SingleChildScrollView(child: content);
       },
     );
   }

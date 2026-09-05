@@ -22,9 +22,35 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
   bool isRunning = false;
 
   final List<String> turkishAlphabet = [
-    'A', 'B', 'C', 'Ç', 'D', 'E', 'F', 'G', 'Ğ', 'H',
-    'I', 'İ', 'J', 'K', 'L', 'M', 'N', 'O', 'Ö', 'P',
-    'R', 'S', 'Ş', 'T', 'U', 'Ü', 'V', 'Y', 'Z'
+    'A',
+    'B',
+    'C',
+    'Ç',
+    'D',
+    'E',
+    'F',
+    'G',
+    'Ğ',
+    'H',
+    'I',
+    'İ',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'Ö',
+    'P',
+    'R',
+    'S',
+    'Ş',
+    'T',
+    'U',
+    'Ü',
+    'V',
+    'Y',
+    'Z',
   ];
 
   @override
@@ -35,14 +61,14 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
 
   void _initGrid() {
     int totalItems = gridSize * gridSize;
-    
+
     if (currentMode == SchulteMode.numbers) {
       items = List.generate(totalItems, (i) => '${i + 1}');
     } else {
       // Harf modunda alfabeden grid boyutuna göre eleman çekilir
       items = turkishAlphabet.take(totalItems).toList();
     }
-    
+
     items.shuffle(); // Her açılışta karıştır
   }
 
@@ -65,7 +91,7 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
   String get currentTargetLabel {
     int totalItems = gridSize * gridSize;
     if (currentTargetIndex >= totalItems) return 'Tamamlandı';
-    
+
     if (currentMode == SchulteMode.numbers) {
       return '${currentTargetIndex + 1}';
     } else {
@@ -113,16 +139,21 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Mod: $gridSize x $gridSize (${currentMode == SchulteMode.numbers ? "Sayı" : "Harf"})'),
+            Text(
+              'Mod: $gridSize x $gridSize (${currentMode == SchulteMode.numbers ? "Sayı" : "Harf"})',
+            ),
             const SizedBox(height: 6),
             Text('Süreniz: $elapsedSeconds saniye'),
             if (bestTime == elapsedSeconds) ...[
               const SizedBox(height: 8),
               const Text(
                 '🏆 YENİ REKOR!',
-                style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ]
+            ],
           ],
         ),
         actions: [
@@ -132,7 +163,7 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
               startTable();
             },
             child: const Text('Tekrar Başlat'),
-          )
+          ),
         ],
       ),
     );
@@ -147,9 +178,7 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Schulte Tablosu'),
-      ),
+      appBar: AppBar(title: const Text('Schulte Tablosu')),
       body: Column(
         children: [
           // MOD VE BOYUT SEÇİM ALANI
@@ -192,8 +221,14 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
                     // Sayı / Harf Modu Seçici
                     SegmentedButton<SchulteMode>(
                       segments: const [
-                        ButtonSegment(value: SchulteMode.numbers, label: Text('1-25 Sayı')),
-                        ButtonSegment(value: SchulteMode.letters, label: Text('A-Z Harf')),
+                        ButtonSegment(
+                          value: SchulteMode.numbers,
+                          label: Text('1-25 Sayı'),
+                        ),
+                        ButtonSegment(
+                          value: SchulteMode.letters,
+                          label: Text('A-Z Harf'),
+                        ),
                       ],
                       selected: {currentMode},
                       onSelectionChanged: (Set<SchulteMode> newSelection) {
@@ -208,8 +243,11 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
                     if (bestTime != null)
                       Text(
                         '🏆 Rekor: $bestTime sn',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
-                      )
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
                   ],
                 ),
               ],
@@ -225,11 +263,19 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
               children: [
                 Text(
                   'Hedef: $currentTargetLabel',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2563EB),
+                  ),
                 ),
                 Text(
                   'Süre: $elapsedSeconds sn',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
                 ),
               ],
             ),
@@ -249,11 +295,13 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
                 ),
                 itemBuilder: (context, index) {
                   final itemValue = items[index];
-                  
+
                   // Geçilen elemanları bulma hesabı
                   int itemIndex;
                   if (currentMode == SchulteMode.numbers) {
-                    itemIndex = int.tryParse(itemValue) != null ? int.parse(itemValue) - 1 : -1;
+                    itemIndex = int.tryParse(itemValue) != null
+                        ? int.parse(itemValue) - 1
+                        : -1;
                   } else {
                     itemIndex = turkishAlphabet.indexOf(itemValue);
                   }
@@ -261,7 +309,9 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
                   final isPassed = itemIndex < currentTargetIndex;
 
                   return Material(
-                    color: isPassed ? Colors.green.shade600 : const Color(0xFF1E293B),
+                    color: isPassed
+                        ? Colors.green.shade600
+                        : const Color(0xFF1E293B),
                     borderRadius: BorderRadius.circular(8),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(8),
@@ -305,11 +355,14 @@ class _SchulteTablePageState extends State<SchulteTablePage> {
                 icon: Icon(isRunning ? Icons.refresh : Icons.play_arrow),
                 label: Text(
                   isRunning ? 'YENİDEN BAŞLAT' : 'BAŞLA',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );

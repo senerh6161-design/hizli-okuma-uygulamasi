@@ -59,7 +59,7 @@ class ExerciseFoldersPage extends StatelessWidget {
       number: 4,
       title: 'Klasör 4',
       isUnlocked: true,
-      readyCount: 9,
+      readyCount: 10,
       totalCount: 10,
       page: () => const Folder4SessionPage(),
     ),

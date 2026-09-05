@@ -5,6 +5,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 class _Cell {
   final String top;
@@ -61,8 +62,10 @@ class _CountChallenge {
 /// Klasör 3'ün sekizinci etkinliği: "Odaklanma Kutucukları". Kitaptaki
 /// 3 sütunlu, ortası kesikli çizgili odaklanma sayfalarının karşılığı —
 /// kutucuklar soldan sağa, satır satır sırayla yanıp sönüyor. 1. Tur tek
-/// sayı, 2. Tur (kitaptaki gibi) sayı çifti, 3. Tur harf+sayı, 4. Tur ise
-/// oyunlaştırılmış: bir hedef sayı/harf kodu kaç kere geçtiğini sayıyoruz.
+/// sayı, 2. Tur (kitaptaki gibi) sayı çifti, 3. Tur harf+sayı (sesli
+/// harfleriyle TAM kelimeler), 4. Tur ise oyunlaştırılmış: bir hedef
+/// sayı/kelime kaç kere geçtiğini sayıp "BİTİRDİM"e basıyoruz — ne kadar
+/// hızlı bitirirsek o kadar çok puan kazanıyoruz (bkz. [_finishTur4Search]).
 class FocusBoxPage extends StatefulWidget {
   const FocusBoxPage({super.key});
 
@@ -71,7 +74,19 @@ class FocusBoxPage extends StatefulWidget {
 }
 
 class _FocusBoxPageState extends State<FocusBoxPage> {
-  static const Color _color = Color(0xFFB91C1C);
+  // const DEĞİL çünkü öğrenci artık paletten değiştirebiliyor (bkz.
+  // AppBar'daki "⋮" -> showExerciseSettingsSheet).
+  Color _color = const Color(0xFFB91C1C);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFFB91C1C), // kırmızı (varsayılan)
+    Color(0xFFEC4899), // pembe
+    Color(0xFFEA580C), // turuncu
+    Color(0xFF0D9488), // teal
+    Color(0xFF7C3AED), // mor
+    Color(0xFF2563EB), // mavi
+  ];
+
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
   static const List<int> _stepMsBySpeed = [900, 600, 350];
   int _speedLevel = 1;
@@ -128,29 +143,30 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     _Cell('508', '8180'),
   ];
 
-  // 3. Tur: kitaptaki devamı — harf kodu + sayı.
+  // 3. Tur: kitaptaki devamı — harf ve sayı. Hoca kısaltılmış (sesli
+  // harfsiz) kodlar yerine kelimelerin TAMAMININ yazılmasını istedi.
   static const List<_Cell> _tur3Cells = [
-    _Cell('ÖĞRN', '99099'),
-    _Cell('İSTN', '88088'),
-    _Cell('SKRY', '54544'),
-    _Cell('MRMR', '40044'),
-    _Cell('BTMN', '12345'),
-    _Cell('DŞNC', '19244'),
-    _Cell('SRCN', '48752'),
-    _Cell('NCPF', '65423'),
-    _Cell('KNTN', '48942'),
-    _Cell('BLKS', '78564'),
-    _Cell('TŞRT', '45128'),
-    _Cell('DMTS', '58312'),
-    _Cell('CİHN', '34168'),
-    _Cell('BGRA', '98784'),
-    _Cell('DNGE', '78541'),
-    _Cell('TRST', '78542'),
-    _Cell('ERZM', '12561'),
-    _Cell('KTPH', '23325'),
+    _Cell('ÖĞRETMEN', '99099'),
+    _Cell('İSTANBUL', '88088'),
+    _Cell('SAKARYA', '54544'),
+    _Cell('MARMARA', '40044'),
+    _Cell('BATMAN', '12345'),
+    _Cell('DÜŞÜNCE', '19244'),
+    _Cell('SARICAN', '48752'),
+    _Cell('NECİP', '65423'),
+    _Cell('KANTİN', '48942'),
+    _Cell('BALIKESİR', '78564'),
+    _Cell('TİŞÖRT', '45128'),
+    _Cell('DOMATES', '58312'),
+    _Cell('CİHAN', '34168'),
+    _Cell('BULGARİSTAN', '98784'),
+    _Cell('DENGE', '78541'),
+    _Cell('TRABZON', '78542'),
+    _Cell('ERZURUM', '12561'),
+    _Cell('KÜTÜPHANE', '23325'),
     _Cell('DATA', '98742'),
-    _Cell('MAKF', '18978'),
-    _Cell('OSMN', '78121'),
+    _Cell('MAKALE', '18978'),
+    _Cell('OSMANLI', '78121'),
   ];
 
   // 4. Tur: oyunlaştırılmış sayma — bir hedef sayı/harf kodu kaç kere
@@ -167,14 +183,40 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
       final target = shuffledPool.first;
       final distractors = shuffledPool.skip(1).toList();
       final correctCount = 3 + rand.nextInt(4);
-      final totalCount = correctCount + 10 + rand.nextInt(4);
+      final rawTotal = correctCount + 10 + rand.nextInt(4);
+      // Izgara 3 sütunlu — son satır eksik kalıp boş kutu görünmesin diye
+      // toplam hücre sayısını 3'ün katına yuvarlıyoruz.
+      final totalCount = rawTotal + ((_cols - rawTotal % _cols) % _cols);
       final sequence = <String>[
         for (int j = 0; j < correctCount; j++) target,
         ...distractors.take(totalCount - correctCount),
       ]..shuffle(rand);
+      _breakTripleRows(sequence);
       challenges.add(_CountChallenge(target, sequence, correctCount));
     }
     return challenges;
+  }
+
+  // Rastgele karıştırma bazen bir satırın 3 kutusunu da AYNI değerle
+  // dolduruyor (hocanın dikkat çektiği durum) — bu satırdaki ortadaki
+  // kutuyu başka bir satırdaki farklı bir değerle takas ederek düzeltiyoruz.
+  // Takas sadece yer değiştirdiği için hedefin toplam geçiş sayısı
+  // (correctCount) değişmiyor.
+  static void _breakTripleRows(List<String> sequence) {
+    for (int start = 0; start + _cols <= sequence.length; start += _cols) {
+      final rowValues = sequence.sublist(start, start + _cols);
+      if (rowValues.toSet().length != 1) continue;
+      final rowValue = rowValues.first;
+      for (int other = 0; other < sequence.length; other++) {
+        if (other >= start && other < start + _cols) continue;
+        if (sequence[other] == rowValue) continue;
+        final swapIndex = start + 1;
+        final tmp = sequence[swapIndex];
+        sequence[swapIndex] = sequence[other];
+        sequence[other] = tmp;
+        break;
+      }
+    }
   }
 
   final List<_CountChallenge> _challenges = _buildChallenges();
@@ -195,6 +237,9 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
   bool _tur4Searching = true;
   int _tur4SecondsLeft = _tur4SearchSeconds;
   Timer? _tur4RevealTimer;
+  // "Bitirdim" ile ne kadar erken bitirirsek (kalan saniye ne kadar
+  // yüksekse) o kadar çok puan kazanıyoruz.
+  int _tur4Score = 0;
 
   int _totalMistakes = 0;
 
@@ -289,6 +334,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
       _tur4Index = 0;
       _tur4Answered = false;
       _tur4CountSelected = 0;
+      _tur4Score = 0;
     });
     _scheduleTur4Reveal();
   }
@@ -313,6 +359,15 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     });
   }
 
+  // "Bitirdim" butonuna basınca sayma süresini erken bitiriyoruz — kalan
+  // saniye ne kadar yüksekse (ne kadar hızlı bitirdiysek) cevap doğru
+  // olduğunda o kadar çok puan kazanacağız (bkz. _submitTur4Answer).
+  void _finishTur4Search() {
+    if (!_tur4Searching) return;
+    _tur4RevealTimer?.cancel();
+    setState(() => _tur4Searching = false);
+  }
+
   void _submitTur4Answer(int selected) {
     if (_tur4Answered) return;
     final correct = _challenges[_tur4Index].correctCount;
@@ -322,6 +377,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     });
     if (selected == correct) {
       SoundManager.playCorrect();
+      _tur4Score += 10 + _tur4SecondsLeft * 5;
     } else {
       SoundManager.playGentleTap();
       _totalMistakes++;
@@ -350,7 +406,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     SoundManager.playSuccess();
     final unlocked = ProgressManager.addCompletedExercise(
       type: 'Odaklanma Kutucukları',
-      result: '4 tur tamamlandı · $_totalMistakes hata',
+      result: '4 tur tamamlandı · $_tur4Score puan · $_totalMistakes hata',
     );
     if (unlocked.isNotEmpty) SoundManager.playAchievement();
 
@@ -368,6 +424,11 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             const SizedBox(height: 8),
+            Text(
+              '⭐ 4. Tur puanı: $_tur4Score',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
             Text('Toplam hata: $_totalMistakes'),
             if (unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
@@ -436,7 +497,21 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🎯 Odaklanma Kutucukları')),
+        appBar: AppBar(
+          title: const Text('🎯 Odaklanma Kutucukları'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -502,7 +577,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Etkinlik 8 · Odaklanma Kutucukları',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -549,7 +624,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Text(
+                      child: Text(
                         '4 tur var: 1. Tur tek sayı, 2. Tur sayı çifti, '
                         '3. Tur harf ve sayı, 4. Tur ise bir hedefi kaç '
                         'kere gördüğümüzü sayacağımız bir oyun!',
@@ -657,10 +732,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
                 ),
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
                 ),
               ),
               buildPauseButton(color: _color, onPressed: _pauseGame),
@@ -697,11 +769,13 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
                     color: _color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Text(
+                  child: Text(
                     '3 Turu tamamladık! Şimdi 4. Tur\'da bir oyun '
-                    'oynayacağız: her soruda bir hedef sayı ya da harf '
-                    'kodu göreceğiz, kutuları kendimiz tarayıp kaç kere '
-                    'geçtiğini sayacağız. 10 soru var!',
+                    'oynayacağız: her soruda bir hedef sayı ya da kelime '
+                    'göreceğiz, kutuları kendimiz tarayıp kaç kere '
+                    'geçtiğini sayacağız. Bulduğumuzda "BİTİRDİM"e '
+                    'basacağız — ne kadar hızlı bitirirsek o kadar çok '
+                    'puan kazanacağız! 10 soru var.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -772,17 +846,46 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
       key: const ValueKey('search'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: _color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            'Soru ${_tur4Index + 1}/${_challenges.length} · '
-            '"${challenge.target}" kaç kere geçiyor?',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: _color),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  'Soru ${_tur4Index + 1}/${_challenges.length} · '
+                  '"${challenge.target}" kaç kere geçiyor?',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: FontWeight.bold, color: _color),
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.shade300),
+              ),
+              child: Text(
+                '⭐ $_tur4Score',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber.shade800,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Expanded(
@@ -807,6 +910,26 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 46,
+          child: ElevatedButton.icon(
+            onPressed: _finishTur4Search,
+            icon: const Icon(Icons.check_circle_outline),
+            label: const Text(
+              'BİTİRDİM',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _color,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
           ),
         ),
       ],
@@ -835,7 +958,7 @@ class _FocusBoxPageState extends State<FocusBoxPage> {
                 Center(
                   child: Text(
                     '"${challenge.target}"',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                       color: _color,

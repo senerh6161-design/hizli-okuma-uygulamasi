@@ -4,6 +4,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Phase { intro, running, reveal }
 
@@ -44,7 +45,16 @@ class SynonymAntonymPage extends StatefulWidget {
 }
 
 class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
-  static const Color _color = Color(0xFF15803D);
+  Color _color = const Color(0xFF15803D);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF15803D),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const List<String> _speedLabels = [
     'Yavaş',
     'Orta',
@@ -375,7 +385,21 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🔤 Eş ve Zıt Anlamlı Kelimeler')),
+        appBar: AppBar(
+          title: const Text('🔤 Eş ve Zıt Anlamlı Kelimeler'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -430,7 +454,7 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
                     '${_pageIndex + 1}. Sayfa · '
                     '${isSynonymPage ? "Eş Anlamlı Kelimeler" : "Zıt Anlamlı Kelimeler"}'
                     ' · Deneme ${_attemptIndex + 1}/$_attemptsPerPage',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
                     ),
@@ -461,7 +485,7 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.info_outline_rounded,
                             color: _color,
                             size: 20,
@@ -473,7 +497,7 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
                               '\n\n${_page.note} Altında zıplayan noktayı '
                               'takip edeceğiz — hızımızı aşağıdan kendimiz '
                               'ayarlayabiliriz!',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 color: _color,
                                 fontWeight: FontWeight.w600,
@@ -712,10 +736,7 @@ class _SynonymAntonymPageState extends State<SynonymAntonymPage> {
                 '${_pageIndex + 1}. Sayfa · Deneme ${_attemptIndex + 1}/'
                 '$_attemptsPerPage · Kutu ${_activeStep ~/ 2 + 1}/'
                 '${_page.boxes.length}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: _color,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, color: _color),
               ),
             ),
             Row(

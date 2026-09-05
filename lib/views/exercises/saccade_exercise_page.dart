@@ -21,10 +21,10 @@ class _SaccadeExercisePageState extends State<SaccadeExercisePage> {
   // Ekranın 4 köşesi ve merkezi için hizalama koordinatları
   final List<Alignment> positions = const [
     Alignment(-0.7, -0.6), // Sol Üst
-    Alignment(0.7, -0.6),  // Sağ Üst
-    Alignment(-0.7, 0.6),  // Sol Alt
-    Alignment(0.7, 0.6),   // Sağ Alt
-    Alignment(0.0, 0.0),   // Merkez
+    Alignment(0.7, -0.6), // Sağ Üst
+    Alignment(-0.7, 0.6), // Sol Alt
+    Alignment(0.7, 0.6), // Sağ Alt
+    Alignment(0.0, 0.0), // Merkez
   ];
 
   Alignment currentAlignment = Alignment.center;
@@ -65,12 +65,11 @@ class _SaccadeExercisePageState extends State<SaccadeExercisePage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentWord = WordData.singleWords[wordIndex % WordData.singleWords.length];
+    final currentWord =
+        WordData.singleWords[wordIndex % WordData.singleWords.length];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Göz Sıçratma (Saccade)'),
-      ),
+      appBar: AppBar(title: const Text('Göz Sıçratma (Saccade)')),
       body: Column(
         children: [
           // ÜST BİLGİLENDİRME
@@ -88,7 +87,10 @@ class _SaccadeExercisePageState extends State<SaccadeExercisePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Hız: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Hız: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     ChoiceChip(
                       label: const Text('1.0 sn'),
                       selected: speedMs == 1000,
@@ -122,7 +124,7 @@ class _SaccadeExercisePageState extends State<SaccadeExercisePage> {
                       },
                     ),
                   ],
-                )
+                ),
               ],
             ),
           ),
@@ -137,15 +139,23 @@ class _SaccadeExercisePageState extends State<SaccadeExercisePage> {
                 border: Border.all(color: Colors.grey.shade300),
               ),
               child: AnimatedAlign(
-                duration: const Duration(milliseconds: 150), // Yumuşak zıplama efekti
+                duration: const Duration(
+                  milliseconds: 150,
+                ), // Yumuşak zıplama efekti
                 curve: Curves.easeInOut,
                 alignment: currentAlignment,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFF2563EB), width: 1.5),
+                    border: Border.all(
+                      color: const Color(0xFF2563EB),
+                      width: 1.5,
+                    ),
                   ),
                   child: Text(
                     isRunning ? currentWord : 'HAZIR',
@@ -178,7 +188,10 @@ class _SaccadeExercisePageState extends State<SaccadeExercisePage> {
                 icon: Icon(isRunning ? Icons.pause : Icons.play_arrow),
                 label: Text(
                   isRunning ? 'DURAKLAT' : 'EGZERSİZİ BAŞLAT',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

@@ -4,6 +4,7 @@ import '../../models/progress_manager.dart';
 import '../../models/sound_manager.dart';
 import '../../widgets/completion_pop_scope.dart';
 import '../../widgets/pause_overlay.dart';
+import '../../widgets/exercise_settings_sheet.dart';
 
 enum _Direction { leftToRight, rightToLeft, topToBottom, bottomToTop }
 
@@ -54,7 +55,16 @@ class FourDirectionScanPage extends StatefulWidget {
 }
 
 class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
-  static const Color _color = Color(0xFF7C3AED);
+  Color _color = const Color(0xFF7C3AED);
+
+  static const List<Color> _colorPalette = [
+    Color(0xFF7C3AED),
+    Color(0xFFEC4899),
+    Color(0xFFEA580C),
+    Color(0xFF0D9488),
+    Color(0xFF7C3AED),
+    Color(0xFF2563EB),
+  ];
   static const List<String> _speedLabels = ['Yavaş', 'Orta', 'Hızlı'];
   static const List<int> _stepMsBySpeed = [700, 450, 260];
   static const List<String> _directionLabels = [
@@ -682,7 +692,21 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
     return CompletionPopScope(
       isCompleted: () => _hasCompletedOnce,
       child: Scaffold(
-        appBar: AppBar(title: const Text('🧭 Dört Yönlü Tarama')),
+        appBar: AppBar(
+          title: const Text('🧭 Dört Yönlü Tarama'),
+          actions: [
+            IconButton(
+              onPressed: () => showExerciseSettingsSheet(
+                context,
+                currentColor: _color,
+                colorOptions: _colorPalette,
+                onColorChanged: (c) => setState(() => _color = c),
+              ),
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: 'Ayarlar',
+            ),
+          ],
+        ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Stack(
@@ -734,7 +758,7 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
                     color: _color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Etkinlik 3 · Dört Yönlü Kelime Taraması',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -787,7 +811,7 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
                         color: _color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
@@ -875,7 +899,7 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
                     'kelimelerle yapacağız — toplam ${_wordPages.length} '
                     'sayfa kelime göreceğiz, hazır olduğunda devam edelim!',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: _color,
                       fontWeight: FontWeight.w600,
@@ -999,7 +1023,7 @@ class _FourDirectionScanPageState extends State<FourDirectionScanPage> {
                               '${_directionLabels[_directionIndex]}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _color,
                     ),

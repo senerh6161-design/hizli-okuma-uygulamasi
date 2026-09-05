@@ -94,7 +94,9 @@ class ComprehensionData {
       title: 'Hızlı Okuma ve Beyin Kasları',
       topic: 'bilim',
       content:
-          'Hızlı okuma, yalnızca gözlerin metin üzerinde hızla kayması değil, beynin görsel verileri işleme kapasitesini artırma sürecidir. İnsan gözü bir kelimeye odaklandığında sıçrama ve duraklama hareketleri yapar. Doğru egzersizlerle bu duraklama süreleri azaltılabilir ve gözün tek bir bakışta algıladığı kelime sayısı artırılabilir.',
+          'Hızlı okuma, yalnızca gözlerin metin üzerinde hızla kayması değil, beynin görsel verileri işleme kapasitesini artırma sürecidir. İnsan gözü bir kelimeye odaklandığında sıçrama ve duraklama hareketleri yapar. Doğru egzersizlerle bu duraklama süreleri azaltılabilir ve gözün tek bir bakışta algıladığı kelime sayısı artırılabilir.\n\n'
+          'Birçok insan okurken kelimeleri zihninde sessizce seslendirir; buna iç seslendirme denir. İç seslendirmeyi azaltmak, okuma hızını artırmanın en etkili yollarından biridir çünkü göz, sesin çıkma hızından çok daha hızlı bilgi işleyebilir. Gözün yan görüş alanını genişletmeyi öğrenen bir okuyucu, bir bakışta tek kelime yerine birkaç kelimeyi birden algılayabilir.\n\n'
+          'Hızlı okuma, tıpkı bir kas gibi düzenli çalışmayla gelişir. İlk başta yavaş ve zor gelen egzersizler, haftalar içinde doğal bir alışkanlığa dönüşür. Önemli olan sabırlı olmak ve pes etmeden pratik yapmaya devam etmektir. Bu sayede hem daha kısa sürede daha çok bilgiye ulaşılır hem de anlama becerisi zamanla güçlenir.',
       questions: [
         {
           'question':
@@ -125,7 +127,9 @@ class ComprehensionData {
       title: 'Yapay Zekânın Geleceği',
       topic: 'teknoloji',
       content:
-          'Yapay zekâ teknolojileri, günümüzde veri analizi ve kalıp tanıma yetenekleriyle insan hayatını kolaylaştırmaktadır. Özellikle mühendislik ve tıp alanında karmaşık problemleri saniyeler içinde çözebilmektedir. Ancak yapay zekânın başarısı, eğitildiği verilerin kalitesine ve doğruluğuna doğrudan bağlıdır.',
+          'Yapay zekâ teknolojileri, günümüzde veri analizi ve kalıp tanıma yetenekleriyle insan hayatını kolaylaştırmaktadır. Özellikle mühendislik ve tıp alanında karmaşık problemleri saniyeler içinde çözebilmektedir. Ancak yapay zekânın başarısı, eğitildiği verilerin kalitesine ve doğruluğuna doğrudan bağlıdır.\n\n'
+          'Yapay zekâ sistemleri, insanlar gibi doğrudan öğretilmez; bunun yerine binlerce, hatta milyonlarca örnek üzerinden kendi kalıplarını bulmayı öğrenir. Buna "makine öğrenmesi" denir. Bir yapay zekâ, çok sayıda kedi fotoğrafını inceleyerek bir kediyi tanımayı öğrenebilir, tıpkı bir çocuğun tekrar tekrar gördüğü bir hayvanı tanımayı öğrenmesi gibi.\n\n'
+          'Günlük hayatta yapay zekâyı fark etmeden sık sık kullanırız: telefonumuzun sesli asistanı, film önerileri sunan uygulamalar ya da bir dili başka bir dile çeviren programlar hep bu teknolojiye dayanır. Yine de yapay zekâ, insan gibi vicdan ya da sağduyuya sahip değildir; bu yüzden önemli kararlarda mutlaka bir insanın kontrolünde çalışması gerekir.',
       questions: [
         {
           'question':
@@ -158,7 +162,9 @@ class ComprehensionData {
       title: 'Arıların Doğa İçindeki Önemi',
       topic: 'doga',
       content:
-          'Arılar, ekosistemin sürdürülebilirliği için kritik bir role sahiptir. Çiçekler arasında polen taşıyarak bitkilerin tozlaşmasını sağlarlar. Dünya üzerindeki tarımsal ürünlerin büyük bir kısmı arıların bu polenleme faaliyetine bağımlıdır. Arı nüfusunun azalması, küresel gıda güvenliği için ciddi bir tehdittir.',
+          'Arılar, ekosistemin sürdürülebilirliği için kritik bir role sahiptir. Çiçekler arasında polen taşıyarak bitkilerin tozlaşmasını sağlarlar. Dünya üzerindeki tarımsal ürünlerin büyük bir kısmı arıların bu polenleme faaliyetine bağımlıdır. Arı nüfusunun azalması, küresel gıda güvenliği için ciddi bir tehdittir.\n\n'
+          'Bir arı kovanı, mükemmel bir düzen içinde çalışan küçük bir toplumdur. Kovanın merkezinde yumurtlamakla görevli bir kraliçe arı bulunur, işçi arılar ise hem yavruların bakımını üstlenir hem de dışarı çıkıp yiyecek toplar. İşçi arılar, bulduğu çiçek tarlasının yönünü arkadaşlarına özel bir dansla, "sallantı dansı" ile anlatır.\n\n'
+          'Arılar aynı zamanda bal üretir; topladıkları çiçek özsuyunu (nektarı) kovanda işleyerek kışın besin olarak saklarlar. Ne yazık ki tarımda kullanılan bazı zararlı ilaçlar ve iklim değişikliği arı nüfusunu tehdit etmektedir. Bahçelere çiçekli bitkiler dikmek ve arılara zarar veren kimyasallardan kaçınmak, bu küçük ama vazgeçilmez canlıları korumaya yardımcı olabilir.',
       questions: [
         {
           'question':
@@ -190,7 +196,9 @@ class ComprehensionData {
       title: 'Güneş Sistemimizin Gizemleri',
       topic: 'uzay',
       content:
-          'Güneş Sistemi, merkezinde Güneş olan ve onun çevresinde dönen sekiz gezegenden oluşur. Dünya, Güneş\'e olan mesafesi sayesinde yaşama uygun sıcaklığa sahiptir. Jüpiter, sistemin en büyük gezegeni olup güçlü fırtınalarıyla bilinir. Bilim insanları, uzay teleskopları sayesinde Güneş Sistemi dışındaki gezegenleri de keşfetmeye devam ediyor.',
+          'Güneş Sistemi, merkezinde Güneş olan ve onun çevresinde dönen sekiz gezegenden oluşur. Dünya, Güneş\'e olan mesafesi sayesinde yaşama uygun sıcaklığa sahiptir. Jüpiter, sistemin en büyük gezegeni olup güçlü fırtınalarıyla bilinir. Bilim insanları, uzay teleskopları sayesinde Güneş Sistemi dışındaki gezegenleri de keşfetmeye devam ediyor.\n\n'
+          'Güneş\'e yakın dört gezegen (Merkür, Venüs, Dünya ve Mars) sert kayalık yüzeylere sahiptir; bunlara "kayaç gezegenler" denir. Daha uzaktaki Jüpiter, Satürn, Uranüs ve Neptün ise büyük ölçüde gazdan oluşan devasa gezegenlerdir. Mars ile Jüpiter arasında, milyonlarca küçük kaya parçasından oluşan asteroit kuşağı yer alır.\n\n'
+          'Bir zamanlar dokuzuncu gezegen sayılan Plüton, 2006 yılında bilim insanları tarafından "cüce gezegen" olarak yeniden sınıflandırılmıştır. Güneş Sistemi\'ndeki birçok gezegenin kendi ayları vardır; örneğin Satürn\'ün çevresinde yüzden fazla ay dönmektedir. Uzay araçları sayesinde bu gezegenlerin yakın fotoğrafları çekilmiş ve Güneş Sistemi hakkındaki bilgimiz her geçen yıl artmaktadır.',
       questions: [
         {
           'question': 'Güneş Sistemi sekiz gezegenden oluşur.',
@@ -220,7 +228,9 @@ class ComprehensionData {
       title: 'Takım Ruhu ve Başarı',
       topic: 'spor',
       content:
-          'Spor yalnızca fiziksel güç kazandırmaz, aynı zamanda paylaşmayı ve dayanışmayı da öğretir. Bir basketbol takımında her oyuncu farklı bir görev üstlenir; kimi pas verir, kimi savunma yapar, kimi de sayı atar. Takım arkadaşlarına güvenmeyi öğrenen bir sporcu, sahada olduğu kadar günlük hayatta da başarılı iletişim kurar.',
+          'Spor yalnızca fiziksel güç kazandırmaz, aynı zamanda paylaşmayı ve dayanışmayı da öğretir. Bir basketbol takımında her oyuncu farklı bir görev üstlenir; kimi pas verir, kimi savunma yapar, kimi de sayı atar. Takım arkadaşlarına güvenmeyi öğrenen bir sporcu, sahada olduğu kadar günlük hayatta da başarılı iletişim kurar.\n\n'
+          'Futboldan voleybola, hentboldan su topuna kadar birçok takım sporunda başarı, bireysel yeteneklerden çok oyuncuların birbiriyle uyum içinde çalışmasına bağlıdır. İyi bir takım oyuncusu, hata yapan arkadaşını suçlamak yerine ona destek olur ve birlikte çözüm arar. Kaptanlar ise takımı motive ederek zor anlarda moral kaynağı olur.\n\n'
+          'Her takım zaman zaman kaybeder; önemli olan yenilgiyi olgunlukla karşılayıp ondan ders çıkarmaktır. Düzenli antrenman, disiplin ve sabır, hem bireysel gelişimin hem de takım başarısının temel taşlarıdır. Sahada öğrenilen bu değerler, okulda grup çalışmalarında ya da arkadaşlıklarda da işe yarar.',
       questions: [
         {
           'question': 'Spor, paylaşmayı ve dayanışmayı da öğretir.',
@@ -251,7 +261,9 @@ class ComprehensionData {
       title: 'Resmin Büyülü Dünyası',
       topic: 'sanat',
       content:
-          'Resim yapmak, düşüncelerimizi kelimeler olmadan anlatmanın en özgür yollarından biridir. Bir ressam, fırçasıyla hem gördüklerini hem de hayal ettiklerini tuvale aktarabilir. Renkler bize duygular hakkında ipucu verir: sıcak tonlar coşkuyu, soğuk tonlar ise huzuru çağrıştırabilir. Sanat tarihinde her dönem, kendi zamanının izlerini taşıyan yeni akımlar doğurmuştur.',
+          'Resim yapmak, düşüncelerimizi kelimeler olmadan anlatmanın en özgür yollarından biridir. Bir ressam, fırçasıyla hem gördüklerini hem de hayal ettiklerini tuvale aktarabilir. Renkler bize duygular hakkında ipucu verir: sıcak tonlar coşkuyu, soğuk tonlar ise huzuru çağrıştırabilir. Sanat tarihinde her dönem, kendi zamanının izlerini taşıyan yeni akımlar doğurmuştur.\n\n'
+          'Ressamlar farklı teknikler ve malzemeler kullanır: suluboya hafif ve şeffaf bir görünüm verirken, yağlıboya daha yoğun ve kalıcı renkler sunar. On dokuzuncu yüzyılda ortaya çıkan izlenimcilik (empresyonizm) akımı, ışığın anlık etkisini yakalamayı amaçlayarak sanat dünyasında büyük bir değişim yaratmıştır.\n\n'
+          'Resim yapmak, tıpkı bir müzik aleti çalmak gibi pratikle gelişen bir beceridir; ilk çizilen basit şekiller zamanla ustalaşarak karmaşık eserlere dönüşebilir. Bir resme bakan iki farklı kişi ondan tamamen farklı duygular hissedebilir, bu da sanatı gerçekten evrensel ve kişisel bir deneyim haline getirir.',
       questions: [
         {
           'question':
@@ -282,7 +294,9 @@ class ComprehensionData {
       title: 'Yunusların Şaşırtıcı Zekâsı',
       topic: 'hayvanlar',
       content:
-          'Yunuslar, denizlerin en zeki canlılarından sayılır. Birbirleriyle özel ıslık sesleriyle iletişim kurar, hatta her yunusun kendine özgü bir "imza ıslığı" olduğu bilinir. Sürü hâlinde avlanırken birbirlerine yardım ederler ve yaralı bir yunusu yüzeye çıkarıp nefes almasına yardımcı olabilirler. Bu davranışlar, yunusların güçlü bir sosyal zekâya sahip olduğunu gösterir.',
+          'Yunuslar, denizlerin en zeki canlılarından sayılır. Birbirleriyle özel ıslık sesleriyle iletişim kurar, hatta her yunusun kendine özgü bir "imza ıslığı" olduğu bilinir. Sürü hâlinde avlanırken birbirlerine yardım ederler ve yaralı bir yunusu yüzeye çıkarıp nefes almasına yardımcı olabilirler. Bu davranışlar, yunusların güçlü bir sosyal zekâya sahip olduğunu gösterir.\n\n'
+          'Yunuslar, karanlık ya da bulanık sularda yön bulmak için "ekolokasyon" adı verilen özel bir yöntem kullanır: çıkardıkları sesler nesnelere çarpıp yankı olarak geri döner ve bu sayede önlerindeki cismin şeklini, büyüklüğünü ve uzaklığını "görmeden" anlayabilirler. Bilim insanları, yunusların aynadaki yansımalarını tanıyabildiğini de keşfetmiştir; bu, sınırlı sayıda hayvanda görülen ileri bir öz farkındalık belirtisidir.\n\n'
+          'Yunuslar oyun oynamayı da çok sever; dalgaların üzerinde sörf yapar, birbirleriyle yüzme yarışları düzenler. Ne yazık ki denizlerdeki plastik kirliliği ve ağlara takılma tehlikesi yunusların hayatını zorlaştırmaktadır. Denizleri temiz tutmak, bu zeki canlıların güvenle yaşamasına destek olur.',
       questions: [
         {
           'question':
@@ -313,7 +327,9 @@ class ComprehensionData {
       title: 'Yağmur Ormanlarının Sırrı',
       topic: 'doga',
       content:
-          'Yağmur ormanları, Dünya\'daki bitki ve hayvan türlerinin yarısından fazlasına ev sahipliği yapar. Bu ormanlar aynı zamanda "Dünya\'nın akciğerleri" olarak da anılır, çünkü ürettikleri oksijen tüm gezegene yayılır. Ne yazık ki tarım ve inşaat için yapılan ağaç kesimleri, bu değerli ekosistemleri her geçen yıl küçültüyor. Ormanları korumak, geleceğimizi korumak anlamına gelir.',
+          'Yağmur ormanları, Dünya\'daki bitki ve hayvan türlerinin yarısından fazlasına ev sahipliği yapar. Bu ormanlar aynı zamanda "Dünya\'nın akciğerleri" olarak da anılır, çünkü ürettikleri oksijen tüm gezegene yayılır. Ne yazık ki tarım ve inşaat için yapılan ağaç kesimleri, bu değerli ekosistemleri her geçen yıl küçültüyor. Ormanları korumak, geleceğimizi korumak anlamına gelir.\n\n'
+          'En büyük yağmur ormanı olan Amazon Ormanları, Güney Amerika\'da dokuz ülkeye yayılır ve içinde henüz keşfedilmemiş binlerce canlı türü barındırdığı düşünülmektedir. Bu ormanlar birkaç kata ayrılır: en üstteki "tepe katmanı" güneş ışığını ilk alan bölgedir, altındaki daha karanlık katmanlarda ise farklı bitki ve hayvanlar yaşar.\n\n'
+          'Birçok modern ilaç, yağmur ormanlarındaki bitkilerden elde edilen maddelerden geliştirilmiştir; bu yüzden ormanların yok olması bilim için de büyük bir kayıptır. Günümüzde birçok ülke ve kuruluş, ağaçlandırma çalışmaları ve koruma alanları oluşturarak bu değerli ekosistemleri gelecek nesillere aktarmaya çalışmaktadır.',
       questions: [
         {
           'question':
@@ -345,7 +361,9 @@ class ComprehensionData {
       title: 'Robotlar Hayatımızda',
       topic: 'teknoloji',
       content:
-          'Robotlar artık yalnızca fabrikalarda değil, evlerimizde, hastanelerde ve hatta uzayda da görev yapıyor. Temizlik robotları evi süpürürken, cerrahi robotlar doktorlara hassas ameliyatlarda yardımcı oluyor. Mars\'ta gezen keşif robotları ise insan ayak basmadan önce gezegen hakkında bilgi topluyor. Robotların en büyük avantajı, tehlikeli ya da tekrar eden işleri yorulmadan yapabilmeleridir.',
+          'Robotlar artık yalnızca fabrikalarda değil, evlerimizde, hastanelerde ve hatta uzayda da görev yapıyor. Temizlik robotları evi süpürürken, cerrahi robotlar doktorlara hassas ameliyatlarda yardımcı oluyor. Mars\'ta gezen keşif robotları ise insan ayak basmadan önce gezegen hakkında bilgi topluyor. Robotların en büyük avantajı, tehlikeli ya da tekrar eden işleri yorulmadan yapabilmeleridir.\n\n'
+          'Bir robotun çevresini "algılayabilmesi" için üzerinde kameralar, ışık sensörleri ya da dokunma sensörleri bulunur; topladığı bu bilgiler, önceden yazılmış kodlara göre işlenir ve robot buna uygun hareket eder. Deprem sonrası enkaz altında arama yapan ya da yanardağların içine inen özel robotlar, insanların gidemeyeceği tehlikeli yerlerde hayat kurtarabilir.\n\n'
+          'Robotlar birçok işi kolaylaştırsa da, yaratıcılık, empati ve karar verme gerektiren birçok görev hâlâ insanlara ihtiyaç duyar. Bir öğretmenin, bir doktorun ya da bir sanatçının işini bütünüyle bir robotun yapması beklenmez; teknoloji ile insan becerisi genellikle birlikte, birbirini tamamlayarak çalışır.',
       questions: [
         {
           'question':
@@ -376,7 +394,9 @@ class ComprehensionData {
       title: 'Kodlama Nedir?',
       topic: 'kodlama',
       content:
-          'Kodlama, bilgisayara ne yapması gerektiğini adım adım anlatmaktır. Programcılar, "kod" adı verilen özel bir dille bilgisayara talimatlar yazar. Bir oyunun nasıl çalışacağını, bir uygulamanın nasıl görüneceğini bile kodlama sayesinde tasarlarız. En küçük bir hata bile, tıpkı bir tarifte yanlış malzeme kullanmak gibi, programın çalışmamasına neden olabilir. Bu yüzden kodlama hem yaratıcılık hem de sabır gerektirir.',
+          'Kodlama, bilgisayara ne yapması gerektiğini adım adım anlatmaktır. Programcılar, "kod" adı verilen özel bir dille bilgisayara talimatlar yazar. Bir oyunun nasıl çalışacağını, bir uygulamanın nasıl görüneceğini bile kodlama sayesinde tasarlarız. En küçük bir hata bile, tıpkı bir tarifte yanlış malzeme kullanmak gibi, programın çalışmamasına neden olabilir. Bu yüzden kodlama hem yaratıcılık hem de sabır gerektirir.\n\n'
+          'Dünyada yüzlerce farklı kodlama dili vardır; her biri farklı işler için daha uygun olabilir. Bir programı yazdıktan sonra, içindeki hataları bulup düzeltme sürecine "hata ayıklama" (debugging) denir ve tecrübeli programcılar bile sık sık bu süreçten geçer. Hata bulmak, aslında bir bulmacayı çözmek gibi eğlenceli bir uğraş olabilir.\n\n'
+          'Çocuklar için geliştirilen Scratch gibi programlar, gerçek kod yazmadan önce renkli bloklarla sürükle-bırak yöntemiyle basit oyunlar ve hikayeler oluşturmayı öğretir. Küçük yaşta kodlamayla tanışmak, problem çözme becerisini ve mantıksal düşünmeyi geliştirir; bu beceriler sadece bilgisayarla değil, günlük hayattaki birçok durumla da işe yarar.',
       questions: [
         {
           'question':
@@ -407,7 +427,9 @@ class ComprehensionData {
       title: 'Sağlıklı Beslenmenin Sırrı',
       topic: 'yemek',
       content:
-          'Sağlıklı beslenmek, vücudumuzun ihtiyaç duyduğu farklı besinleri dengeli bir şekilde almaktır. Meyveler ve sebzeler vitamin deposu iken, tahıllar bize enerji verir. Fazla şekerli ve yağlı yiyecekler ise sadece ara sıra, ölçülü tüketilmelidir. Bol su içmek de sindirim sistemimizin düzgün çalışması için çok önemlidir.',
+          'Sağlıklı beslenmek, vücudumuzun ihtiyaç duyduğu farklı besinleri dengeli bir şekilde almaktır. Meyveler ve sebzeler vitamin deposu iken, tahıllar bize enerji verir. Fazla şekerli ve yağlı yiyecekler ise sadece ara sıra, ölçülü tüketilmelidir. Bol su içmek de sindirim sistemimizin düzgün çalışması için çok önemlidir.\n\n'
+          'Et, yumurta, süt ürünleri ve baklagiller gibi besinlerde bulunan protein, kaslarımızın ve hücrelerimizin onarılıp güçlenmesi için gereklidir. Beslenme uzmanları, bir tabağın yarısının sebzelerden, kalan kısmının ise tahıl ve proteinden oluşmasını önerir; bu dengeye bazen "sağlıklı tabak" modeli denir.\n\n'
+          'Düzenli saatlerde ve öğün atlamadan beslenmek, vücudun enerjisini gün boyunca dengeli tutar. Özellikle kahvaltı yapmak, sabah derslerinde dikkati ve konsantrasyonu artırdığı için okula giden çocuklar için oldukça önemlidir. Sağlıklı alışkanlıklar küçük yaşta kazanıldığında, bir ömür boyu sürebilir.',
       questions: [
         {
           'question': 'Meyveler ve sebzeler vitamin deposudur.',
@@ -437,7 +459,9 @@ class ComprehensionData {
       title: 'Kitapların Büyülü Dünyası',
       topic: 'kitaplar',
       content:
-          'Bir kitap açtığımızda, aslında başka bir dünyaya kapı aralarız. Roman okurken hayal gücümüz canlanır, karakterlerin yaşadıklarını sanki kendimiz yaşıyormuş gibi hissederiz. Düzenli kitap okumak sadece hayal gücümüzü değil, kelime dağarcığımızı ve empati kurma becerimizi de geliştirir. Her kitap, okuyana farklı bir bakış açısı kazandırır.',
+          'Bir kitap açtığımızda, aslında başka bir dünyaya kapı aralarız. Roman okurken hayal gücümüz canlanır, karakterlerin yaşadıklarını sanki kendimiz yaşıyormuş gibi hissederiz. Düzenli kitap okumak sadece hayal gücümüzü değil, kelime dağarcığımızı ve empati kurma becerimizi de geliştirir. Her kitap, okuyana farklı bir bakış açısı kazandırır.\n\n'
+          'Kitaplar öyle çeşitlidir ki herkes kendine uygun bir tür bulabilir: macera severler fantastik romanlara, meraklılar bilim kurguya, gerçek olayları merak edenler ise biyografilere yönelebilir. Her yeni kitap türü denemek, okuma zevkimizi genişletir ve daha önce hiç ilgilenmediğimiz konularla tanışmamızı sağlar.\n\n'
+          'Düzenli okuma alışkanlığı kazanmak için her gün küçük bir süre ayırmak yeterlidir; önemli olan miktar değil sürekliliktir. Kütüphaneler, herkesin ücretsiz olarak binlerce kitaba ulaşabileceği değerli mekanlardır. Çok okuyan kişiler genellikle daha akıcı ve düzgün yazar, çünkü okudukları güzel cümleler zamanla kendi yazılarına da yansır.',
       questions: [
         {
           'question': 'Düzenli kitap okumak kelime dağarcığını geliştirir.',
@@ -466,7 +490,9 @@ class ComprehensionData {
       title: 'Dünyanın Dört Bir Yanından',
       topic: 'ulkeler',
       content:
-          'Dünya üzerinde yaklaşık 195 farklı ülke bulunur ve her birinin kendine özgü bir bayrağı, dili ve kültürü vardır. Bazı ülkeler çok büyük topraklara sahipken, bazıları küçücük adalardan oluşur. Ülkeler arasındaki bu çeşitlilik, dünyayı keşfetmeyi ve farklı gelenekleri tanımayı heyecanlı bir maceraya dönüştürür. Her ülkenin başkenti, o ülkenin yönetim merkezi olarak kabul edilir.',
+          'Dünya üzerinde yaklaşık 195 farklı ülke bulunur ve her birinin kendine özgü bir bayrağı, dili ve kültürü vardır. Bazı ülkeler çok büyük topraklara sahipken, bazıları küçücük adalardan oluşur. Ülkeler arasındaki bu çeşitlilik, dünyayı keşfetmeyi ve farklı gelenekleri tanımayı heyecanlı bir maceraya dönüştürür. Her ülkenin başkenti, o ülkenin yönetim merkezi olarak kabul edilir.\n\n'
+          'Rusya, yüz ölçümü bakımından dünyanın en büyük ülkesiyken, Vatikan sadece birkaç yüz metrekarelik alanıyla en küçük ülke olarak bilinir. Bazı ülkeler tek bir dil konuşurken bazılarında onlarca farklı dil bir arada yaşar. Ülkeler, ortak konularda iş birliği yapmak için Birleşmiş Milletler gibi uluslararası kuruluşlarda bir araya gelir.\n\n'
+          'Bir ülkeyi tanımanın yolu sadece oraya gitmekten geçmez; haritalar incelemek, o ülkenin yemeklerini tatmak ya da kitaplar okumak da dünyayı keşfetmenin keyifli yollarıdır. Farklı kültürleri tanımak, insanların birbirine olan saygısını ve hoşgörüsünü artırır.',
       questions: [
         {
           'question': 'Dünya üzerinde yaklaşık 195 farklı ülke bulunur.',
@@ -496,7 +522,9 @@ class ComprehensionData {
       title: 'İbni Sina: Tıbbın Öncüsü',
       topic: 'biyografi',
       content:
-          'İbni Sina, 980 yılında bugünkü Özbekistan sınırları içinde doğmuş ünlü bir bilgin ve hekimdir. Küçük yaşta tıp, felsefe ve matematik alanlarında kendini yetiştirmiş, on sekiz yaşına geldiğinde döneminin önde gelen hekimlerinden biri olmuştur. En bilinen eseri El-Kânun fi\'t-Tıbb (Tıbbın Kanunu), yüzyıllarca hem İslam dünyasında hem de Avrupa üniversitelerinde tıp eğitiminin temel kaynağı olarak okutulmuştur. İbni Sina\'nın çalışmaları, modern tıbbın gelişimine de önemli katkılar sağlamıştır.',
+          'İbni Sina, 980 yılında bugünkü Özbekistan sınırları içinde doğmuş ünlü bir bilgin ve hekimdir. Küçük yaşta tıp, felsefe ve matematik alanlarında kendini yetiştirmiş, on sekiz yaşına geldiğinde döneminin önde gelen hekimlerinden biri olmuştur. En bilinen eseri El-Kânun fi\'t-Tıbb (Tıbbın Kanunu), yüzyıllarca hem İslam dünyasında hem de Avrupa üniversitelerinde tıp eğitiminin temel kaynağı olarak okutulmuştur. İbni Sina\'nın çalışmaları, modern tıbbın gelişimine de önemli katkılar sağlamıştır.\n\n'
+          'El-Kânun fi\'t-Tıbb adlı eserinde İbni Sina, bazı hastalıkların havadaki ya da sudaki görünmez etkenlerle bir kişiden diğerine geçebileceğini yazmıştır; bu fikir, yüzyıllar sonra keşfedilecek olan mikroplar bilgisine ışık tutan öncü bir gözlemdir. Ayrıca ameliyat sırasında acıyı azaltmak için bazı bitkisel karışımlar kullanmış, hastaların rahat tedavi görmesine önem vermiştir.\n\n'
+          'İbni Sina yalnızca tıpla ilgilenmemiş, felsefe üzerine de önemli eserler yazmış çok yönlü bir düşünürdür. Yaşamı boyunca yazdığı yüzlerce eser, dünyanın birçok diline çevrilmiştir. Bugün hâlâ birçok üniversite ve hastane, onun bilime olan katkılarını anmak için adını taşımaktadır.',
       questions: [
         {
           'question':
@@ -528,7 +556,9 @@ class ComprehensionData {
       title: 'Ali Kuşçu: Yıldızların Bilgini',
       topic: 'biyografi',
       content:
-          'Ali Kuşçu, 15. yüzyılda yaşamış önemli bir Türk astronomu ve matematikçisidir. Semerkant\'ta Uluğ Bey Rasathanesi\'nde çalışarak gök cisimleri üzerine değerli gözlemler yapmıştır. Fatih Sultan Mehmed\'in daveti üzerine İstanbul\'a gelmiş, burada matematik ve astronomi alanında dersler vermiştir. Ali Kuşçu\'nun bilime katkılarını anmak için Ay üzerindeki bir krater onun adıyla anılmaktadır.',
+          'Ali Kuşçu, 15. yüzyılda yaşamış önemli bir Türk astronomu ve matematikçisidir. Semerkant\'ta Uluğ Bey Rasathanesi\'nde çalışarak gök cisimleri üzerine değerli gözlemler yapmıştır. Fatih Sultan Mehmed\'in daveti üzerine İstanbul\'a gelmiş, burada matematik ve astronomi alanında dersler vermiştir. Ali Kuşçu\'nun bilime katkılarını anmak için Ay üzerindeki bir krater onun adıyla anılmaktadır.\n\n'
+          'Ali Kuşçu\'nun yazdığı "Risale-i Fethiye" adlı eser, dönemin en gelişmiş astronomi bilgilerini bir araya getirmiş ve uzun yıllar boyunca ders kitabı olarak kullanılmıştır. İstanbul\'a geldiğinde Ayasofya medresesinde matematik dersleri vermiş, birçok öğrenciyi yetiştirerek bilginin genç nesillere aktarılmasına öncülük etmiştir.\n\n'
+          'Onun titiz gözlem yöntemleri, kendisinden sonra gelen astronomlara da yol gösterici olmuştur. Ali Kuşçu\'nun bilime olan bu değerli katkıları, yüzyıllar sonra bile hatırlanmakta ve gökbilim tarihinde önemli bir yere sahip olmaya devam etmektedir.',
       questions: [
         {
           'question': 'Ali Kuşçu, Uluğ Bey Rasathanesi\'nde çalışmıştır.',
@@ -559,7 +589,9 @@ class ComprehensionData {
       title: 'Bîrûnî: Çok Yönlü Bilgin',
       topic: 'biyografi',
       content:
-          'Bîrûnî, 973 yılında Harezm\'de doğmuş; matematik, astronomi, coğrafya ve tarih gibi pek çok alanda eser vermiş çok yönlü bir bilgindir. Dünya\'nın yarıçapını, o dönem için şaşırtıcı derecede doğru bir yöntemle hesaplamıştır. Hindistan\'a yaptığı geziler sonucunda kaleme aldığı Kitâbü\'l-Hind adlı eseriyle Hint kültürünü ve bilimini tanıtmıştır. Bîrûnî\'nin çalışmaları, onun tarihin ilk gerçek bilim insanlarından biri olarak anılmasını sağlamıştır.',
+          'Bîrûnî, 973 yılında Harezm\'de doğmuş; matematik, astronomi, coğrafya ve tarih gibi pek çok alanda eser vermiş çok yönlü bir bilgindir. Dünya\'nın yarıçapını, o dönem için şaşırtıcı derecede doğru bir yöntemle hesaplamıştır. Hindistan\'a yaptığı geziler sonucunda kaleme aldığı Kitâbü\'l-Hind adlı eseriyle Hint kültürünü ve bilimini tanıtmıştır. Bîrûnî\'nin çalışmaları, onun tarihin ilk gerçek bilim insanlarından biri olarak anılmasını sağlamıştır.\n\n'
+          'Dünya\'nın yarıçapını hesaplarken bir dağın tepesinden ufka bakış açısını ölçmüş ve basit geometri kurallarını kullanarak sonuca ulaşmıştır; bu yöntem, dönemine göre son derece yaratıcı bir çözümdü. Bîrûnî ayrıca birçok dili akıcı biçimde konuşabiliyordu; bu sayede farklı kültürlerdeki bilgi kaynaklarını doğrudan okuyup karşılaştırabiliyordu.\n\n'
+          'Taşlar ve madenler üzerine yaptığı çalışmalarla mineraloji bilimine de katkı sağlamıştır. Bîrûnî\'nin gözleme dayalı, önyargısız araştırma anlayışı, günümüz bilimsel yönteminin temel ilkeleriyle büyük benzerlik taşır ve bu yüzden modern bilim tarihinde saygıyla anılır.',
       questions: [
         {
           'question': 'Bîrûnî, Dünya\'nın yarıçapını hesaplamıştır.',
@@ -591,7 +623,9 @@ class ComprehensionData {
       title: 'Mikroplar Dünyası',
       topic: 'bilim',
       content:
-          'Mikroplar, çıplak gözle görülemeyecek kadar küçük canlılardır; bakteri, virüs ve mantarları kapsar. Bazı mikroplar hastalıklara neden olurken, bazıları sindirim sistemimizde besinleri parçalamamıza yardımcı olan faydalı canlılardır. Bilim insanları mikroskop sayesinde bu küçük dünyayı keşfedip incelemeyi başarmıştır. Ellerimizi düzenli yıkamak, zararlı mikropların vücudumuza girmesini önlemenin en etkili yollarından biridir.',
+          'Mikroplar, çıplak gözle görülemeyecek kadar küçük canlılardır; bakteri, virüs ve mantarları kapsar. Bazı mikroplar hastalıklara neden olurken, bazıları sindirim sistemimizde besinleri parçalamamıza yardımcı olan faydalı canlılardır. Bilim insanları mikroskop sayesinde bu küçük dünyayı keşfedip incelemeyi başarmıştır. Ellerimizi düzenli yıkamak, zararlı mikropların vücudumuza girmesini önlemenin en etkili yollarından biridir.\n\n'
+          'Mikroskop icat edilmeden önce insanlar bu küçük canlıların varlığından habersizdi. On yedinci yüzyılda geliştirilen ilk mikroskoplarla bilim insanları, bir su damlasının içinde bile binlerce mikroorganizma olduğunu görünce büyük bir şaşkınlık yaşamıştır. Bu keşif, hastalıkların nasıl yayıldığını anlamamızda dönüm noktası olmuştur.\n\n'
+          'Yoğurt ve ekmek gibi birçok besin, faydalı mikropların yardımıyla üretilir; mayalanma denen bu süreç sayesinde hamur kabarır, süt yoğurda dönüşür. Aşılar ve antibiyotikler de mikroplarla mücadele etmek için geliştirilmiş önemli buluşlardır. Ellerimizi sabunla en az yirmi saniye yıkamak, hastalık yapan mikropların yayılmasını büyük ölçüde azaltır.',
       questions: [
         {
           'question': 'Mikroplar çıplak gözle görülemeyecek kadar küçüktür.',
@@ -621,7 +655,9 @@ class ComprehensionData {
       title: 'Enerjinin Halleri',
       topic: 'bilim',
       content:
-          'Enerji, bir işin yapılabilmesini sağlayan güçtür ve farklı biçimlerde bulunabilir: ışık enerjisi, ısı enerjisi, hareket enerjisi ve elektrik enerjisi gibi. Güneş, dünyadaki en büyük enerji kaynağıdır ve bitkiler fotosentez yoluyla bu enerjiyi kullanır. Enerji yoktan var edilemez ya da yok edilemez, sadece bir biçimden diğerine dönüşür. Rüzgar türbinleri, rüzgarın hareket enerjisini elektrik enerjisine çevirerek evlerimizi aydınlatmamıza yardımcı olur.',
+          'Enerji, bir işin yapılabilmesini sağlayan güçtür ve farklı biçimlerde bulunabilir: ışık enerjisi, ısı enerjisi, hareket enerjisi ve elektrik enerjisi gibi. Güneş, dünyadaki en büyük enerji kaynağıdır ve bitkiler fotosentez yoluyla bu enerjiyi kullanır. Enerji yoktan var edilemez ya da yok edilemez, sadece bir biçimden diğerine dönüşür. Rüzgar türbinleri, rüzgarın hareket enerjisini elektrik enerjisine çevirerek evlerimizi aydınlatmamıza yardımcı olur.\n\n'
+          'Enerji kaynakları ikiye ayrılır: kömür ve petrol gibi tükenebilir kaynaklar, güneş ve rüzgar gibi ise sürekli yenilenen kaynaklardır. Güneş panelleri, güneş ışığını doğrudan elektriğe çevirerek evlere ve hatta uydulara enerji sağlayabilir. Yenilenebilir enerji kaynaklarının kullanımı arttıkça çevreye verilen zarar da azalmaktadır.\n\n'
+          'Enerji tasarrufu yapmak için kullanılmayan odalarda ışıkları kapatmak, cihazları fişten çekmek ve gün ışığından olabildiğince faydalanmak gibi basit alışkanlıklar edinebiliriz. Küçük görünen bu davranışlar, birçok insan tarafından uygulandığında büyük bir enerji tasarrufuna dönüşür.',
       questions: [
         {
           'question': 'Güneş, dünyadaki en büyük enerji kaynağıdır.',
@@ -651,7 +687,9 @@ class ComprehensionData {
       title: 'Deney Yapmanın Önemi',
       topic: 'bilim',
       content:
-          'Bilim insanları, bir fikrin doğru olup olmadığını anlamak için deneyler yapar. Bir deney yaparken önce bir soru sorulur, sonra bu soruya cevap bulmak için dikkatli bir plan hazırlanır. Aynı deneyin birkaç kez tekrarlanması, sonuçların güvenilir olup olmadığını anlamamızı sağlar. Deneyler sırasında elde edilen veriler dikkatle kaydedilir ve sonunda bir sonuca varılır.',
+          'Bilim insanları, bir fikrin doğru olup olmadığını anlamak için deneyler yapar. Bir deney yaparken önce bir soru sorulur, sonra bu soruya cevap bulmak için dikkatli bir plan hazırlanır. Aynı deneyin birkaç kez tekrarlanması, sonuçların güvenilir olup olmadığını anlamamızı sağlar. Deneyler sırasında elde edilen veriler dikkatle kaydedilir ve sonunda bir sonuca varılır.\n\n'
+          'İyi bir deneyde genellikle iki grup karşılaştırılır: değişikliğin uygulandığı grup ve hiçbir değişiklik yapılmadan bırakılan "kontrol grubu". Bu karşılaştırma, gözlenen farkın gerçekten yapılan değişiklikten mi yoksa tesadüften mi kaynaklandığını anlamamıza yardımcı olur.\n\n'
+          'Okullarda düzenlenen bilim şenlikleri, öğrencilerin kendi sorularını sorup küçük deneylerle cevap aramasına fırsat tanır. Bir bitkinin farklı miktarda suyla nasıl büyüdüğünü gözlemlemek gibi basit bir deney bile, bilimsel düşünme becerisini geliştirmek için harika bir başlangıçtır. Deney yaparken güvenlik kurallarına uymak da her zaman en önemli adımdır.',
       questions: [
         {
           'question':
@@ -682,7 +720,9 @@ class ComprehensionData {
       title: 'Karıncaların Gizli Dünyası',
       topic: 'hayvanlar',
       content:
-          'Karıncalar, küçük görünse de son derece düzenli bir toplum içinde yaşayan böceklerdir. Her karınca kolonisinde işçi karıncalar, asker karıncalar ve bir kraliçe karınca farklı görevler üstlenir. Karıncalar, kendi ağırlıklarının kat kat fazlasını taşıyabilecek kadar güçlüdür. Birbirleriyle özel kokular (feromonlar) bırakarak iletişim kurar ve yiyecek kaynaklarına giden yolu arkadaşlarına gösterirler.',
+          'Karıncalar, küçük görünse de son derece düzenli bir toplum içinde yaşayan böceklerdir. Her karınca kolonisinde işçi karıncalar, asker karıncalar ve bir kraliçe karınca farklı görevler üstlenir. Karıncalar, kendi ağırlıklarının kat kat fazlasını taşıyabilecek kadar güçlüdür. Birbirleriyle özel kokular (feromonlar) bırakarak iletişim kurar ve yiyecek kaynaklarına giden yolu arkadaşlarına gösterirler.\n\n'
+          'Bir karınca kolonisi, bazen milyonlarca bireyden oluşabilir ve toprağın altında birbirine bağlı karmaşık tünellerden oluşan devasa bir yuva inşa edebilir. İlginç bir şekilde bazı karınca türleri, tıpkı çiftçilerin ineklerden süt sağması gibi, yaprak bitlerinden tatlı bir sıvı elde ederek onları "sağar" ve karşılığında koruyup bakar.\n\n'
+          'Karıncaların hiçbir merkezi yönetici olmadan bu kadar düzenli çalışabilmesi, bilim insanlarını uzun süre hayrete düşürmüştür; her karınca sadece yakınındaki birkaç ipucuna göre hareket eder, ama sonuçta koloninin tamamı uyum içinde çalışır. Bu, birlikte çalışmanın küçük çabalarla bile büyük işler başarabileceğinin güzel bir örneğidir.',
       questions: [
         {
           'question':
@@ -715,7 +755,9 @@ class ComprehensionData {
       title: 'Kutup Ayısının Yaşamı',
       topic: 'hayvanlar',
       content:
-          'Kutup ayıları, Kuzey Kutbu\'nun buzlu sularında ve karlarla kaplı topraklarında yaşayan büyük memelilerdir. Kalın kürkleri ve altındaki yağ tabakası, onları dondurucu soğuktan korur. Mükemmel yüzücülerdir ve saatlerce kesintisiz yüzebilirler. Beslenmeleri büyük ölçüde foklara dayanır, bu yüzden buzların erimesi onların hayatta kalması için ciddi bir tehdit oluşturur.',
+          'Kutup ayıları, Kuzey Kutbu\'nun buzlu sularında ve karlarla kaplı topraklarında yaşayan büyük memelilerdir. Kalın kürkleri ve altındaki yağ tabakası, onları dondurucu soğuktan korur. Mükemmel yüzücülerdir ve saatlerce kesintisiz yüzebilirler. Beslenmeleri büyük ölçüde foklara dayanır, bu yüzden buzların erimesi onların hayatta kalması için ciddi bir tehdit oluşturur.\n\n'
+          'İlginç bir şekilde kutup ayılarının kürkü beyaz görünse de, derilerinin altı aslında siyahtır; bu koyu renk, güneş ışığının ısısını daha iyi emerek onları sıcak tutmaya yardımcı olur. Avlanırken genellikle foklerin nefes almak için buzda açtığı deliklerin başında sabırla bekler ve fok yüzeye çıktığı anda hızla yakalar.\n\n'
+          'Yavru kutup ayıları, doğduktan sonra ilk aylarını anneleriyle birlikte kar mağarasında geçirir ve avlanmayı, yüzmeyi anneden izleyerek öğrenir. Küresel ısınma nedeniyle deniz buzlarının erken erimesi, kutup ayılarının avlanma süresini kısaltmakta ve bu değerli türün geleceğini tehdit etmektedir.',
       questions: [
         {
           'question':
@@ -747,7 +789,9 @@ class ComprehensionData {
       title: 'Kelebeğin Değişimi',
       topic: 'hayvanlar',
       content:
-          'Bir kelebeğin hayatı, minik bir yumurtadan başlar ve tırtıl haline gelmesiyle devam eder. Tırtıl, yeterince büyüdüğünde kendini bir kozanın içine sarar ve burada büyük bir dönüşüm geçirir. Bu sürece başkalaşım (metamorfoz) denir. Kozadan çıkan canlı, artık renkli kanatlara sahip bir kelebektir ve çiçeklerden nektar toplayarak beslenir.',
+          'Bir kelebeğin hayatı, minik bir yumurtadan başlar ve tırtıl haline gelmesiyle devam eder. Tırtıl, yeterince büyüdüğünde kendini bir kozanın içine sarar ve burada büyük bir dönüşüm geçirir. Bu sürece başkalaşım (metamorfoz) denir. Kozadan çıkan canlı, artık renkli kanatlara sahip bir kelebektir ve çiçeklerden nektar toplayarak beslenir.\n\n'
+          'Tırtıl evresinde kelebek, hızla büyüyebilmek için gün boyunca durmadan yaprak yiyerek kendi ağırlığının kat kat fazlası kadar besin tüketir. Bazı kelebek türleri, örneğin Monark kelebekleri, kışı geçirmek için binlerce kilometre uçarak göç eder; bu küçük canlıların bu kadar uzun bir yolculuğu nasıl başardığı hâlâ araştırılan bir konudur.\n\n'
+          'Kelebekler çiçekten çiçeğe uçarken üzerlerine bulaşan poleni taşıyarak, tıpkı arılar gibi bitkilerin tozlaşmasına yardımcı olur. Bir kelebeğin yetişkin hâldeki ömrü genellikle sadece birkaç hafta sürer, ama bu kısa sürede doğaya sağladığı katkı oldukça büyüktür.',
       questions: [
         {
           'question': 'Kelebeğin hayatı bir yumurtayla başlar.',
@@ -776,7 +820,9 @@ class ComprehensionData {
       title: 'Kütüphanelerin Tarihi',
       topic: 'kitaplar',
       content:
-          'Kütüphaneler, binlerce yıldır bilginin saklandığı özel yerlerdir. Tarihteki en ünlü kütüphanelerden biri, Mısır\'daki İskenderiye Kütüphanesi\'ydi ve dönemin en büyük bilgi hazinesini barındırıyordu. Eskiden kitaplar el yazmasıyla yazıldığı için çok değerliydi ve üretilmesi uzun zaman alıyordu. Günümüzde kütüphaneler hem basılı kitapları hem de dijital kaynakları bir arada sunmaktadır.',
+          'Kütüphaneler, binlerce yıldır bilginin saklandığı özel yerlerdir. Tarihteki en ünlü kütüphanelerden biri, Mısır\'daki İskenderiye Kütüphanesi\'ydi ve dönemin en büyük bilgi hazinesini barındırıyordu. Eskiden kitaplar el yazmasıyla yazıldığı için çok değerliydi ve üretilmesi uzun zaman alıyordu. Günümüzde kütüphaneler hem basılı kitapları hem de dijital kaynakları bir arada sunmaktadır.\n\n'
+          'On beşinci yüzyılda matbaanın icadıyla kitaplar artık elle değil makineyle basılmaya başlandı; bu da kitapların çok daha hızlı üretilip daha fazla insana ulaşmasını sağladı. Bu buluş, bilginin yayılma hızını inanılmaz derecede artırmış ve okuma yazma bilen insan sayısının artmasına katkı sağlamıştır.\n\n'
+          'Günümüz kütüphaneleri sadece kitap ödünç vermekle kalmaz; bilgisayar kullanımı, film gösterimleri ve çocuklar için hikaye saatleri gibi birçok etkinlik de düzenler. Bazı şehirlerde, kitaplara kolay ulaşamayan mahallelere kitap götüren "gezici kütüphaneler" bile bulunur. Herkesin ücretsiz olarak bilgiye ulaşabilmesi, kütüphanelerin en değerli özelliğidir.',
       questions: [
         {
           'question': 'İskenderiye Kütüphanesi Mısır\'daydı.',
@@ -807,7 +853,9 @@ class ComprehensionData {
       title: 'Bir Kitap Nasıl Yazılır',
       topic: 'kitaplar',
       content:
-          'Bir kitap yazmak, önce bir fikir bulmakla başlar. Yazar, hikayesinin karakterlerini, olay örgüsünü ve mekanını dikkatlice planlar. İlk taslak tamamlandıktan sonra, yazar metni tekrar tekrar gözden geçirir ve düzeltmeler yapar. Bu düzenleme sürecine "editleme" denir ve bir kitabın okuyucuya ulaşmadan önce geçirdiği en önemli aşamalardan biridir.',
+          'Bir kitap yazmak, önce bir fikir bulmakla başlar. Yazar, hikayesinin karakterlerini, olay örgüsünü ve mekanını dikkatlice planlar. İlk taslak tamamlandıktan sonra, yazar metni tekrar tekrar gözden geçirir ve düzeltmeler yapar. Bu düzenleme sürecine "editleme" denir ve bir kitabın okuyucuya ulaşmadan önce geçirdiği en önemli aşamalardan biridir.\n\n'
+          'Bazı yazarlar, hikayelerini gerçekçi kılmak için önceden araştırma yapar; tarihi bir roman yazan bir yazar, o döneme ait giysileri, konuşma biçimlerini ve olayları dikkatle inceleyebilir. Taslak tamamlandığında, yayınevindeki editörler yazarla birlikte çalışarak metni daha akıcı ve anlaşılır hale getirir.\n\n'
+          'Çocuk kitaplarında genellikle resimleyiciler de görev alır; onların çizdiği renkli resimler, hikayeyi görsel olarak zenginleştirir. Bir kitabın fikir aşamasından raflara ulaşmasına kadar geçen süre, bazen aylar bazen de yıllar alabilir; bu yüzden her kitabın arkasında sabırlı ve emek dolu uzun bir çalışma vardır.',
       questions: [
         {
           'question': 'Bir kitap yazmak bir fikir bulmakla başlar.',
@@ -838,7 +886,9 @@ class ComprehensionData {
       title: 'E-Kitap mı Kağıt Kitap mı',
       topic: 'kitaplar',
       content:
-          'Günümüzde kitaplar hem kağıt hem de elektronik (e-kitap) biçiminde okunabiliyor. E-kitaplar, bir tablet ya da telefonla yüzlerce kitabı yanınızda taşımanıza olanak tanır. Kağıt kitaplar ise sayfaları çevirme hissini ve göz yorgunluğunun daha az olmasını sağlar. Her iki biçimin de kendine göre avantajları vardır ve tercih genellikle okuyucunun alışkanlıklarına bağlıdır.',
+          'Günümüzde kitaplar hem kağıt hem de elektronik (e-kitap) biçiminde okunabiliyor. E-kitaplar, bir tablet ya da telefonla yüzlerce kitabı yanınızda taşımanıza olanak tanır. Kağıt kitaplar ise sayfaları çevirme hissini ve göz yorgunluğunun daha az olmasını sağlar. Her iki biçimin de kendine göre avantajları vardır ve tercih genellikle okuyucunun alışkanlıklarına bağlıdır.\n\n'
+          'Son yıllarda sesli kitaplar da üçüncü bir seçenek olarak popülerlik kazanmıştır; bir hikayeyi dinleyerek "okumak", yolda ya da ev işleri yaparken bile mümkün olur. E-kitap okuyucularda yazı boyutunu istediğimiz gibi büyütüp küçültebilmemiz, göz sağlığı için özellikle faydalı bir özelliktir.\n\n'
+          'Bazı kitapseverler ise kağıt kitapları biriktirmeyi bir hobi haline getirir; raflarında özenle sakladıkları kitaplar onlar için özel bir değer taşır. Hangi biçim tercih edilirse edilsin, önemli olan okuma alışkanlığını sürdürmek ve kitaplarla vakit geçirmekten keyif almaktır.',
       questions: [
         {
           'question':
@@ -869,7 +919,9 @@ class ComprehensionData {
       title: 'Algoritma Nedir',
       topic: 'kodlama',
       content:
-          'Algoritma, bir problemi çözmek için izlenen adım adım talimatlar dizisidir. Günlük hayatta bile farkında olmadan algoritmalar kullanırız; örneğin bir sandviç yapmanın adımları da bir algoritmadır. Bilgisayar programcıları, bir algoritmayı kodlama diline çevirerek bilgisayarın belirli bir görevi yerine getirmesini sağlar. İyi bir algoritma, hem doğru sonucu verir hem de mümkün olduğunca hızlı çalışır.',
+          'Algoritma, bir problemi çözmek için izlenen adım adım talimatlar dizisidir. Günlük hayatta bile farkında olmadan algoritmalar kullanırız; örneğin bir sandviç yapmanın adımları da bir algoritmadır. Bilgisayar programcıları, bir algoritmayı kodlama diline çevirerek bilgisayarın belirli bir görevi yerine getirmesini sağlar. İyi bir algoritma, hem doğru sonucu verir hem de mümkün olduğunca hızlı çalışır.\n\n'
+          'Programcılar, bir algoritmayı kod yazmadan önce genellikle "akış şeması" adı verilen oklu bir çizimle görselleştirir; bu da adımların doğru sırayla planlanmasına yardımcı olur. Kitapları alfabetik sıraya dizmek ya da bir yarışta sporcuları puanına göre sıralamak da birer algoritma örneğidir.\n\n'
+          'Kullandığımız arama motorları, milyonlarca sayfa arasından en uygun sonucu bulmak için karmaşık algoritmalar kullanır; harita uygulamaları ise en kısa yolu hesaplamak için benzer bir mantıkla çalışır. Günlük görevlerimizi adım adım planlamayı öğrenmek, aslında algoritmik düşünmeyi pratik yapmanın eğlenceli bir yoludur.',
       questions: [
         {
           'question':
@@ -901,7 +953,9 @@ class ComprehensionData {
       title: 'Robotlar ve Kodlama',
       topic: 'kodlama',
       content:
-          'Bir robotun hareket edebilmesi, aslında arkasındaki koda bağlıdır. Programcılar, robota ne zaman döneceğini, ne zaman duracağını ve engellerden nasıl kaçınacağını kod satırlarıyla öğretir. Sensörler sayesinde robot çevresini algılar ve bu bilgiyi kodun belirlediği kurallara göre işler. Kodlama sayesinde bir robot, fabrikalarda parça taşımaktan evde toz almaya kadar birçok işi yapabilir.',
+          'Bir robotun hareket edebilmesi, aslında arkasındaki koda bağlıdır. Programcılar, robota ne zaman döneceğini, ne zaman duracağını ve engellerden nasıl kaçınacağını kod satırlarıyla öğretir. Sensörler sayesinde robot çevresini algılar ve bu bilgiyi kodun belirlediği kurallara göre işler. Kodlama sayesinde bir robot, fabrikalarda parça taşımaktan evde toz almaya kadar birçok işi yapabilir.\n\n'
+          'Fabrikalarda kullanılan robot kollar, aynı hareketi binlerce kez tekrar ederek arabalara parça takabilir ya da ürünleri paketleyebilir; bu da üretimi hem hızlandırır hem de daha güvenli hale getirir. Işık sensörleri, mesafe sensörleri ve dokunma sensörleri, robotların farklı görevleri yerine getirmesine yardımcı olan yaygın örneklerdir.\n\n'
+          'Birçok okulda düzenlenen robotik yarışmaları, öğrencilerin takım hâlinde çalışarak kendi robotlarını tasarlayıp kodlamasına olanak tanır. Bu tür etkinlikler, hem kodlama becerisini geliştirir hem de takım çalışmasının ve sabırlı denemelerin önemini öğretir.',
       questions: [
         {
           'question': 'Bir robotun hareketleri arkasındaki koda bağlıdır.',
@@ -930,7 +984,9 @@ class ComprehensionData {
       title: 'Oyun Programlama',
       topic: 'kodlama',
       content:
-          'Video oyunları, arkasında yüzlerce satır kodla çalışan karmaşık programlardır. Bir oyun programcısı, karakterlerin nasıl hareket edeceğini, puanların nasıl hesaplanacağını ve oyunun kurallarını kodla belirler. Grafik tasarımcılar görsel dünyayı oluştururken, programcılar bu dünyayı hayata geçiren "motoru" yazar. Basit bir oyun bile, saatlerce planlama ve kodlama gerektirir.',
+          'Video oyunları, arkasında yüzlerce satır kodla çalışan karmaşık programlardır. Bir oyun programcısı, karakterlerin nasıl hareket edeceğini, puanların nasıl hesaplanacağını ve oyunun kurallarını kodla belirler. Grafik tasarımcılar görsel dünyayı oluştururken, programcılar bu dünyayı hayata geçiren "motoru" yazar. Basit bir oyun bile, saatlerce planlama ve kodlama gerektirir.\n\n'
+          'Bir oyun tamamlanmadan önce mutlaka test edilir; test uzmanları oyunu defalarca oynayarak hataları bulmaya çalışır, çünkü küçük bir kod hatası oyunun donmasına ya da beklenmedik şekilde çalışmasına neden olabilir. Ses tasarımcıları ise karakterlerin adımlarından müzik parçalarına kadar oyundaki tüm sesleri hazırlar.\n\n'
+          'Büyük oyunlar genellikle onlarca kişinin bir arada çalıştığı takımlar tarafından yapılır; programcı, tasarımcı ve ses uzmanı birlikte uyum içinde çalışmalıdır. Yeni başlayanlar için geliştirilen basit oyun tasarım araçları sayesinde, çocuklar bile küçük yaşta kendi oyunlarını tasarlamayı deneyebilir.',
       questions: [
         {
           'question':
@@ -961,7 +1017,9 @@ class ComprehensionData {
       title: 'Heykel Sanatı',
       topic: 'sanat',
       content:
-          'Heykel, taş, tunç, ahşap ya da kil gibi malzemelerden üç boyutlu eserler yaratma sanatıdır. Heykeltıraşlar, düz bir resimden farklı olarak eserlerini her açıdan izlenebilecek şekilde şekillendirir. Tarihteki en ünlü heykellerden biri, Michelangelo\'nun yaptığı Davut Heykeli\'dir. Heykel yapmak, hem sabır hem de malzemenin doğasını iyi anlamayı gerektiren zorlu bir zanaattir.',
+          'Heykel, taş, tunç, ahşap ya da kil gibi malzemelerden üç boyutlu eserler yaratma sanatıdır. Heykeltıraşlar, düz bir resimden farklı olarak eserlerini her açıdan izlenebilecek şekilde şekillendirir. Tarihteki en ünlü heykellerden biri, Michelangelo\'nun yaptığı Davut Heykeli\'dir. Heykel yapmak, hem sabır hem de malzemenin doğasını iyi anlamayı gerektiren zorlu bir zanaattir.\n\n'
+          'Heykel yapmanın birçok yöntemi vardır: bazı sanatçılar bir taş bloğunu yontarak fazlalıkları kazır, bazıları ise erimiş metali bir kalıba dökerek şekil verir. Kil gibi yumuşak malzemelerle çalışan heykeltıraşlar ise eseri elleriyle şekillendirip sonra fırınlayarak sertleştirir. Antik Mısır ve Antik Yunan uygarlıkları, günümüze kadar ulaşan pek çok etkileyici heykel bırakmıştır.\n\n'
+          'Günümüzde heykeltıraşlar metal, cam ve hatta geri dönüştürülmüş malzemelerle de eserler üretmektedir. Şehir meydanlarında ve parklarda gördüğümüz heykeller, hem şehre estetik bir güzellik katar hem de genellikle önemli bir kişiyi ya da olayı hatırlatmak amacıyla dikilir.',
       questions: [
         {
           'question': 'Heykel üç boyutlu eserler yaratma sanatıdır.',
@@ -990,7 +1048,9 @@ class ComprehensionData {
       title: 'Müziğin Gücü',
       topic: 'sanat',
       content:
-          'Müzik, sesleri belirli bir düzen içinde bir araya getirerek duygu ve düşünceleri anlatan evrensel bir sanattır. Farklı kültürlerin kendine özgü müzik aletleri ve tarzları vardır, ama müziğin duyguları harekete geçirme gücü her yerde aynıdır. Bilim insanları, müzik dinlemenin stresi azaltabileceğini ve odaklanmayı artırabileceğini keşfetmiştir. Bir beste yazmak, notaları doğru sırayla bir araya getirmekten çok daha fazlasını, yani duygu aktarmayı gerektirir.',
+          'Müzik, sesleri belirli bir düzen içinde bir araya getirerek duygu ve düşünceleri anlatan evrensel bir sanattır. Farklı kültürlerin kendine özgü müzik aletleri ve tarzları vardır, ama müziğin duyguları harekete geçirme gücü her yerde aynıdır. Bilim insanları, müzik dinlemenin stresi azaltabileceğini ve odaklanmayı artırabileceğini keşfetmiştir. Bir beste yazmak, notaları doğru sırayla bir araya getirmekten çok daha fazlasını, yani duygu aktarmayı gerektirir.\n\n'
+          'Müzik aletleri genellikle üç ana gruba ayrılır: telli çalgılar (gitar, keman), üflemeli çalgılar (flüt, trompet) ve vurmalı çalgılar (davul, ksilofon). Bir orkestrada onlarca farklı çalgı, bir şef yönetiminde uyum içinde çalarak tek bir eseri hayata geçirir; bu da müziğin aynı zamanda büyük bir takım çalışması olduğunu gösterir.\n\n'
+          'Küçük yaşta bir müzik aleti çalmayı öğrenmek, hem el becerisini hem de matematiksel düşünmeyi geliştirdiği için bilim insanları tarafından önerilir. Dünyanın her köşesinde farklı müzik türleri gelişmiştir; bu çeşitlilik, müziği kültürler arasında en güçlü ortak dillerden biri haline getirir.',
       questions: [
         {
           'question':
@@ -1022,7 +1082,9 @@ class ComprehensionData {
       title: 'Tiyatronun Doğuşu',
       topic: 'sanat',
       content:
-          'Tiyatro, insanların bir hikayeyi canlı olarak sahnede canlandırdığı en eski sanat türlerinden biridir. Antik Yunan\'da tiyatro, hem eğlence hem de toplumsal konuları tartışma amacı taşıyordu. Oyuncular, maskeler takarak farklı karakterleri ve duyguları seyirciye aktarırdı. Günümüzde tiyatro, sinema ve dizilerin yanında hâlâ canlı performansın eşsiz heyecanını sunmaya devam ediyor.',
+          'Tiyatro, insanların bir hikayeyi canlı olarak sahnede canlandırdığı en eski sanat türlerinden biridir. Antik Yunan\'da tiyatro, hem eğlence hem de toplumsal konuları tartışma amacı taşıyordu. Oyuncular, maskeler takarak farklı karakterleri ve duyguları seyirciye aktarırdı. Günümüzde tiyatro, sinema ve dizilerin yanında hâlâ canlı performansın eşsiz heyecanını sunmaya devam ediyor.\n\n'
+          'Antik Yunan\'da kullanılan maskelerin gülen yüzü komediyi, üzgün yüzü ise trajediyi (dramatik oyunları) temsil ederdi; bu maskeler bugün bile tiyatronun simgesi olarak bilinir. Oyunlar, sesin en arka sıraya kadar net duyulmasını sağlayan özel taş amfitiyatrolarda sahnelenirdi.\n\n'
+          'Sinema ve dizilerden farklı olarak tiyatroda oyuncular seyirciyle aynı anda, aynı mekânda bulunur ve her gösterim birbirinden biraz farklı olabilir; bu da tiyatroya tekrarlanamaz bir heyecan katar. Okullarda düzenlenen tiyatro oyunları, öğrencilerin özgüvenini, sesini doğru kullanmasını ve ekip çalışmasını geliştiren değerli bir deneyim sunar.',
       questions: [
         {
           'question':
@@ -1055,7 +1117,9 @@ class ComprehensionData {
       title: 'Olimpiyat Oyunlarının Tarihi',
       topic: 'spor',
       content:
-          'Olimpiyat Oyunları, ilk olarak Antik Yunanistan\'da, Olympia şehrinde binlerce yıl önce düzenlenmeye başlamıştır. O dönemde oyunlar sırasında şehirler arasındaki savaşlar bile geçici olarak durdurulurdu. Modern Olimpiyatlar ise 1896 yılında Atina\'da yeniden başlatılmıştır. Bugün dünyanın dört bir yanından binlerce sporcu, dört yılda bir bu büyük yarışmada bir araya gelmektedir.',
+          'Olimpiyat Oyunları, ilk olarak Antik Yunanistan\'da, Olympia şehrinde binlerce yıl önce düzenlenmeye başlamıştır. O dönemde oyunlar sırasında şehirler arasındaki savaşlar bile geçici olarak durdurulurdu. Modern Olimpiyatlar ise 1896 yılında Atina\'da yeniden başlatılmıştır. Bugün dünyanın dört bir yanından binlerce sporcu, dört yılda bir bu büyük yarışmada bir araya gelmektedir.\n\n'
+          'Olimpiyat bayrağındaki beş iç içe geçmiş halka, dünyanın beş kıtasını ve sporun birleştirici gücünü simgeler. Yaz Olimpiyatlarında yüzme ve atletizm gibi dallar yer alırken, kış aylarında düzenlenen Kış Olimpiyatları\'nda kayak ve buz pateni gibi kar ve buz sporları öne çıkar.\n\n'
+          'Oyunlar başlamadan önce Olympia\'da yakılan olimpiyat ateşi, koşucular tarafından ülkeden ülkeye taşınarak yarışmaların yapılacağı şehre ulaştırılır. Olimpiyatların temelinde yatan en önemli değer, kazanmaktan çok dürüst ve saygılı bir şekilde yarışmaktır; buna "fair play" (adil oyun) denir.',
       questions: [
         {
           'question':
@@ -1086,7 +1150,9 @@ class ComprehensionData {
       title: 'Yüzmenin Faydaları',
       topic: 'spor',
       content:
-          'Yüzme, vücuttaki hemen hemen tüm kasları aynı anda çalıştıran ender sporlardan biridir. Su içinde hareket etmek, eklemlere kara sporlarına göre çok daha az yük bindirir. Düzenli yüzmek, kalp ve akciğer sağlığını güçlendirir ve dayanıklılığı artırır. Ayrıca suyun serinletici etkisi, yüzmeyi hem eğlenceli hem de rahatlatıcı bir aktivite haline getirir.',
+          'Yüzme, vücuttaki hemen hemen tüm kasları aynı anda çalıştıran ender sporlardan biridir. Su içinde hareket etmek, eklemlere kara sporlarına göre çok daha az yük bindirir. Düzenli yüzmek, kalp ve akciğer sağlığını güçlendirir ve dayanıklılığı artırır. Ayrıca suyun serinletici etkisi, yüzmeyi hem eğlenceli hem de rahatlatıcı bir aktivite haline getirir.\n\n'
+          'Yarışmalarda kullanılan başlıca yüzme stilleri serbest stil, sırtüstü, kurbağalama ve kelebektir; her biri farklı kas gruplarını çalıştırır ve farklı teknik beceriler gerektirir. Küçük yaşta doğru teknikle yüzmeyi öğrenmek, hem güvenlik açısından önemlidir hem de ileride bu sporu severek sürdürmeyi kolaylaştırır.\n\n'
+          'Havuzda ya da denizde yüzerken bir yetişkinin gözetiminde olmak ve derin sulara tek başına girmemek, su güvenliğinin en temel kurallarındandır. Dünya çapındaki yüzme yarışmalarında sporcular, yıllarca süren disiplinli antrenmanlar sonunda saniyelerle ölçülen farklarla dereceye girer.',
       questions: [
         {
           'question': 'Yüzme vücuttaki hemen hemen tüm kasları çalıştırır.',
@@ -1116,7 +1182,9 @@ class ComprehensionData {
       title: 'Satranç Bir Spor mu',
       topic: 'spor',
       content:
-          'Satranç, fiziksel güç gerektirmese de büyük bir zihinsel yoğunluk ve strateji becerisi ister. Uluslararası Olimpiyat Komitesi, satrancı "zihin sporu" olarak tanımaktadır. Profesyonel satranç oyuncuları, uzun bir maç sırasında yüzlerce kalori harcayabilir çünkü yoğun konsantrasyon beyni oldukça yorar. Satranç, sabırlı planlama ve rakibin hamlelerini önceden tahmin etme becerisini geliştirir.',
+          'Satranç, fiziksel güç gerektirmese de büyük bir zihinsel yoğunluk ve strateji becerisi ister. Uluslararası Olimpiyat Komitesi, satrancı "zihin sporu" olarak tanımaktadır. Profesyonel satranç oyuncuları, uzun bir maç sırasında yüzlerce kalori harcayabilir çünkü yoğun konsantrasyon beyni oldukça yorar. Satranç, sabırlı planlama ve rakibin hamlelerini önceden tahmin etme becerisini geliştirir.\n\n'
+          'Satranç tahtası 64 kareden oluşur ve her oyuncunun on altı taşı vardır; her taş türü farklı bir şekilde hareket eder, bu da oyunu her seferinde farklı bir bulmacaya dönüştürür. Bir satranç oyuncusunun ulaşabileceği en yüksek unvan "büyükusta"dır ve bu unvana ulaşmak yıllarca süren çalışma gerektirir.\n\n'
+          'Küçük yaşta satranç oynamayı öğrenen çocuklarda hafıza, sabır ve problem çözme becerilerinin geliştiği gözlemlenmiştir. Günümüzde bilgisayar programları, en güçlü insan oyuncuları bile yenebilecek kadar gelişmiştir; yine de satranç, insanlar arasında hâlâ en sevilen zihinsel yarışmalardan biri olmaya devam etmektedir.',
       questions: [
         {
           'question':
@@ -1148,7 +1216,9 @@ class ComprehensionData {
       title: 'Japonya\'nın Gelenekleri',
       topic: 'ulkeler',
       content:
-          'Japonya, modern teknolojisiyle tanınsa da köklü geleneklerini de büyük bir özenle korumaktadır. Çay seremonisi, sadece çay içmekten öte, sakinlik ve saygıyı simgeleyen özel bir törendir. Kiraz çiçeklerinin (sakura) açtığı bahar mevsiminde, aileler parklarda "hanami" adı verilen çiçek izleme etkinlikleri düzenler. Japon kültüründe nezaket ve düzen, günlük yaşamın her alanında önemli bir yer tutar.',
+          'Japonya, modern teknolojisiyle tanınsa da köklü geleneklerini de büyük bir özenle korumaktadır. Çay seremonisi, sadece çay içmekten öte, sakinlik ve saygıyı simgeleyen özel bir törendir. Kiraz çiçeklerinin (sakura) açtığı bahar mevsiminde, aileler parklarda "hanami" adı verilen çiçek izleme etkinlikleri düzenler. Japon kültüründe nezaket ve düzen, günlük yaşamın her alanında önemli bir yer tutar.\n\n'
+          'Origami, tek bir kağıt parçasını kesmeden katlayarak kuş, çiçek ya da hayvan şekilleri oluşturma sanatıdır ve sabır ile dikkat gerektirir. Geleneksel kıyafet olan kimono, özel gün ve törenlerde hâlâ gururla giyilir; her deseni ve rengi farklı bir anlam taşıyabilir.\n\n'
+          'Japonya\'da insanlar birbirini selamlarken genellikle eğilerek saygı gösterir; eğilmenin derecesi bile karşıdaki kişiye duyulan saygının miktarını belirtebilir. Zamana ve temizliğe verilen önem de Japon kültüründe öne çıkan değerlerdendir; örneğin okul öğrencileri sınıflarını kendileri temizler.',
       questions: [
         {
           'question':
@@ -1179,7 +1249,9 @@ class ComprehensionData {
       title: 'Mısır Piramitleri',
       topic: 'ulkeler',
       content:
-          'Mısır piramitleri, binlerce yıl önce firavunlar için mezar olarak inşa edilmiş devasa yapılardır. En büyük ve en ünlü piramit, Giza\'daki Büyük Piramit\'tir ve yüzyıllarca dünyanın en yüksek yapısı olma özelliğini korumuştur. Piramitlerin nasıl inşa edildiği hâlâ bilim insanlarını şaşırtan bir konudur, çünkü o dönemde modern makineler yoktu. Bu yapılar, Antik Mısır uygarlığının mühendislik becerisinin canlı bir kanıtıdır.',
+          'Mısır piramitleri, binlerce yıl önce firavunlar için mezar olarak inşa edilmiş devasa yapılardır. En büyük ve en ünlü piramit, Giza\'daki Büyük Piramit\'tir ve yüzyıllarca dünyanın en yüksek yapısı olma özelliğini korumuştur. Piramitlerin nasıl inşa edildiği hâlâ bilim insanlarını şaşırtan bir konudur, çünkü o dönemde modern makineler yoktu. Bu yapılar, Antik Mısır uygarlığının mühendislik becerisinin canlı bir kanıtıdır.\n\n'
+          'Giza\'daki Büyük Piramit\'in inşasında on binlerce işçinin, ağır taş blokları kızaklar ve rampalar yardımıyla taşıyarak çalıştığı düşünülmektedir. Piramitlerin hemen yanında yer alan ve aslan gövdeli, insan başlı dev heykel Sfenks de Antik Mısır\'ın en tanınan simgelerinden biridir.\n\n'
+          'Antik Mısırlılar, hiyeroglif adı verilen resim yazısıyla duvarlara ve tapınaklara önemli olayları kaydetmiştir. Bilim insanları bu yazıları çözerek Antik Mısır hakkında pek çok bilgiye ulaşmış, piramitlerin ve o döneme ait yaşamın sırlarını gün geçtikçe daha iyi anlamaya başlamıştır.',
       questions: [
         {
           'question':
@@ -1211,7 +1283,9 @@ class ComprehensionData {
       title: 'Antarktika Kıtası',
       topic: 'ulkeler',
       content:
-          'Antarktika, Dünya\'nın en güneyinde yer alan ve neredeyse tamamı kalın buzla kaplı bir kıtadır. Burada herhangi bir ülkenin daimi vatandaşı yaşamaz, sadece bilim insanları araştırma istasyonlarında geçici olarak kalır. Kıtadaki sıcaklıklar bazen eksi 80 dereceye kadar düşebilir, bu da onu Dünya\'nın en soğuk yeri yapar. Antarktika\'daki buzullar, Dünya\'nın tatlı su rezervlerinin büyük bir kısmını barındırır.',
+          'Antarktika, Dünya\'nın en güneyinde yer alan ve neredeyse tamamı kalın buzla kaplı bir kıtadır. Burada herhangi bir ülkenin daimi vatandaşı yaşamaz, sadece bilim insanları araştırma istasyonlarında geçici olarak kalır. Kıtadaki sıcaklıklar bazen eksi 80 dereceye kadar düşebilir, bu da onu Dünya\'nın en soğuk yeri yapar. Antarktika\'daki buzullar, Dünya\'nın tatlı su rezervlerinin büyük bir kısmını barındırır.\n\n'
+          'Bu dondurucu soğuğa rağmen Antarktika\'da penguenler, foklar ve çeşitli deniz kuşları yaşar; penguenler kalın yağ tabakaları ve sıkı tüyleri sayesinde bu zorlu iklime uyum sağlamıştır. Kıtanın bazı bölgelerinde yılın belirli aylarında güneş hiç batmazken, diğer aylarda uzun süre hiç doğmaz.\n\n'
+          'Antarktika, hiçbir ülkeye ait değildir; birçok ülke burada yalnızca bilimsel araştırma yapmak amacıyla anlaşarak ortak çalışmalar yürütür. Bu iş birliği sayesinde Antarktika, Dünya\'nın iklim geçmişini ve buzulların erimesini incelemek için eşsiz bir doğal laboratuvar olarak korunmaktadır.',
       questions: [
         {
           'question': 'Antarktika\'nın neredeyse tamamı kalın buzla kaplıdır.',
@@ -1240,7 +1314,9 @@ class ComprehensionData {
       title: 'Ay\'a Yolculuk',
       topic: 'uzay',
       content:
-          'İnsanoğlu ilk kez 1969 yılında Ay\'a ayak basmıştır; bu tarihi adımı atan kişi astronot Neil Armstrong\'dur. Ay\'a gitmek için özel olarak tasarlanmış roketler, dünyanın yerçekiminden kurtulacak kadar güçlü olmalıdır. Ay\'da atmosfer olmadığı için gökyüzü her zaman siyah görünür ve sessizlik tamdır. Bilim insanları, Ay\'dan getirilen kayaları inceleyerek Güneş Sistemi\'nin oluşumu hakkında önemli bilgiler edinmiştir.',
+          'İnsanoğlu ilk kez 1969 yılında Ay\'a ayak basmıştır; bu tarihi adımı atan kişi astronot Neil Armstrong\'dur. Ay\'a gitmek için özel olarak tasarlanmış roketler, dünyanın yerçekiminden kurtulacak kadar güçlü olmalıdır. Ay\'da atmosfer olmadığı için gökyüzü her zaman siyah görünür ve sessizlik tamdır. Bilim insanları, Ay\'dan getirilen kayaları inceleyerek Güneş Sistemi\'nin oluşumu hakkında önemli bilgiler edinmiştir.\n\n'
+          'Bu tarihi yolculuğa Apollo 11 görevi adı verilmiştir. Ay\'da rüzgar ve hava olmadığı için astronotların bıraktığı ayak izleri, tıpkı ilk bırakıldığı gün gibi hâlâ yerinde durmaktadır. Ay\'ın Dünya çevresindeki dönüşü sırasında güneş ışığını farklı açılardan alması, gökyüzünde gördüğümüz hilal, dolunay gibi farklı Ay evrelerini oluşturur.\n\n'
+          'Ay\'a ilk gidişin üzerinden yıllar geçmiş olsa da bilim insanları, gelecekte Ay\'da uzun süreli bir üs kurmayı ve oradan Mars gibi daha uzak gezegenlere yolculuklar yapmayı planlamaktadır. Ay, hâlâ uzay araştırmalarının en önemli hedeflerinden biri olmaya devam etmektedir.',
       questions: [
         {
           'question': 'İnsanoğlu ilk kez 1969 yılında Ay\'a ayak basmıştır.',
@@ -1270,7 +1346,9 @@ class ComprehensionData {
       title: 'Yıldızlar Nasıl Doğar',
       topic: 'uzay',
       content:
-          'Yıldızlar, uzaydaki dev gaz ve toz bulutlarının kendi yerçekimiyle çökmesi sonucu oluşur. Bu bulutun merkezi giderek ısınır ve sonunda nükleer füzyon adı verilen bir süreç başlar, bu da yıldızın parlamasını sağlar. Güneşimiz de yaklaşık 4.6 milyar yıl önce böyle bir bulutun içinden doğmuştur. Bir yıldızın ömrü, boyutuna bağlı olarak milyonlarca ya da milyarlarca yıl sürebilir.',
+          'Yıldızlar, uzaydaki dev gaz ve toz bulutlarının kendi yerçekimiyle çökmesi sonucu oluşur. Bu bulutun merkezi giderek ısınır ve sonunda nükleer füzyon adı verilen bir süreç başlar, bu da yıldızın parlamasını sağlar. Güneşimiz de yaklaşık 4.6 milyar yıl önce böyle bir bulutun içinden doğmuştur. Bir yıldızın ömrü, boyutuna bağlı olarak milyonlarca ya da milyarlarca yıl sürebilir.\n\n'
+          'Yıldızların rengi aslında sıcaklıkları hakkında ipucu verir: mavimsi yıldızlar en sıcak, kırmızımsı yıldızlar ise nispeten daha soğuk yıldızlardır. Büyük bir yıldız ömrünün sonuna geldiğinde muazzam bir patlamayla parçalanabilir; bu olaya süpernova denir ve geride bazen çok yoğun küçük bir çekirdek bırakır.\n\n'
+          'Eski denizciler ve kervan yolcuları, yıldızların oluşturduğu takımyıldızlarına bakarak yönlerini bulurdu; bu yüzden yıldızlar tarih boyunca hem bilim hem de yolculuk için yol gösterici olmuştur. Gökyüzünde yıldızların titreşerek parlıyormuş gibi görünmesinin nedeni, ışığın Dünya\'nın hareketli atmosferinden geçerken kırılmasıdır.',
       questions: [
         {
           'question':
@@ -1300,7 +1378,9 @@ class ComprehensionData {
       title: 'Uzay İstasyonunda Yaşam',
       topic: 'uzay',
       content:
-          'Uluslararası Uzay İstasyonu, Dünya\'nın yörüngesinde dönen ve içinde astronotların aylarca yaşayıp çalışabildiği devasa bir yapıdır. Yerçekimi neredeyse hiç olmadığı için astronotlar istasyon içinde havada süzülerek hareket eder. Yemek yemek bile burada farklıdır; sıvılar damlalar halinde havada uçuşabileceği için özel kaplarda saklanır. Astronotlar, kaslarının erimemesi için istasyonda her gün özel egzersizler yapmak zorundadır.',
+          'Uluslararası Uzay İstasyonu, Dünya\'nın yörüngesinde dönen ve içinde astronotların aylarca yaşayıp çalışabildiği devasa bir yapıdır. Yerçekimi neredeyse hiç olmadığı için astronotlar istasyon içinde havada süzülerek hareket eder. Yemek yemek bile burada farklıdır; sıvılar damlalar halinde havada uçuşabileceği için özel kaplarda saklanır. Astronotlar, kaslarının erimemesi için istasyonda her gün özel egzersizler yapmak zorundadır.\n\n'
+          'Bu istasyon, birçok ülkenin uzay ajansının ortaklaşa yürüttüğü uluslararası bir bilim projesidir; farklı ülkelerden astronotlar burada birlikte çalışır. İstasyon Dünya\'nın çevresinde çok hızlı döndüğü için astronotlar günde on altı kez gün doğumu ve gün batımı görebilir.\n\n'
+          'Yerçekimi olmadığından astronotlar uyurken havada süzülmemek için duvara bağlı özel uyku tulumlarında uyurlar. İstasyonda bitkilerin uzayda nasıl büyüdüğünden insan vücudunun uzun süreli uzay yolculuğuna nasıl tepki verdiğine kadar birçok bilimsel deney yapılır; bu deneyler gelecekteki uzay yolculukları için değerli bilgiler sağlar.',
       questions: [
         {
           'question':
@@ -1333,7 +1413,9 @@ class ComprehensionData {
       title: 'Ekmeğin Tarihi',
       topic: 'yemek',
       content:
-          'Ekmek, insanlık tarihinin en eski ve en temel besinlerinden biridir; binlerce yıl önce eski Mısırlılar tarafından mayalanarak yapılmaya başlanmıştır. Un, su ve mayanın bir araya gelmesiyle oluşan hamur, fırınlanarak bugün bildiğimiz ekmeğe dönüşür. Dünyanın farklı bölgelerinde farklı ekmek çeşitleri gelişmiştir; örneğin Fransa\'da baget, Hindistan\'da naan öne çıkar. Ekmek, günümüzde de dünyanın hemen her sofrasında yer alan vazgeçilmez bir besindir.',
+          'Ekmek, insanlık tarihinin en eski ve en temel besinlerinden biridir; binlerce yıl önce eski Mısırlılar tarafından mayalanarak yapılmaya başlanmıştır. Un, su ve mayanın bir araya gelmesiyle oluşan hamur, fırınlanarak bugün bildiğimiz ekmeğe dönüşür. Dünyanın farklı bölgelerinde farklı ekmek çeşitleri gelişmiştir; örneğin Fransa\'da baget, Hindistan\'da naan öne çıkar. Ekmek, günümüzde de dünyanın hemen her sofrasında yer alan vazgeçilmez bir besindir.\n\n'
+          'Mayanın hamuru kabartması, aslında canlı mikroskobik mantarların hamurdaki şekeri sindirmesi ve bu sırada gaz üretmesiyle gerçekleşir; bu gaz hamurun içinde küçük kabarcıklar oluşturarak ekmeği yumuşacık yapar. Mayanın keşfedilmesinden önce insanlar, kabarmayan daha düz ve sert ekmekler yapıyordu; bu ekmekler bugün bile bazı kültürlerde tercih edilmektedir.\n\n'
+          'Türkiye\'de de yöreden yöreye değişen birçok ekmek çeşidi bulunur; bazı bölgelerde ince ve yuvarlak, bazı bölgelerde ise kalın ve kabarık ekmekler pişirilir. Birçok kültürde ekmek paylaşmak, misafirperverliğin ve dostluğun bir simgesi olarak kabul edilir.',
       questions: [
         {
           'question':
@@ -1364,7 +1446,9 @@ class ComprehensionData {
       title: 'Dünya Mutfaklarından Lezzetler',
       topic: 'yemek',
       content:
-          'Her ülkenin mutfağı, o toplumun kültürünü, iklimini ve tarihini yansıtır. İtalya\'da makarna ve pizza öne çıkarken, Japonya\'da suşi ve ramen çok sevilen yemeklerdendir. Baharatlar, yemeklere hem lezzet hem de renk katar; örneğin Hindistan mutfağında köri baharatı sıkça kullanılır. Farklı mutfakları tatmak, bir ülkeyi ziyaret etmeden de o kültürü tanımanın keyifli bir yoludur.',
+          'Her ülkenin mutfağı, o toplumun kültürünü, iklimini ve tarihini yansıtır. İtalya\'da makarna ve pizza öne çıkarken, Japonya\'da suşi ve ramen çok sevilen yemeklerdendir. Baharatlar, yemeklere hem lezzet hem de renk katar; örneğin Hindistan mutfağında köri baharatı sıkça kullanılır. Farklı mutfakları tatmak, bir ülkeyi ziyaret etmeden de o kültürü tanımanın keyifli bir yoludur.\n\n'
+          'Türk mutfağı da dünyaca tanınan zengin bir mutfaktır; kebaplar, mantı ve baklava gibi lezzetler birçok ülkede sevilerek tüketilir. Bir bölgenin mutfağı genellikle o bölgede yetişen ürünlere göre şekillenir; örneğin sahil kesimlerinde balık, tarım arazilerinde ise tahıl ve sebze ağırlıklı yemekler öne çıkar.\n\n'
+          'Sokak lezzetleri de bir kültürü tanımanın keyifli bir yoludur; Meksika\'da taco, Tayland\'da pad thai gibi yemekler o ülkenin sokaklarında kolayca bulunabilir. Yemek tarifleri, göç eden insanlar ve ticaret yoluyla ülkeler arasında yayılarak zamanla birbirini etkilemiş ve zenginleştirmiştir.',
       questions: [
         {
           'question': 'Her ülkenin mutfağı o toplumun kültürünü yansıtır.',
@@ -1393,7 +1477,9 @@ class ComprehensionData {
       title: 'Meyvelerin Faydaları',
       topic: 'yemek',
       content:
-          'Meyveler, vücudumuzun ihtiyaç duyduğu vitamin ve lifleri doğal yoldan almamızı sağlayan besinlerdir. Portakal ve çilek gibi meyveler C vitamini bakımından zengindir ve bağışıklık sistemimizi güçlendirir. Meyvelerdeki lifler, sindirim sistemimizin düzenli çalışmasına yardımcı olur. Günde birkaç porsiyon meyve tüketmek, sağlıklı bir yaşamın basit ama etkili yollarından biridir.',
+          'Meyveler, vücudumuzun ihtiyaç duyduğu vitamin ve lifleri doğal yoldan almamızı sağlayan besinlerdir. Portakal ve çilek gibi meyveler C vitamini bakımından zengindir ve bağışıklık sistemimizi güçlendirir. Meyvelerdeki lifler, sindirim sistemimizin düzenli çalışmasına yardımcı olur. Günde birkaç porsiyon meyve tüketmek, sağlıklı bir yaşamın basit ama etkili yollarından biridir.\n\n'
+          'Her mevsimin kendine has meyveleri vardır; yazın karpuz ve kayısı, kışın ise mandalina ve nar sofralarımızı süsler. Mevsiminde yetişen meyveleri tercih etmek, hem daha lezzetli hem de genellikle daha uygun fiyatlı olur. Meyvelerdeki şeker doğal olduğu için işlenmiş şekerli atıştırmalıklara göre vücudumuz tarafından daha dengeli bir şekilde kullanılır.\n\n'
+          'Bir meyveyi suyunu sıkarak içmek yerine bütün olarak yemek, içindeki değerli lifleri de almamızı sağlar. Acıktığımızda cips ya da şekerleme yerine bir meyve tercih etmek, hem açlığımızı giderir hem de vücudumuza daha fazla fayda sağlar.',
       questions: [
         {
           'question': 'Portakal ve çilek C vitamini bakımından zengindir.',
@@ -1424,7 +1510,9 @@ class ComprehensionData {
       title: 'Mevsimlerin Değişimi',
       topic: 'doga',
       content:
-          'Dünya\'nın kendi ekseni etrafında eğik durması, mevsimlerin oluşmasının temel nedenidir. Bu eğiklik sayesinde, Dünya Güneş çevresinde dönerken farklı bölgeler farklı zamanlarda daha fazla ya da daha az güneş ışığı alır. İlkbaharda doğa canlanır, yazın sıcaklıklar artar, sonbaharda yapraklar dökülür ve kışın hava soğur. Mevsimler, birçok hayvanın göç etme ya da kış uykusuna yatma zamanını da belirler.',
+          'Dünya\'nın kendi ekseni etrafında eğik durması, mevsimlerin oluşmasının temel nedenidir. Bu eğiklik sayesinde, Dünya Güneş çevresinde dönerken farklı bölgeler farklı zamanlarda daha fazla ya da daha az güneş ışığı alır. İlkbaharda doğa canlanır, yazın sıcaklıklar artar, sonbaharda yapraklar dökülür ve kışın hava soğur. Mevsimler, birçok hayvanın göç etme ya da kış uykusuna yatma zamanını da belirler.\n\n'
+          'İlginç bir şekilde, Dünya\'nın kuzey ve güney yarım küreleri aynı anda farklı mevsimler yaşar; biz yazı yaşarken güney yarım kürede kış hüküm sürer. Sonbaharda yaprakların renk değiştirmesinin nedeni, yapraklardaki yeşil renk veren klorofil maddesinin azalması ve altında gizli olan sarı, turuncu tonların ortaya çıkmasıdır.\n\n'
+          'Ayılar ve kirpiler gibi bazı hayvanlar, besin bulmanın zorlaştığı kış aylarında enerji harcamamak için kış uykusuna yatar. Ekvatora yakın bölgelerde ise güneş ışığı yıl boyunca daha eşit dağıldığından mevsimler arasındaki fark çok daha az hissedilir.',
       questions: [
         {
           'question':
@@ -1455,7 +1543,9 @@ class ComprehensionData {
       title: 'Su Döngüsü',
       topic: 'doga',
       content:
-          'Su döngüsü, suyun Dünya üzerinde sürekli olarak buharlaşıp yağış hâlinde geri dönmesini sağlayan doğal bir sistemdir. Güneşin ısısıyla denizlerdeki ve göllerdeki su buharlaşarak gökyüzüne yükselir ve bulutları oluşturur. Bulutlar soğuduğunda, içindeki su damlacıkları yağmur ya da kar olarak yeryüzüne düşer. Bu döngü sayesinde Dünya\'daki su miktarı hiç azalmadan sürekli yeniden kullanılır.',
+          'Su döngüsü, suyun Dünya üzerinde sürekli olarak buharlaşıp yağış hâlinde geri dönmesini sağlayan doğal bir sistemdir. Güneşin ısısıyla denizlerdeki ve göllerdeki su buharlaşarak gökyüzüne yükselir ve bulutları oluşturur. Bulutlar soğuduğunda, içindeki su damlacıkları yağmur ya da kar olarak yeryüzüne düşer. Bu döngü sayesinde Dünya\'daki su miktarı hiç azalmadan sürekli yeniden kullanılır.\n\n'
+          'Bitkiler de bu döngüye katkıda bulunur; kökleriyle topraktan aldıkları suyu yapraklarından buhar hâlinde havaya bırakır, bu sürece terleme (transpirasyon) denir. Yağan yağmur suyunun bir kısmı toprağa sızarak yer altı sularını beslerken, bir kısmı da dereler ve nehirler aracılığıyla tekrar denizlere ulaşır.\n\n'
+          'İçtiğimiz su, aslında milyonlarca yıldır bu döngü içinde defalarca dönüşüp durmuş aynı sudur. Suyu israf etmemek, örneğin diş fırçalarken musluğu kapalı tutmak, bu değerli ve sınırlı kaynağın herkes için yeterli kalmasına küçük ama önemli bir katkı sağlar.',
       questions: [
         {
           'question': 'Su döngüsünde su buharlaşıp yağış hâlinde geri döner.',
@@ -1485,7 +1575,9 @@ class ComprehensionData {
       title: 'İnternetin Doğuşu',
       topic: 'teknoloji',
       content:
-          'İnternet, başlangıçta 1960\'larda bilgisayarların birbirleriyle bilgi paylaşabilmesi için askeri ve akademik amaçlarla geliştirilmiştir. Zamanla bu ağ genişleyerek dünyanın dört bir yanındaki milyonlarca bilgisayarı birbirine bağlayan devasa bir sisteme dönüşmüştür. World Wide Web\'in 1990\'larda icat edilmesiyle internet, sıradan insanların da kolayca kullanabileceği bir araç haline geldi. Bugün internet, bilgiye ulaşmaktan iletişim kurmaya kadar hayatımızın her alanında yer almaktadır.',
+          'İnternet, başlangıçta 1960\'larda bilgisayarların birbirleriyle bilgi paylaşabilmesi için askeri ve akademik amaçlarla geliştirilmiştir. Zamanla bu ağ genişleyerek dünyanın dört bir yanındaki milyonlarca bilgisayarı birbirine bağlayan devasa bir sisteme dönüşmüştür. World Wide Web\'in 1990\'larda icat edilmesiyle internet, sıradan insanların da kolayca kullanabileceği bir araç haline geldi. Bugün internet, bilgiye ulaşmaktan iletişim kurmaya kadar hayatımızın her alanında yer almaktadır.\n\n'
+          'Bir mesaj gönderdiğimizde ya da bir web sitesi açtığımızda, bilgi aslında küçük parçalara (veri paketlerine) bölünerek kablolar, fiber hatlar ve hatta uydular aracılığıyla saniyeler içinde dünyanın öbür ucuna ulaşabilir. Bu sayede binlerce kilometre uzaktaki biriyle anında haberleşebiliriz.\n\n'
+          'İnternet sayesinde bilgiye ulaşmak çok kolaylaşsa da, karşılaştığımız her bilginin doğru olduğunu varsaymamak önemlidir; güvenilir kaynakları tanımayı öğrenmek, internetin en değerli kullanım becerilerinden biridir. İnterneti güvenli ve bilinçli kullanmak, hem kişisel bilgilerimizi korumamıza hem de zamanımızı verimli değerlendirmemize yardımcı olur.',
       questions: [
         {
           'question':
@@ -1517,7 +1609,9 @@ class ComprehensionData {
       title: 'Akıllı Telefonların Gelişimi',
       topic: 'teknoloji',
       content:
-          'İlk cep telefonları sadece arama yapmak için kullanılırken, günümüzün akıllı telefonları birer mini bilgisayar haline gelmiştir. Kamera, internet tarayıcısı, harita ve binlerce uygulama artık cebimizdeki bu tek cihazda toplanmış durumda. Dokunmatik ekran teknolojisi, telefonların kullanımını çok daha kolay ve sezgisel hale getirmiştir. Akıllı telefonlar sayesinde insanlar artık dünyanın her yerinden anında bilgiye ulaşabilmektedir.',
+          'İlk cep telefonları sadece arama yapmak için kullanılırken, günümüzün akıllı telefonları birer mini bilgisayar haline gelmiştir. Kamera, internet tarayıcısı, harita ve binlerce uygulama artık cebimizdeki bu tek cihazda toplanmış durumda. Dokunmatik ekran teknolojisi, telefonların kullanımını çok daha kolay ve sezgisel hale getirmiştir. Akıllı telefonlar sayesinde insanlar artık dünyanın her yerinden anında bilgiye ulaşabilmektedir.\n\n'
+          'İlk cep telefonları bugünkülerden çok daha büyük ve ağırdı; bazıları neredeyse bir tuğla kadar yer kaplıyordu ve sadece birkaç saat konuşma imkânı sunuyordu. Modern akıllı telefonların içinde, telefonun hareketini algılayan sensörler ve konumunu bulan uydu alıcıları gibi birçok gizli teknoloji bulunur.\n\n'
+          'Telefon kameraları öylesine gelişmiştir ki artık herkes profesyonel ekipmana ihtiyaç duymadan kaliteli fotoğraflar çekebilir. Bu kadar çok işe yaraması, akıllı telefonları hayatımızın vazgeçilmez bir parçası yapsa da, ekran karşısında geçirilen zamanı dengelemek ve göz sağlığına dikkat etmek de bir o kadar önemlidir.',
       questions: [
         {
           'question':
@@ -1550,7 +1644,9 @@ class ComprehensionData {
       title: 'Mimar Sinan: Ustaların Ustası',
       topic: 'biyografi',
       content:
-          'Mimar Sinan, 16. yüzyılda yaşamış, Osmanlı Devleti\'nin en usta mimarlarından biridir. Süleymaniye Camii ve Selimiye Camii gibi birçok görkemli yapıyı tasarlayarak mimarlık tarihine adını altın harflerle yazdırmıştır. Sinan, yapılarında hem estetiği hem de depreme dayanıklılığı bir araya getirmeyi başarmış, bu yüzden eserlerinin çoğu günümüze kadar sapasağlam ulaşmıştır. Kendisi "ustalık eserim" olarak nitelendirdiği Selimiye Camii\'ni Edirne\'de inşa etmiştir.',
+          'Mimar Sinan, 16. yüzyılda yaşamış, Osmanlı Devleti\'nin en usta mimarlarından biridir. Süleymaniye Camii ve Selimiye Camii gibi birçok görkemli yapıyı tasarlayarak mimarlık tarihine adını altın harflerle yazdırmıştır. Sinan, yapılarında hem estetiği hem de depreme dayanıklılığı bir araya getirmeyi başarmış, bu yüzden eserlerinin çoğu günümüze kadar sapasağlam ulaşmıştır. Kendisi "ustalık eserim" olarak nitelendirdiği Selimiye Camii\'ni Edirne\'de inşa etmiştir.\n\n'
+          'Sinan, mimarlığa başlamadan önce orduda inşaat ve mühendislik işleriyle uğraşmış, köprüler ve yollar yaparak büyük bir tecrübe kazanmıştır. Bu mühendislik bilgisi, sonradan tasarladığı büyük kubbeli yapıların sağlam ve dengeli durmasında ona büyük avantaj sağlamıştır.\n\n'
+          'Uzun ve verimli mesleki hayatı boyunca cami, köprü, çeşme ve saray gibi üç yüzden fazla yapıya imza attığı bilinmektedir. Sinan\'ın geliştirdiği kubbe destekleme yöntemleri, kendisinden sonra gelen mimarlara da ilham kaynağı olmuş ve dünya mimarlık tarihinde önemli bir yer edinmesini sağlamıştır.',
       questions: [
         {
           'question': 'Mimar Sinan, Süleymaniye Camii\'ni tasarlamıştır.',
